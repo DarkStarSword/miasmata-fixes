@@ -184,7 +184,7 @@ class env_remove_list(env_list):
 		return self.len.enc() + '\0'*self.len
 
 def parse_environment(f, outputfd):
-	(magic, filename, filesize, u2) = rs5.parse_header(f)
+	(magic, filename, filesize, u2) = rs5.parse_rs5file_header(f)
 	assert(magic == 'RAW.')
 	assert(filename == 'environment')
 	assert(u2 == 1)
@@ -209,7 +209,8 @@ def json2env(j, outputfd):
 	# print dump_json(root, sys.stdout)
 	d = root.id + root.enc()
 	dh = struct.pack('<4s4sI4s', 'DATA', '\0\0\1\0', len(d), '\0\0\0\0')
-	outputfd.write(rs5.enc_file('RAW.', 'environment', dh + d, 1))
+	pad = rs5.padding(len(dh) + len(d), 8) # DATA files are padded before RAW. header is applied
+	outputfd.write(rs5.enc_file('RAW.', 'environment', dh + d + pad, 1))
 
 def parse_args():
 	import argparse
