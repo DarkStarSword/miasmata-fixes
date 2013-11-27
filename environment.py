@@ -222,22 +222,19 @@ def parse_args():
 			help='Encode a JSON formatted environment file')
 
 	parser.add_argument('-o', '--output',
-			help='Store the result in a OUTPUT')
+			type=argparse.FileType('wb'), default=sys.stdout,
+			help='Store the result in OUTPUT')
 
 	return parser.parse_args()
 
 def main():
 	args = parse_args()
 
-	outputfd = sys.stdout
-	if args.output:
-		outputfd = open(args.output, 'wb')
-
 	if args.decode_file:
-		return parse_environment(open(args.decode_file, 'rb'), outputfd)
+		return parse_environment(open(args.decode_file, 'rb'), args.output)
 
 	if args.encode_file:
-		return json2env(open(args.encode_file, 'rb'), outputfd)
+		return json2env(open(args.encode_file, 'rb'), args.output)
 
 if __name__ == '__main__':
 	main()
