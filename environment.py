@@ -3,6 +3,7 @@
 import sys
 import struct
 import json
+import collections
 
 import rs5
 
@@ -27,20 +28,23 @@ def encode_json_types(obj):
 	return {'__%s__' % obj.id: obj.to_json()}
 
 def decode_json_types(dct):
-	assert(len(dct) == 1)
-	(k,v) = dct.items()[0]
-	if k in json_decoders:
-		r = json_decoders[k]()
-		r.from_json(v)
-		# print r
-		return r
-	return (null_str(k), v)
+	ret = collections.OrderedDict()
+	for (k,v) in dct:
+		if k in json_decoders:
+			assert(len(dct) == 1)
+			r = json_decoders[k]()
+			r.from_json(v)
+			# print r
+			return r
+		ret[null_str(k)] = v
+	# print ret
+	return ret
 
 def dump_json(node):
 	return json.dumps(node, default=encode_json_types, ensure_ascii=True, indent=4, separators=(',', ':'))
 
 def parse_json(j):
-	return json.loads(j, object_hook=decode_json_types, parse_int=env_int, parse_float=env_float)
+	return json.loads(j, object_pairs_hook=decode_json_types, parse_int=env_int, parse_float=env_float)
 
 
 @data_type
@@ -74,9 +78,7 @@ class null_str(str):
 class env_tree(object):
 	id = 'T'
 	def __init__(self):
-		# TODO: Store these as an ordered dictionary to make the output
-		# clearer, while not losing order
-		self.children = []
+		self.children = collections.OrderedDict()
 	def dec(self, f):
 		while True:
 			name = null_str.dec_new(f)
@@ -85,20 +87,20 @@ class env_tree(object):
 			t = f.read(1)
 			try:
 				child = parse_type(t, f)
-				self.children.append({name: child})
+				self.children[name] = child
 			except:
 				print>>sys.stderr, dump_json(self.children)
 				raise
 	def to_json(self):
 		return self.children
 	def from_json(self, c):
-		for (name, child) in c:
+		for (name, child) in c.iteritems():
 			if isinstance(child, unicode):
 				child = null_str(child)
-			self.children.append((null_str(name), child))
+			self.children[null_str(name)] = child
 	def enc(self):
 		ret = ''
-		for (name, child) in self.children:
+		for (name, child) in self.children.iteritems():
 			ret += name.enc() + child.id + child.enc()
 		return ret + '\0'
 
