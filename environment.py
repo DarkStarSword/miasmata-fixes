@@ -184,7 +184,11 @@ class env_remove_list(env_list):
 		return self.len.enc() + '\0'*self.len
 
 def parse_environment(f, outputfd):
-	(magic, filename, filesize) = rs5.parse_header(f)
+	(magic, filename, filesize, u2) = rs5.parse_header(f)
+	assert(magic == 'RAW.')
+	assert(filename == 'environment')
+	assert(u2 == 1)
+
 	assert(f.read(4) == 'DATA')
 	(u1, size, u3) = struct.unpack('<4sI4s', f.read(4*3))
 	assert(u1 == '\0\0\1\0')
@@ -203,15 +207,9 @@ def parse_environment(f, outputfd):
 def json2env(j, outputfd):
 	root = parse_json(j)
 	# print dump_json(root, sys.stdout)
-	# TODO: DATA header, RAW header
 	d = root.id + root.enc()
 	dh = struct.pack('<4s4sI4s', 'DATA', '\0\0\1\0', len(d), '\0\0\0\0')
-	pad = (4 - (len(d) + len(dh)) % 4) % 4 # XXX Need to determine padding constraints - 4 / 8 / 16 bytes?
-	h = rs5.enc_header('RAW.', 'environment', len(dh) + len(d) + pad, 1)
-	outputfd.write(h)
-	outputfd.write(dh)
-	outputfd.write(d)
-	outputfd.write('\0' * pad)
+	outputfd.write(rs5.enc_file('RAW.', 'environment', dh + d, 1))
 
 def parse_args():
 	import argparse

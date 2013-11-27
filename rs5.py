@@ -24,9 +24,14 @@ def parse_header(f):
 	assert(f.read(pad) == '\0'*pad)
 	return (magic, filename, filesize, u2)
 
-def enc_header(magic, name, size, u2):
+def _enc_header(magic, name, size, u2):
 	name = name + '\0'
 	ret = struct.pack('<4s2sBBI', magic, '\0\0', len(name), u2, size)
 	pad = (8 - ((12 + len(name)) % 8)) % 8
 	ret += name + '\0'*pad
 	return ret
+
+def enc_file(magic, name, data, u2):
+	pad = (4 - len(data) % 4) % 4 # XXX Need to determine padding constraints - 4 / 8 / 16 bytes?
+	header = _enc_header(magic, name, len(data) + pad, u2)
+	return header + data + '\0'*pad
