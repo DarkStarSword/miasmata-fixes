@@ -40,11 +40,11 @@ def decode_json_types(dct):
 	# print ret
 	return ret
 
-def dump_json(node):
-	return json.dumps(node, default=encode_json_types, ensure_ascii=True, indent=4, separators=(',', ':'))
+def dump_json(node, outputfd):
+	return json.dump(node, outputfd, default=encode_json_types, ensure_ascii=True, indent=4, separators=(',', ': '))
 
 def parse_json(j):
-	return json.loads(j, object_pairs_hook=decode_json_types, parse_int=env_int, parse_float=env_float)
+	return json.load(j, object_pairs_hook=decode_json_types, parse_int=env_int, parse_float=env_float)
 
 
 @data_type
@@ -89,7 +89,7 @@ class env_tree(object):
 				child = parse_type(t, f)
 				self.children[name] = child
 			except:
-				print>>sys.stderr, dump_json(self.children)
+				dump_json(self.children, sys.stderr)
 				raise
 	def to_json(self):
 		return self.children
@@ -183,8 +183,7 @@ class env_remove_list(env_list):
 	def enc(self):
 		return self.len.enc() + '\0'*self.len
 
-def parse_environment():
-	f = open('environment', 'r')
+def parse_environment(f, outputfd):
 	(magic, filename, filesize) = rs5.parse_header(f)
 	assert(f.read(4) == 'DATA')
 	(u1, size, u3) = struct.unpack('<4sI4s', f.read(4*3))
@@ -199,29 +198,48 @@ def parse_environment():
 	except:
 		print 'Address: 0x%x' % f.tell()
 		raise
-	return dump_json(root)
+	return dump_json(root, outputfd)
 
-def dump_env(node):
-	# TODO: DATA header, RAW header
-	r = node.id + node.enc()
-	# pad = '\0' * (4 - (len(r) % 4) % 4)
-	return r
-
-def json2env(j):
+def json2env(j, outputfd):
 	root = parse_json(j)
-	# print dump_json(root)
-	return dump_env(root)
+	# print dump_json(root, sys.stdout)
+	# TODO: DATA header, RAW header
+	d = root.id + root.enc()
+	dh = struct.pack('<4s4sI4s', 'DATA', '\0\0\1\0', len(d), '\0\0\0\0')
+	pad = (4 - (len(d) + len(dh)) % 4) % 4 # XXX Need to determine padding constraints - 4 / 8 / 16 bytes?
+	h = rs5.enc_header('RAW.', 'environment', len(dh) + len(d) + pad, 1)
+	outputfd.write(h)
+	outputfd.write(dh)
+	outputfd.write(d)
+	outputfd.write('\0' * pad)
+
+def parse_args():
+	import argparse
+	parser = argparse.ArgumentParser()
+
+	group = parser.add_mutually_exclusive_group(required=True)
+	group.add_argument('-d', '--decode-file', metavar='FILE',
+			help='Decode a previously extracted environment file')
+	group.add_argument('-e', '--encode-file', metavar='FILE',
+			help='Encode a JSON formatted environment file')
+
+	parser.add_argument('-o', '--output',
+			help='Store the result in a OUTPUT')
+
+	return parser.parse_args()
 
 def main():
-	j = parse_environment()
-	# print j
+	args = parse_args()
 
-	# print>>sys.stderr, '-'*79
-	sys.stdout.write(json2env(j))
+	outputfd = sys.stdout
+	if args.output:
+		outputfd = open(args.output, 'wb')
 
-	# if len(sys.argv) == 1:
-	# 	return parse_environment()
-	# return json2env(open(sys.argv[1], 'r'))
+	if args.decode_file:
+		return parse_environment(open(args.decode_file, 'rb'), outputfd)
+
+	if args.encode_file:
+		return json2env(open(args.encode_file, 'rb'), outputfd)
 
 if __name__ == '__main__':
 	main()

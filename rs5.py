@@ -22,4 +22,11 @@ def parse_header(f):
 	pad = (8 - ((12 + filename_len) % 8)) % 8
 	# print>>sys.stderr, '%i bytes of padding' % pad
 	assert(f.read(pad) == '\0'*pad)
-	return (magic, filename, filesize)
+	return (magic, filename, filesize, u2)
+
+def enc_header(magic, name, size, u2):
+	name = name + '\0'
+	ret = struct.pack('<4s2sBBI', magic, '\0\0', len(name), u2, size)
+	pad = (8 - ((12 + len(name)) % 8)) % 8
+	ret += name + '\0'*pad
+	return ret
