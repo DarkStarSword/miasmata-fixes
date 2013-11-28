@@ -13,7 +13,7 @@ def data_type(c):
 	global data_types
 	data_types[c.id] = c
 	if hasattr(c, 'from_json'):
-		json_decoders['__%s__'%c.id] = c
+		json_decoders[c.id] = c
 	return c
 
 def parse_type(t, f):
@@ -25,18 +25,18 @@ def parse_type(t, f):
 	return r
 
 def encode_json_types(obj):
-	return {'__%s__' % obj.id: obj.to_json()}
+	return obj.to_json()
 
 def decode_json_types(dct):
 	ret = collections.OrderedDict()
 	for (k,v) in dct:
-		if k in json_decoders:
-			assert(len(dct) == 1)
-			r = json_decoders[k]()
+		assert(k[1] == ':')
+		if k[0] in json_decoders:
+			r = json_decoders[k[0]]()
 			r.from_json(v)
-			# print r
-			return r
-		ret[null_str(k)] = v
+			ret[null_str(k)] = r
+		else:
+			ret[null_str(k)] = v
 	# print ret
 	return ret
 
@@ -44,8 +44,10 @@ def dump_json(node, outputfd):
 	return json.dump(node, outputfd, default=encode_json_types, ensure_ascii=True, indent=4, separators=(',', ': '))
 
 def parse_json(j):
-	return json.load(j, object_pairs_hook=decode_json_types, parse_int=env_int, parse_float=env_float)
-
+	j = json.load(j, object_pairs_hook=decode_json_types, parse_int=env_int, parse_float=env_float)
+	root = env_tree()
+	root.from_json(j)
+	return root
 
 @data_type
 class env_null(object):
@@ -92,12 +94,15 @@ class env_tree(object):
 				dump_json(self.children, sys.stderr)
 				raise
 	def to_json(self):
-		return self.children
+		r = collections.OrderedDict()
+		for (name, child) in self.children.iteritems():
+			r['%s:%s' % (child.id, name)] = child
+		return r
 	def from_json(self, c):
 		for (name, child) in c.iteritems():
 			if isinstance(child, unicode):
 				child = null_str(child)
-			self.children[null_str(name)] = child
+			self.children[null_str(name[2:])] = child
 	def enc(self):
 		ret = ''
 		for (name, child) in self.children.iteritems():
