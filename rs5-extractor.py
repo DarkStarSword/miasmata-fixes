@@ -58,6 +58,24 @@ class Rs5CompressedFile(object):
 		# 	print repr(self.type), self.filename
 		# 	print hex(unknown1), hex(unknown2)
 
+		# # NFI what this data is, probably just old data as things
+		# # were moved around in the rs5 archive
+		# print self.filename
+		# i = 0
+		# for x in data[40+filename_len+1:]:
+		# 	print '%.2x' % ord(x),
+		# 	i += 1
+		# 	if (i % 32 == 0):
+		# 		print
+		# 	else:
+		# 		if (i % 16 == 0):
+		# 			print '',
+		# 		if (i % 8 == 0):
+		# 			print '',
+		# 		if (i % 4 == 0):
+		# 			print '',
+		# print
+
 	def _read(self):
 		self.fp.seek(self.data_off)
 		return self.fp.read(self.compressed_size)
@@ -81,11 +99,30 @@ class Rs5CompressedFile(object):
 		f.close()
 		os.utime(dest, (self.modtime, self.modtime))
 
+class Rs5CompressedFileEncoder(object):
+	def __init__(self, fp, filename):
+		import rs5
+		import StringIO
+		self.modtime = os.stat(filename).st_mtime
+		uncompressed = open(filename, 'rb').read()
+		self.uncompressed_size = len(uncompressed)
+		(self.type, self.filename, _1, _2) = rs5.parse_rs5file_header(StringIO.StringIO(uncompressed))
+		compressed = zlib.compress(uncompressed)
+		self.compressed_size = len(compressed)
+		self.u1 = 0x30080000000
+		self.u2 = 1
 
-class Rs5Archive(list):
-	pass
+		self.data_off = fp.tell()
+		fp.write(compressed)
 
-class Rs5ArchiveDecoder(Rs5Archive):
+	def gen_dir_ent(self):
+		return struct.pack('<QIQ4sQQ',
+				self.data_off, self.compressed_size, self.u1,
+				self.type, self.uncompressed_size << 1 | self.u2,
+				to_win_time(self.modtime)) + self.filename + '\0'
+
+
+class Rs5ArchiveDecoder(list):
 	def __init__(self, f):
 		magic = f.read(8)
 		if magic != 'CFILEHDR':
@@ -94,6 +131,7 @@ class Rs5ArchiveDecoder(Rs5Archive):
 
 		(d_off, ent_len, u1) = struct.unpack('<QII', f.read(16))
 		# print hex(d_off), hex(ent_len)
+		# print 'ent_len: %i' % ent_len
 		# print "Unknown: %i" % u1
 		#  - 0 in environment.rs5, 7 in main.rs5
 		# Not enough samples to work out what this is...
@@ -122,8 +160,9 @@ class Rs5ArchiveDecoder(Rs5Archive):
 		(d_off1, d_len, flags) = struct.unpack('<QII', data[:16])
 		assert(d_off == d_off1)
 		# print hex(d_len), hex(flags)
+		print 'd_len: %i, flags: %x' % (d_len, flags)
 
-		Rs5Archive.__init__(self)
+		list.__init__(self)
 
 		for f_off in range(d_off + ent_len, d_off + d_len, ent_len):
 			# print hex(f_off)
@@ -134,6 +173,45 @@ class Rs5ArchiveDecoder(Rs5Archive):
 				continue
 
 		print('0x%.8x - 0x%.8x  : %s' % (d_off, f.tell()-1, 'directory'))
+
+class Rs5ArchiveEncoder(list):
+	header_len = 24
+	ent_len = 168
+	u1 = 0
+	flags = 0x80000000
+
+	def __init__(self, filename):
+		self.fp = open(filename, 'wb')
+		self.fp.seek(self.header_len)
+
+	def add(self, filename):
+		print "Adding %s..." % filename
+		self.append(Rs5CompressedFileEncoder(self.fp, filename))
+
+	def _write_directory(self):
+		print "Writing central directory..."
+		self.d_off = self.fp.tell()
+
+		dir_hdr = struct.pack('<QII', self.d_off, self.ent_len * (1 + len(self)), self.flags)
+		pad = '\0' * (self.ent_len - len(dir_hdr)) # XXX: Not sure if any data here is important
+		self.fp.write(dir_hdr + pad)
+
+		for file in self:
+			ent = file.gen_dir_ent()
+			pad = '\0' * (self.ent_len - len(ent)) # XXX: Not sure if any data here is important
+			self.fp.write(ent + pad)
+
+	def _write_header(self):
+		print "Writing RS5 header..."
+		self.fp.seek(0)
+		self.fp.write(struct.pack('<8sQII', 'CFILEHDR', self.d_off, self.ent_len, self.u1))
+
+	def save(self):
+		self._write_directory()
+		self._write_header()
+		self.fp.flush()
+		print "Done."
+
 
 def extract_all(filename, dest):
 	rs5 = Rs5ArchiveDecoder(open(filename, 'rb'))
@@ -147,6 +225,16 @@ def extract_all(filename, dest):
 			file.extract(dest)
 		except OSError, e:
 			print>>sys.stderr, 'ERROR EXTRACTING %s: %s, SKIPPING!' % (file.filename, str(e))
+
+def create_rs5(source, filename):
+	if os.path.exists(filename):
+		print '%s already exists, refusing to continue!' % filename
+		return
+	rs5 = Rs5ArchiveEncoder(filename)
+	for (root, dirs, files) in os.walk(source):
+		for file in files:
+			rs5.add(os.path.join(root, file))
+	rs5.save()
 
 def analyse(filename):
 	rs5 = Rs5ArchiveDecoder(open(filename, 'rb'))
@@ -205,7 +293,6 @@ def analyse(filename):
 				assert(rs5file.filesize % 8 == 0)
 				assert((rs5file.headersize + rs5file.filesize) % 8 == 0)
 
-
 def parse_args():
 	import argparse
 	parser = argparse.ArgumentParser()
@@ -213,6 +300,8 @@ def parse_args():
 	group = parser.add_mutually_exclusive_group(required=True)
 	group.add_argument('-X', '--extract-all', nargs=2, metavar=('RS5', 'DEST'),
 			help='Extract all files from the rs5 archive to DEST')
+	group.add_argument('-C', '--create', nargs=2, metavar=('SOURCE', 'RS5'),
+			help='Pack the files under SOURCE into a new RS5 file')
 
 	group.add_argument('--analyse', metavar='RS5')
 
@@ -223,6 +312,9 @@ def main():
 
 	if args.extract_all:
 		return extract_all(*args.extract_all)
+
+	if args.create:
+		return create_rs5(*args.create)
 
 	if args.analyse:
 		return analyse(args.analyse)
