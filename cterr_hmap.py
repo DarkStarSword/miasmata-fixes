@@ -20,12 +20,14 @@ def main():
 
 	mn = -255
 	mn2 = -32
+	mn3 = -187
 	mx = 255
 
 	abs_mn = -2047.8125
 	abs_mx = 1967.375
 	for y in range(h):
-		print '%i/%i' % (y, h)
+		if y & 0xff == 0:
+			print '%i/%i' % (y, h)
 		floats = struct.unpack('<%if' % w, f.read(4*w))
 		for x in range(w):
 			z = floats[x]
@@ -42,6 +44,8 @@ def main():
 				else:
 					b = int(255 + z)
 					g = int(255 - (z * 255 / mn2)) / 2
+					if z <= mn3:
+						r = g = 128
 				# elif z > mn2:
 				# 	b = int(255 - (z * 255 / mn2))
 				# 	g = b / 2
