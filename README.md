@@ -32,8 +32,9 @@ archive has to be unpacked and repacked to edit any contained files.
 This script can decode the game's environment database into human editable
 JSON, and then re-encode the JSON back into the binary format used by the game.
 
-With some small tweaks this code can probably be made generic to work with
-other databases used by the game as well.
+### data.py ###
+This script can decode & re-encode any database used by the game to/from JSON,
+including the saved games.
 
 ### markers.py ###
 This script lists and plots the location of items listed in the game's markers
