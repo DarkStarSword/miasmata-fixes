@@ -82,3 +82,9 @@ debugger, e.g. for the Bored Cartographer achievement.
 
 _Currently it requires certain files to have already been extracted into
 specific locations - TODO is the ability to read them directly from main.rs5._
+
+### cterr_hmap.py ###
+This script generates a heightmap of the game's map
+
+_Currently it requires certain files to have already been extracted into
+specific locations - TODO is the ability to read them directly from main.rs5._
