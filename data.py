@@ -180,13 +180,18 @@ class data_mixed_list(data_list):
 		return r
 
 @data_type
-class data_remove_list(data_list):
+class data_raw(object):
 	id = 'R'
-	@staticmethod
-	def parse(f):
-		assert(f.read(1) == '\0')
+	def dec(self, f):
+		l = data_int.dec_new(f)
+		self.raw = f.read(l)
 	def enc(self):
-		return self.len.enc() + '\0'*self.len
+		return data_int(len(self.raw)).enc() + self.raw
+	def to_json(self):
+		return self.raw.encode('hex_codec')
+	def from_json(self, l):
+		self.raw = l.decode('hex_codec')
+
 
 def parse_data(f, outputfd):
 	try:
