@@ -4,12 +4,13 @@
 
 # I wanted something a bit lower level that didn't convert the contained files
 # so I could examine the format for myself. Don't expect this to be feature
-# complete and a re-packer is probably a long way off.
+# complete for a while
 
 import struct
 import zlib
 import sys
 import os
+import collections
 
 # http://msdn.microsoft.com/en-us/library/system.datetime.fromfiletimeutc.aspx:
 # A Windows file time is a 64-bit value that represents the number of
@@ -122,7 +123,7 @@ class Rs5CompressedFileEncoder(object):
 				to_win_time(self.modtime)) + self.filename + '\0'
 
 
-class Rs5ArchiveDecoder(list):
+class Rs5ArchiveDecoder(collections.OrderedDict):
 	def __init__(self, f):
 		magic = f.read(8)
 		if magic != 'CFILEHDR':
@@ -136,7 +137,7 @@ class Rs5ArchiveDecoder(list):
 		#  - 0 in environment.rs5, 7 in main.rs5
 		# Not enough samples to work out what this is...
 
-		print('0x%.8x - 0x%.8x  : %s' % (0, f.tell()-1, 'rs5 header'))
+		# print('0x%.8x - 0x%.8x  : %s' % (0, f.tell()-1, 'rs5 header'))
 		# XXX: What is the data following this header?
 		# XXX: The files are in this range, but what else?
 		# i = 0
@@ -160,33 +161,36 @@ class Rs5ArchiveDecoder(list):
 		(d_off1, d_len, flags) = struct.unpack('<QII', data[:16])
 		assert(d_off == d_off1)
 		# print hex(d_len), hex(flags)
-		print 'd_len: %i, flags: %x' % (d_len, flags)
+		# print 'd_len: %i, flags: %x' % (d_len, flags)
 
-		list.__init__(self)
+		collections.OrderedDict.__init__(self)
 
 		for f_off in range(d_off + ent_len, d_off + d_len, ent_len):
 			# print hex(f_off)
 			try:
-				self.append(Rs5CompressedFile(f, f.read(ent_len)))
+				entry = Rs5CompressedFile(f, f.read(ent_len))
+				self[entry.filename] = entry
 			except NotAFile:
 				# XXX TODO FIXME: Figure out what these are
 				continue
 
-		print('0x%.8x - 0x%.8x  : %s' % (d_off, f.tell()-1, 'directory'))
+		# print('0x%.8x - 0x%.8x  : %s' % (d_off, f.tell()-1, 'directory'))
 
-class Rs5ArchiveEncoder(list):
+class Rs5ArchiveEncoder(collections.OrderedDict):
 	header_len = 24
 	ent_len = 168
 	u1 = 0
 	flags = 0x80000000
 
 	def __init__(self, filename):
+		collections.OrderedDict.__init__(self)
 		self.fp = open(filename, 'wb')
 		self.fp.seek(self.header_len)
 
 	def add(self, filename):
 		print "Adding %s..." % filename
-		self.append(Rs5CompressedFileEncoder(self.fp, filename))
+		entry = Rs5CompressedFileEncoder(self.fp, filename)
+		self[entry.filename] = entry
 
 	def _write_directory(self):
 		print "Writing central directory..."
@@ -196,7 +200,7 @@ class Rs5ArchiveEncoder(list):
 		pad = '\0' * (self.ent_len - len(dir_hdr)) # XXX: Not sure if any data here is important
 		self.fp.write(dir_hdr + pad)
 
-		for file in self:
+		for file in self.itervalues():
 			ent = file.gen_dir_ent()
 			pad = '\0' * (self.ent_len - len(ent)) # XXX: Not sure if any data here is important
 			self.fp.write(ent + pad)
@@ -212,11 +216,15 @@ class Rs5ArchiveEncoder(list):
 		self.fp.flush()
 		print "Done."
 
+def list_files(filename):
+	rs5 = Rs5ArchiveDecoder(open(filename, 'rb'))
+	for file in rs5.itervalues():
+		print '%4s %8i %s' % (file.type, file.uncompressed_size, file.filename)
 
 def extract_all(filename, dest):
 	rs5 = Rs5ArchiveDecoder(open(filename, 'rb'))
 	print 'Extracting files to %s' % dest
-	for file in rs5:
+	for file in rs5.itervalues():
 		if not file.filename:
 			print 'SKIPPING FILE OF TYPE %s WITHOUT FILENAME' % repr(file.type)
 			continue
@@ -298,6 +306,8 @@ def parse_args():
 	parser = argparse.ArgumentParser()
 
 	group = parser.add_mutually_exclusive_group(required=True)
+	group.add_argument('-l', '--list', metavar='RS5',
+			help='List all files in the rs5 archive')
 	group.add_argument('-X', '--extract-all', nargs=2, metavar=('RS5', 'DEST'),
 			help='Extract all files from the rs5 archive to DEST')
 	group.add_argument('-C', '--create', nargs=2, metavar=('SOURCE', 'RS5'),
@@ -309,6 +319,9 @@ def parse_args():
 
 def main():
 	args = parse_args()
+
+	if args.list:
+		return list_files(args.list)
 
 	if args.extract_all:
 		return extract_all(*args.extract_all)
