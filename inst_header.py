@@ -3,7 +3,7 @@
 import struct
 import Image
 
-import rs5
+import rs5file
 import miasmap
 
 def parse_inst_header_header(f):
@@ -13,14 +13,14 @@ def parse_inst_header_header(f):
 
 def get_points():
 	f = open('inst_header')
-	filesize = rs5.parse_raw_header(f)
+	filesize = rs5file.parse_raw_header(f)
 	nodes = parse_inst_header_header(f)
 	for i in range(nodes):
 		yield (i, struct.unpack('<6f', f.read(4*6)))
 
 def _get_name_list():
 	f = open('inst_header')
-	filesize = rs5.parse_raw_header(f)
+	filesize = rs5file.parse_raw_header(f)
 	nodes = parse_inst_header_header(f)
 	seek = nodes*6*4
 	f.seek(seek, 1)

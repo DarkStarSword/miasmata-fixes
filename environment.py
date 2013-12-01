@@ -3,10 +3,10 @@
 import sys
 
 import data
-import rs5
+import rs5file
 
 def parse_environment(f, outputfd):
-	(magic, filename, filesize, u2) = rs5.parse_rs5file_header(f)
+	(magic, filename, filesize, u2) = rs5file.parse_rs5file_header(f)
 	assert(magic == 'RAW.')
 	assert(filename == 'environment')
 	assert(u2 == 1)
@@ -15,7 +15,7 @@ def parse_environment(f, outputfd):
 
 def json2env(j, outputfd):
 	d = data.wrap_data(data.json2data(j))
-	outputfd.write(rs5.enc_file('RAW.', 'environment', d, 1))
+	outputfd.write(rs5file.enc_file('RAW.', 'environment', d, 1))
 
 def parse_args():
 	import argparse

@@ -3,7 +3,7 @@
 import struct
 import sys
 
-import rs5
+import rs5file
 import miasmap
 
 def parse_nlst_header(f):
@@ -21,7 +21,7 @@ def parse_mlst_header(f):
 
 def parse_markers():
 	f = open('markers')
-	filesize = rs5.parse_raw_header(f)
+	filesize = rs5file.parse_raw_header(f)
 	(chunk_size, num_entries) = parse_nlst_header(f)
 	nlst = f.read(chunk_size).rstrip('\0').split('\0')
 	chunk_size = parse_mlst_header(f)

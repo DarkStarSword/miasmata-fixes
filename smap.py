@@ -5,7 +5,7 @@ import sys
 import struct
 import Image
 
-import rs5
+import rs5file
 
 def parse_smap_header(f):
 	(magic, u1, num_entries, u2) = struct.unpack('<4s4sI4s', f.read(16))
@@ -21,7 +21,7 @@ def main():
 	highlight = [ int(x, 16) for x in sys.argv[2:] ]
 
 	f = open(sys.argv[1], 'r')
-	(magic, filename, filesize, u2) = rs5.parse_rs5file_header(f)
+	(magic, filename, filesize, u2) = rs5file.parse_rs5file_header(f)
 	num_entries = parse_smap_header(f)
 	smap = f.read(num_entries)
 

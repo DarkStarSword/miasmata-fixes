@@ -95,9 +95,9 @@ class Rs5CompressedFile(object):
 		try:
 			data = self.decompress()
 			if strip:
-				import rs5, StringIO
+				import rs5file, StringIO
 				data = StringIO.StringIO(data)
-				(magic, filename, filesize, u2) = rs5.parse_rs5file_header(data)
+				(magic, filename, filesize, u2) = rs5file.parse_rs5file_header(data)
 				assert(magic == self.type)
 				assert(filename == self.filename)
 				data = data.read(filesize)
@@ -111,12 +111,12 @@ class Rs5CompressedFile(object):
 
 class Rs5CompressedFileEncoder(object):
 	def __init__(self, fp, filename):
-		import rs5
+		import rs5file
 		import StringIO
 		self.modtime = os.stat(filename).st_mtime
 		uncompressed = open(filename, 'rb').read()
 		self.uncompressed_size = len(uncompressed)
-		(self.type, self.filename, _1, _2) = rs5.parse_rs5file_header(StringIO.StringIO(uncompressed))
+		(self.type, self.filename, _1, _2) = rs5file.parse_rs5file_header(StringIO.StringIO(uncompressed))
 		compressed = zlib.compress(uncompressed)
 		self.compressed_size = len(compressed)
 		self.u1 = 0x30080000000
@@ -238,12 +238,12 @@ def list_files(archive, file_list, list_chunks=False):
 			continue
 		print '%4s %8i %s' % (file.type, file.uncompressed_size, file.filename)
 		if list_chunks and file.type not in ('PROF', 'INOD', 'FOGN'):
-			import rs5, StringIO
+			import rs5file, StringIO
 			data = StringIO.StringIO(file.decompress())
-			(magic, filename, filesize, u2) = rs5.parse_rs5file_header(data)
+			(magic, filename, filesize, u2) = rs5file.parse_rs5file_header(data)
 			while True:
 				try:
-					(magic, size) = rs5.parse_chunk_header(data)
+					(magic, size) = rs5file.parse_chunk_header(data)
 					data.seek(size, 1)
 				except AssertionError:
 					if file.type == 'RAW.':
@@ -293,7 +293,7 @@ def create_rs5(archive, file_list, overwrite):
 
 def analyse(filename):
 	rs5 = Rs5ArchiveDecoder(open(filename, 'rb'))
-	import rs5 as foo
+	import rs5file
 	import StringIO
 	interesting = ('cterr_texturelist',)
 	for file in rs5.itervalues():
@@ -314,7 +314,7 @@ def analyse(filename):
 				continue
 			raise
 			# continue
-		rs5file = foo.Rs5FileDecoder(d)
+		rs5file = rs5file.Rs5FileDecoder(d)
 		# if file.filename in interesting:
 		if True:
 			print '0x%.8x - 0x%.8x  |  %s %x %8i %x %x  |   %-25s  |  compressed_size: %i\t|  size: %8i' \

@@ -5,11 +5,11 @@ import struct
 import math
 import Image
 
-import rs5
+import rs5file
 
 def main():
 	f = open('cterr_hmap', 'rb')
-	(magic, filename, filesize, u2) = rs5.parse_rs5file_header(f)
+	(magic, filename, filesize, u2) = rs5file.parse_rs5file_header(f)
 	assert(magic == 'RAW.')
 	assert(filename == 'cterr_hmap')
 	assert(u2 == 0)

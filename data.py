@@ -5,7 +5,7 @@ import struct
 import json
 import collections
 
-import rs5
+import rs5file
 
 data_types = {}
 json_decoders = {}
@@ -219,7 +219,7 @@ def write_data(j, outputfd):
 
 def wrap_data(data):
 	data_header = struct.pack('<4s4sI4s', 'DATA', '\0\0\1\0', len(data), '\0\0\0\0')
-	pad = rs5.padding(len(data_header) + len(data), 8) # DATA files are padded before RAW. header is applied
+	pad = rs5file.padding(len(data_header) + len(data), 8) # DATA files are padded before RAW. header is applied
 	return data_header + data + pad
 
 def write_wrapped_data(j, outputfd):
