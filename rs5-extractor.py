@@ -11,6 +11,7 @@ import zlib
 import sys
 import os
 import collections
+import rs5file
 
 # http://msdn.microsoft.com/en-us/library/system.datetime.fromfiletimeutc.aspx:
 # A Windows file time is a 64-bit value that represents the number of
@@ -238,23 +239,12 @@ def list_files(archive, file_list, list_chunks=False):
 			continue
 		print '%4s %8i %s' % (file.type, file.uncompressed_size, file.filename)
 		if list_chunks and file.type not in ('PROF', 'INOD', 'FOGN'):
-			import rs5file, StringIO
-			data = StringIO.StringIO(file.decompress())
-			(magic, filename, filesize, u2) = rs5file.parse_rs5file_header(data)
-			while True:
-				try:
-					(magic, size) = rs5file.parse_chunk_header(data)
-					data.seek(size, 1)
-				except AssertionError:
-					if file.type == 'RAW.':
-						print '%4s %8s - ???? Not a chunk header?' % ('', '')
-						print
-						break
-					raise
-				except EOFError:
-					print
-					break
-				print '%4s %8s - %4s %8i' % ('', '', magic, size)
+			chunks = rs5file.rs5_file_decoder_factory(file.decompress())
+			if not hasattr(chunks, 'itervalues'):
+				continue
+			for chunk in chunks.itervalues():
+				print '%4s %8s - %4s %8i' % ('', '', chunk.name, chunk.size)
+			print
 
 def extract(archive, dest, file_list, strip, overwrite):
 	rs5 = Rs5ArchiveDecoder(open(archive, 'rb'))

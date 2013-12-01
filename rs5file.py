@@ -2,6 +2,8 @@
 
 import struct
 import sys
+import collections
+from StringIO import StringIO
 
 def parse_raw_header(f): # XXX: Deprecated - use parse_rs5file_header
 	(magic, u1, filename_len, u2, filesize) = struct.unpack('<4s2sB1sI', f.read(12))
@@ -30,24 +32,6 @@ def parse_rs5file_header(f):
 	assert(f.read(pad) == '\0'*pad)
 	return (magic, filename, filesize, u2)
 
-def parse_chunk_header(f):
-	pad_len = padding_len(f.tell(), 8)
-	if pad_len:
-		pad = f.read(pad_len)
-		if pad == '':
-			raise EOFError('parse_chunk_header: No padding?')
-		# print '%i bytes of padding' % pad_len
-		assert(pad == '\0'*pad_len)
-
-	header = f.read(16)
-	if header == '':
-		raise EOFError()
-	(magic, u1, u2, size, u3) = struct.unpack('<4s3sBI4s', header)
-	assert(u1 == '\0\0\1')
-	assert(u2 == int(size == 0))
-	assert(u3 == '\0\0\0\0')
-	return (magic, size)
-
 def _enc_header(magic, name, size, u2):
 	name = name + '\0'
 	ret = struct.pack('<4s2sBBI', magic, '\0\0', len(name), u2, size)
@@ -58,11 +42,94 @@ def enc_file(magic, name, data, u2):
 	header = _enc_header(magic, name, len(data), u2)
 	return header + data + padding(len(data), 8)
 
+
+class Rs5Chunk(object):
+	u1 = '\0\0\1'
+	u3 = '\0\0\0\0'
+
+	def encode(self):
+		r = struct.pack('<4s3sBI4s', self.name, self.u1,
+				int(self.size == 0), self.size, self.u3)
+		return r + self.read_chunk() + pad(self.size, 8)
+
+class Rs5ChunkDecoder(Rs5Chunk):
+	def __init__(self, fp):
+		self.fp = fp
+		header = fp.read(16)
+		if header == '':
+			raise EOFError()
+		(self.name, u1, u2, self.size, u3) = \
+				struct.unpack('<4s3sBI4s', header)
+		assert(u1 == self.u1)
+		assert(u2 == int(self.size == 0))
+		assert(u3 == self.u3)
+		self.data_off = fp.tell()
+
+		fp.seek(self.size, 1)
+		pad_len = padding_len(self.size, 8)
+		assert(fp.read(pad_len) == '\0'*pad_len)
+
+	@property
+	def data(self):
+		self.fp.seek(self.data_off)
+		return self.fp.read(self.size)
+
+class Rs5ChunkEncoder(Rs5Chunk):
+	def __init__(self, name, data):
+		self.name = name
+		self.size = len(data)
+		self.data = data
+		self.data_off = 0
+
+
+
 class Rs5File(object):
-	pass
+	def encode(self):
+		return enc_file(self.magic, self.filename, self.data, self.u2)
 
 class Rs5FileDecoder(Rs5File):
-	def __init__(self, f):
-		pos = f.tell()
-		(self.magic, self.filename, self.filesize, self.u2) = parse_rs5file_header(f)
-		self.headersize = f.tell() - pos
+	def __init__(self, data):
+		self.fp = StringIO(data)
+		(self.magic, self.filename, self.filesize, self.u2) = parse_rs5file_header(self.fp)
+		self.headersize = self.fp.tell()
+
+	@property
+	def data(self):
+		self.fp.seek(self.headersize)
+		return self.fp.read(self.filesize)
+
+class Rs5FileEncoder(Rs5File):
+	def __init__(self, magic, name, data, u2):
+		self.magic = magic
+		self.filename = name
+		self.data = data
+		self.u2 = u2
+
+
+class Rs5ChunkedFile(Rs5File, collections.OrderedDict):
+	pass
+
+class Rs5ChunkedFileDecoder(Rs5FileDecoder, Rs5ChunkedFile):
+	def __init__(self, data):
+		Rs5FileDecoder.__init__(self, data)
+		collections.OrderedDict.__init__(self)
+
+		while True:
+			try:
+				chunk = Rs5ChunkDecoder(self.fp)
+				self[chunk.name] = chunk
+			except EOFError:
+				if self == {}:
+					raise
+				break
+
+class Rs5ChunkedFileEncoder(Rs5FileEncoder, Rs5ChunkedFile):
+	def __init__(self, magic, name, data, u2, chunks):
+		Rs5FileEncoder.__init__(magic, name, data, u2)
+		collections.OrderedDict.__init__(self, chunks)
+
+def rs5_file_decoder_factory(data):
+	try:
+		return Rs5ChunkedFileDecoder(data)
+	except:
+		return Rs5FileDecoder(data)
