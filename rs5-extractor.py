@@ -221,6 +221,20 @@ def list_files(filename):
 	for file in rs5.itervalues():
 		print '%4s %8i %s' % (file.type, file.uncompressed_size, file.filename)
 
+def extract(filename, dest, files):
+	rs5 = Rs5ArchiveDecoder(open(filename, 'rb'))
+	print 'Extracting files to %s' % dest
+	for file in files:
+		file = file.replace(os.path.sep, '\\')
+		if file not in rs5:
+			print '%s not found in %s!' % (file, filename)
+			continue
+		try:
+			print 'Extracting %s %s...' % (repr(rs5[file].type), file)
+			rs5[file].extract(dest)
+		except OSError, e:
+			print>>sys.stderr, 'ERROR EXTRACTING %s: %s, SKIPPING!' % (file.filename, str(e))
+
 def extract_all(filename, dest):
 	rs5 = Rs5ArchiveDecoder(open(filename, 'rb'))
 	print 'Extracting files to %s' % dest
@@ -234,7 +248,7 @@ def extract_all(filename, dest):
 		except OSError, e:
 			print>>sys.stderr, 'ERROR EXTRACTING %s: %s, SKIPPING!' % (file.filename, str(e))
 
-def create_rs5(source, filename):
+def create_rs5(filename, source):
 	if os.path.exists(filename):
 		print '%s already exists, refusing to continue!' % filename
 		return
@@ -306,14 +320,19 @@ def parse_args():
 	parser = argparse.ArgumentParser()
 
 	group = parser.add_mutually_exclusive_group(required=True)
-	group.add_argument('-l', '--list', metavar='RS5',
+	group.add_argument('-l', '--list', action='store_true',
 			help='List all files in the rs5 archive')
-	group.add_argument('-X', '--extract-all', nargs=2, metavar=('RS5', 'DEST'),
+	group.add_argument('-x', '--extract', nargs='+', metavar=('FILES...'),
+			help='Extract the specified FILES from the archive into the current directory')
+	group.add_argument('-X', '--extract-all', metavar='DEST',
 			help='Extract all files from the rs5 archive to DEST')
-	group.add_argument('-C', '--create', nargs=2, metavar=('SOURCE', 'RS5'),
+	group.add_argument('-C', '--create', metavar='SOURCE',
 			help='Pack the files under SOURCE into a new RS5 file')
 
 	group.add_argument('--analyse', metavar='RS5')
+
+	parser.add_argument('-f', '--file', metavar='ARCHIVE', required=True,
+			help='Specify the rs5 ARCHIVE to work on')
 
 	return parser.parse_args()
 
@@ -321,13 +340,16 @@ def main():
 	args = parse_args()
 
 	if args.list:
-		return list_files(args.list)
+		return list_files(args.file)
+
+	if args.extract:
+		return extract(args.file, '.', args.extract)
 
 	if args.extract_all:
-		return extract_all(*args.extract_all)
+		return extract_all(args.file, args.extract_all)
 
 	if args.create:
-		return create_rs5(*args.create)
+		return create_rs5(args.file, args.create)
 
 	if args.analyse:
 		return analyse(args.analyse)
