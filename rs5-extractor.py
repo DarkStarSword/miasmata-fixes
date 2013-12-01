@@ -96,14 +96,13 @@ class Rs5CompressedFile(object):
 		try:
 			data = self.decompress()
 			if strip:
-				import rs5file, StringIO
-				data = StringIO.StringIO(data)
-				(magic, filename, filesize, u2) = rs5file.parse_rs5file_header(data)
-				assert(magic == self.type)
-				assert(filename == self.filename)
-				data = data.read(filesize)
-				assert(len(data) == filesize)
-			f.write(data)
+				contents = rs5file.Rs5FileDecoder(data)
+				assert(contents.magic == self.type)
+				assert(contents.filename == self.filename)
+				assert(len(contents.data) == filesize)
+				f.write(contents.data)
+			else:
+				f.write(data)
 		except zlib.error, e:
 			print>>sys.stderr, 'ERROR EXTRACTING %s: %s. Skipping decompression!' % (dest, str(e))
 			f.write(self._read())
@@ -112,12 +111,11 @@ class Rs5CompressedFile(object):
 
 class Rs5CompressedFileEncoder(object):
 	def __init__(self, fp, filename):
-		import rs5file
-		import StringIO
 		self.modtime = os.stat(filename).st_mtime
 		uncompressed = open(filename, 'rb').read()
 		self.uncompressed_size = len(uncompressed)
-		(self.type, self.filename, _1, _2) = rs5file.parse_rs5file_header(StringIO.StringIO(uncompressed))
+		contents = rs5file.Rs5FileDecoder(uncompressed)
+		(self.type, self.filename) = (contents.magic, contents.filename)
 		compressed = zlib.compress(uncompressed)
 		self.compressed_size = len(compressed)
 		self.u1 = 0x30080000000
@@ -283,8 +281,6 @@ def create_rs5(archive, file_list, overwrite):
 
 def analyse(filename):
 	rs5 = Rs5ArchiveDecoder(open(filename, 'rb'))
-	import rs5file
-	import StringIO
 	interesting = ('cterr_texturelist',)
 	for file in rs5.itervalues():
 		if not file.filename:
@@ -294,7 +290,6 @@ def analyse(filename):
 		try:
 			d = file.decompress()
 			size = len(d)
-			d = StringIO.StringIO(d)
 		except zlib.error, e:
 			# XXX: What are these?
 			print 'ERROR EXTRACTING %s: %s' % (file.filename, str(e))
@@ -304,39 +299,31 @@ def analyse(filename):
 				continue
 			raise
 			# continue
-		rs5file = rs5file.Rs5FileDecoder(d)
+		contents = rs5file.rs5_file_decoder_factory(d)
 		# if file.filename in interesting:
 		if True:
 			print '0x%.8x - 0x%.8x  |  %s %x %8i %x %x  |   %-25s  |  compressed_size: %i\t|  size: %8i' \
-				% (file.data_off, file.data_off + file.compressed_size-1, file.type, file.u1, file.uncompressed_size, file.u2, rs5file.u2, file.filename, file.compressed_size, rs5file.filesize+rs5file.headersize)
+				% (file.data_off, file.data_off + file.compressed_size-1, file.type, file.u1, file.uncompressed_size, file.u2, contents.u2, file.filename, file.compressed_size, contents.filesize+contents.data_off)
 
 		assert(file.u2 == 1)
 		assert(file.uncompressed_size == size)
-		assert(file.type == rs5file.magic)
-		assert(file.filename == rs5file.filename)
+		assert(file.type == contents.magic)
+		assert(file.filename == contents.filename)
 
 		# ALIGNMENT CONSTRAINT FOUND - FILE IS PADDED TO 8 BYTES BEFORE COMPRESSION
 		assert(file.uncompressed_size % 8 == 0)
 
 		# PADDING CONSTRAINT - FILE HEADER IS PADDED TO A MULTIPLE OF 8 BYTES
-		assert(rs5file.headersize % 8 == 0)
+		assert(contents.data_off % 8 == 0)
 
 		# NO PADDING CONSTRAINTS FOUND ON CONTAINED FILES IN THE GENERAL CASE
-		# assert(rs5file.filesize % 2 == 0)
-		# assert(rs5file.filesize % 4 == 0)
-		# assert(rs5file.filesize % 8 == 0)
-		#assert((rs5file.headersize + rs5file.filesize) % 2 == 0)
-		#assert((rs5file.headersize + rs5file.filesize) % 4 == 0)
-		#assert((rs5file.headersize + rs5file.filesize) % 8 == 0)
-		#assert((rs5file.headersize + rs5file.filesize) % 16 == 0)
-
-		# AT LEAST 'DATA' SUBTYPE DOES HAVE AN 8 BYTE PADDING
-		if file.type == 'RAW.':
-			t = d.read(4)
-			# print '%s\t%s' % (repr(t), file.filename)
-			if t == 'DATA':
-				assert(rs5file.filesize % 8 == 0)
-				assert((rs5file.headersize + rs5file.filesize) % 8 == 0)
+		# assert(contents.filesize % 2 == 0)
+		# assert(contents.filesize % 4 == 0)
+		# assert(contents.filesize % 8 == 0)
+		#assert((contents.data_off + contents.filesize) % 2 == 0)
+		#assert((contents.data_off + contents.filesize) % 4 == 0)
+		#assert((contents.data_off + contents.filesize) % 8 == 0)
+		#assert((contents.data_off + contents.filesize) % 16 == 0)
 
 def parse_args():
 	import argparse

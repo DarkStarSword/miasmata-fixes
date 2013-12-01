@@ -91,11 +91,11 @@ class Rs5FileDecoder(Rs5File):
 	def __init__(self, data):
 		self.fp = StringIO(data)
 		(self.magic, self.filename, self.filesize, self.u2) = parse_rs5file_header(self.fp)
-		self.headersize = self.fp.tell()
+		self.data_off = self.fp.tell()
 
 	@property
 	def data(self):
-		self.fp.seek(self.headersize)
+		self.fp.seek(self.data_off)
 		return self.fp.read(self.filesize)
 
 class Rs5FileEncoder(Rs5File):
