@@ -225,10 +225,28 @@ class Rs5ArchiveEncoder(collections.OrderedDict):
 		self.fp.flush()
 		print "Done."
 
-def list_files(filename):
+def list_files(filename, list_chunks=False):
 	rs5 = Rs5ArchiveDecoder(open(filename, 'rb'))
 	for file in rs5.itervalues():
 		print '%4s %8i %s' % (file.type, file.uncompressed_size, file.filename)
+		if list_chunks and file.type not in ('PROF', 'INOD', 'FOGN'):
+			import rs5, StringIO
+			data = StringIO.StringIO(file.decompress())
+			(magic, filename, filesize, u2) = rs5.parse_rs5file_header(data)
+			while True:
+				try:
+					(magic, size) = rs5.parse_chunk_header(data)
+					data.seek(size, 1)
+				except AssertionError:
+					if file.type == 'RAW.':
+						print '%4s %8s - ???? Not a chunk header?' % ('', '')
+						print
+						break
+					raise
+				except EOFError:
+					print
+					break
+				print '%4s %8s - %4s %8i' % ('', '', magic, size)
 
 def extract(filename, dest, files, strip, overwrite):
 	rs5 = Rs5ArchiveDecoder(open(filename, 'rb'))
@@ -331,6 +349,8 @@ def parse_args():
 	group = parser.add_mutually_exclusive_group(required=True)
 	group.add_argument('-l', '--list', action='store_true',
 			help='List all files in the rs5 archive')
+	group.add_argument('-L', '--list-chunks', action='store_true',
+			help='List all files and contained chunks in the rs5 archive')
 	group.add_argument('-x', '--extract', nargs='+', metavar=('FILES...'),
 			help='Extract the specified FILES from the archive into the current directory')
 	group.add_argument('-X', '--extract-all', metavar='DEST',
@@ -354,6 +374,9 @@ def main():
 
 	if args.list:
 		return list_files(args.file)
+
+	if args.list_chunks:
+		return list_files(args.file, list_chunks=True)
 
 	if args.extract:
 		return extract(args.file, '.', args.extract, args.strip, args.overwrite)

@@ -30,6 +30,24 @@ def parse_rs5file_header(f):
 	assert(f.read(pad) == '\0'*pad)
 	return (magic, filename, filesize, u2)
 
+def parse_chunk_header(f):
+	pad_len = padding_len(f.tell(), 8)
+	if pad_len:
+		pad = f.read(pad_len)
+		if pad == '':
+			raise EOFError('parse_chunk_header: No padding?')
+		# print '%i bytes of padding' % pad_len
+		assert(pad == '\0'*pad_len)
+
+	header = f.read(16)
+	if header == '':
+		raise EOFError()
+	(magic, u1, u2, size, u3) = struct.unpack('<4s3sBI4s', header)
+	assert(u1 == '\0\0\1')
+	assert(u2 == int(size == 0))
+	assert(u3 == '\0\0\0\0')
+	return (magic, size)
+
 def _enc_header(magic, name, size, u2):
 	name = name + '\0'
 	ret = struct.pack('<4s2sBBI', magic, '\0\0', len(name), u2, size)
