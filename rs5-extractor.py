@@ -84,16 +84,25 @@ class Rs5CompressedFile(object):
 	def decompress(self):
 		return zlib.decompress(self._read())
 
-	def extract(self, base_path):
+	def extract(self, base_path, strip, overwrite):
 		dest = os.path.join(base_path, self.filename.replace('\\', os.path.sep))
-		if os.path.isfile(dest): # and size != 0
+		if os.path.isfile(dest) and not overwrite: # and size != 0
 			print>>sys.stderr, 'Skipping %s - file exists.' % dest
 			return
 		(dir, file) = os.path.split(dest)
 		mkdir_recursive(dir)
 		f = open(dest, 'wb')
 		try:
-			f.write(self.decompress())
+			data = self.decompress()
+			if strip:
+				import rs5, StringIO
+				data = StringIO.StringIO(data)
+				(magic, filename, filesize, u2) = rs5.parse_rs5file_header(data)
+				assert(magic == self.type)
+				assert(filename == self.filename)
+				data = data.read(filesize)
+				assert(len(data) == filesize)
+			f.write(data)
 		except zlib.error, e:
 			print>>sys.stderr, 'ERROR EXTRACTING %s: %s. Skipping decompression!' % (dest, str(e))
 			f.write(self._read())
@@ -221,7 +230,7 @@ def list_files(filename):
 	for file in rs5.itervalues():
 		print '%4s %8i %s' % (file.type, file.uncompressed_size, file.filename)
 
-def extract(filename, dest, files):
+def extract(filename, dest, files, strip, overwrite):
 	rs5 = Rs5ArchiveDecoder(open(filename, 'rb'))
 	print 'Extracting files to %s' % dest
 	for file in files:
@@ -231,11 +240,11 @@ def extract(filename, dest, files):
 			continue
 		try:
 			print 'Extracting %s %s...' % (repr(rs5[file].type), file)
-			rs5[file].extract(dest)
+			rs5[file].extract(dest, strip, overwrite)
 		except OSError, e:
 			print>>sys.stderr, 'ERROR EXTRACTING %s: %s, SKIPPING!' % (file.filename, str(e))
 
-def extract_all(filename, dest):
+def extract_all(filename, dest, strip, overwrite):
 	rs5 = Rs5ArchiveDecoder(open(filename, 'rb'))
 	print 'Extracting files to %s' % dest
 	for file in rs5.itervalues():
@@ -244,12 +253,12 @@ def extract_all(filename, dest):
 			continue
 		print 'Extracting %s %s...' % (repr(file.type), file.filename)
 		try:
-			file.extract(dest)
+			file.extract(dest, strip, overwrite)
 		except OSError, e:
 			print>>sys.stderr, 'ERROR EXTRACTING %s: %s, SKIPPING!' % (file.filename, str(e))
 
-def create_rs5(filename, source):
-	if os.path.exists(filename):
+def create_rs5(filename, source, overwrite):
+	if os.path.exists(filename) and not overwrite:
 		print '%s already exists, refusing to continue!' % filename
 		return
 	rs5 = Rs5ArchiveEncoder(filename)
@@ -333,6 +342,10 @@ def parse_args():
 
 	parser.add_argument('-f', '--file', metavar='ARCHIVE', required=True,
 			help='Specify the rs5 ARCHIVE to work on')
+	parser.add_argument('--strip', action='store_true',
+			help='Strip the local file headers during extraction')
+	parser.add_argument('--overwrite', action='store_true',
+			help='Overwrite files without asking')
 
 	return parser.parse_args()
 
@@ -343,13 +356,13 @@ def main():
 		return list_files(args.file)
 
 	if args.extract:
-		return extract(args.file, '.', args.extract)
+		return extract(args.file, '.', args.extract, args.strip, args.overwrite)
 
 	if args.extract_all:
-		return extract_all(args.file, args.extract_all)
+		return extract_all(args.file, args.extract_all, args.strip, args.overwrite)
 
 	if args.create:
-		return create_rs5(args.file, args.create)
+		return create_rs5(args.file, args.create, args.overwrite)
 
 	if args.analyse:
 		return analyse(args.analyse)
