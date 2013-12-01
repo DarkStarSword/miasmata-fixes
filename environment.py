@@ -6,16 +6,18 @@ import data
 import rs5file
 
 def parse_environment(f, outputfd):
-	(magic, filename, filesize, u2) = rs5file.parse_rs5file_header(f)
-	assert(magic == 'RAW.')
-	assert(filename == 'environment')
-	assert(u2 == 1)
+	chunks = rs5file.Rs5ChunkedFileDecoder(f)
+	assert(chunks.magic == 'RAW.')
+	assert(chunks.filename == 'environment')
+	assert(chunks.u2 == 1)
+	assert(len(chunks) == 1)
 
-	data.parse_wrapped_data(f, outputfd)
+	data.parse_chunk(chunks['DATA'], outputfd)
 
 def json2env(j, outputfd):
-	d = data.wrap_data(data.json2data(j))
-	outputfd.write(rs5file.enc_file('RAW.', 'environment', d, 1))
+	chunk = data.make_chunk(data.json2data(j))
+	chunks = rs5file.Rs5ChunkedFileEncoder('RAW.', 'environment', 1, chunk)
+	outputfd.write(chunks.encode())
 
 def parse_args():
 	import argparse

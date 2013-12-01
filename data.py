@@ -202,13 +202,9 @@ def parse_data(f, outputfd):
 		raise
 	return dump_json(root, outputfd)
 
-def parse_wrapped_data(f, outputfd):
-	assert(f.read(4) == 'DATA')
-	(u1, size, u3) = struct.unpack('<4sI4s', f.read(4*3))
-	assert(u1 == '\0\0\1\0')
-	assert(u3 == '\0\0\0\0')
-
-	return parse_data(f, outputfd)
+def parse_chunk(chunk, outputfd):
+	assert(chunk.name == 'DATA')
+	return parse_data(chunk.get_fp(), outputfd)
 
 def json2data(j):
 	root = parse_json(j)
@@ -217,13 +213,8 @@ def json2data(j):
 def write_data(j, outputfd):
 	outputfd.write(json2data(j))
 
-def wrap_data(data):
-	data_header = struct.pack('<4s4sI4s', 'DATA', '\0\0\1\0', len(data), '\0\0\0\0')
-	pad = rs5file.padding(len(data_header) + len(data), 8) # DATA files are padded before RAW. header is applied
-	return data_header + data + pad
-
-def write_wrapped_data(j, outputfd):
-	outputfd.write(wrap_data(json2data(data)))
+def make_chunk(data):
+	return rs5file.Rs5ChunkEncoder('DATA', data)
 
 def parse_args():
 	import argparse
@@ -237,9 +228,6 @@ def parse_args():
 			type=argparse.FileType('rb'),
 			help='Encode a JSON formatted database')
 
-	parser.add_argument('-r', '--raw', action='store_false',
-			help='Read/write a database without DATA header')
-
 	parser.add_argument('-o', '--output',
 			type=argparse.FileType('wb'), default=sys.stdout,
 			help='Store the result in OUTPUT')
@@ -250,14 +238,10 @@ def main():
 	args = parse_args()
 
 	if args.decode_file:
-		if args.raw:
-			return parse_data(args.decode_file, args.output)
-		return parse_wrapped_data(args.decode_file, args.output)
+		return parse_data(args.decode_file, args.output)
 
 	if args.encode_file:
-		if args.raw:
-			return write_data(args.encode_file, args.output)
-		return write_wrapped_data(args.encode_file, args.output)
+		return write_data(args.encode_file, args.output)
 
 if __name__ == '__main__':
 	main()
