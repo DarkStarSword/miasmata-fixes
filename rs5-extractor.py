@@ -272,7 +272,7 @@ def analyse(filename):
 	import rs5 as foo
 	import StringIO
 	interesting = ('cterr_texturelist',)
-	for file in rs5:
+	for file in rs5.itervalues():
 		if not file.filename:
 			# XXX: What are these?
 			# print 'SKIPPING FILE OF TYPE %s WITHOUT FILENAME' % repr(file.type)
@@ -338,7 +338,7 @@ def parse_args():
 	group.add_argument('-C', '--create', metavar='SOURCE',
 			help='Pack the files under SOURCE into a new RS5 file')
 
-	group.add_argument('--analyse', metavar='RS5')
+	group.add_argument('--analyse', action='store_true')
 
 	parser.add_argument('-f', '--file', metavar='ARCHIVE', required=True,
 			help='Specify the rs5 ARCHIVE to work on')
@@ -365,7 +365,7 @@ def main():
 		return create_rs5(args.file, args.create, args.overwrite)
 
 	if args.analyse:
-		return analyse(args.analyse)
+		return analyse(args.file)
 
 if __name__ == '__main__':
 	sys.exit(main())
