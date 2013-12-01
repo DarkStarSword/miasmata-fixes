@@ -225,9 +225,17 @@ class Rs5ArchiveEncoder(collections.OrderedDict):
 		self.fp.flush()
 		print "Done."
 
-def list_files(filename, list_chunks=False):
-	rs5 = Rs5ArchiveDecoder(open(filename, 'rb'))
-	for file in rs5.itervalues():
+def list_files(archive, file_list, list_chunks=False):
+	rs5 = Rs5ArchiveDecoder(open(archive, 'rb'))
+	if not file_list:
+		file_list = rs5
+	for filename in file_list:
+		filename = filename.replace(os.path.sep, '\\')
+		try:
+			file = rs5[filename]
+		except KeyError:
+			print '%s not found in %s~' % (filename, archive)
+			continue
 		print '%4s %8i %s' % (file.type, file.uncompressed_size, file.filename)
 		if list_chunks and file.type not in ('PROF', 'INOD', 'FOGN'):
 			import rs5, StringIO
@@ -248,41 +256,39 @@ def list_files(filename, list_chunks=False):
 					break
 				print '%4s %8s - %4s %8i' % ('', '', magic, size)
 
-def extract(filename, dest, files, strip, overwrite):
-	rs5 = Rs5ArchiveDecoder(open(filename, 'rb'))
+def extract(archive, dest, file_list, strip, overwrite):
+	rs5 = Rs5ArchiveDecoder(open(archive, 'rb'))
 	print 'Extracting files to %s' % dest
-	for file in files:
-		file = file.replace(os.path.sep, '\\')
-		if file not in rs5:
-			print '%s not found in %s!' % (file, filename)
+	if not file_list:
+		file_list = rs5
+	for filename in file_list:
+		filename = filename.replace(os.path.sep, '\\')
+		if filename not in rs5:
+			print '%s not found in %s!' % (filename, archive)
 			continue
 		try:
-			print 'Extracting %s %s...' % (repr(rs5[file].type), file)
-			rs5[file].extract(dest, strip, overwrite)
+			print 'Extracting %s %s...' % (repr(rs5[filename].type), filename)
+			rs5[filename].extract(dest, strip, overwrite)
 		except OSError, e:
 			print>>sys.stderr, 'ERROR EXTRACTING %s: %s, SKIPPING!' % (file.filename, str(e))
 
-def extract_all(filename, dest, strip, overwrite):
-	rs5 = Rs5ArchiveDecoder(open(filename, 'rb'))
-	print 'Extracting files to %s' % dest
-	for file in rs5.itervalues():
-		if not file.filename:
-			print 'SKIPPING FILE OF TYPE %s WITHOUT FILENAME' % repr(file.type)
-			continue
-		print 'Extracting %s %s...' % (repr(file.type), file.filename)
-		try:
-			file.extract(dest, strip, overwrite)
-		except OSError, e:
-			print>>sys.stderr, 'ERROR EXTRACTING %s: %s, SKIPPING!' % (file.filename, str(e))
-
-def create_rs5(filename, source, overwrite):
-	if os.path.exists(filename) and not overwrite:
-		print '%s already exists, refusing to continue!' % filename
+def create_rs5(archive, file_list, overwrite):
+	if not file_list:
+		print 'Must specify at least one file!'
 		return
-	rs5 = Rs5ArchiveEncoder(filename)
-	for (root, dirs, files) in os.walk(source):
-		for file in files:
-			rs5.add(os.path.join(root, file))
+	if os.path.exists(archive) and not overwrite:
+		print '%s already exists, refusing to continue!' % archive
+		return
+	rs5 = Rs5ArchiveEncoder(archive)
+
+	for filename in file_list:
+		if os.path.isdir(filename):
+			for (root, dirs, files) in os.walk(filename):
+				for file in files:
+					rs5.add(os.path.join(root, file))
+		else:
+			rs5.add(filename)
+
 	rs5.save()
 
 def analyse(filename):
@@ -347,25 +353,27 @@ def parse_args():
 	parser = argparse.ArgumentParser()
 
 	group = parser.add_mutually_exclusive_group(required=True)
+	parser.add_argument('files', nargs='*', metavar='FILE')
 	group.add_argument('-l', '--list', action='store_true',
 			help='List all files in the rs5 archive')
 	group.add_argument('-L', '--list-chunks', action='store_true',
 			help='List all files and contained chunks in the rs5 archive')
-	group.add_argument('-x', '--extract', nargs='+', metavar=('FILES...'),
-			help='Extract the specified FILES from the archive into the current directory')
-	group.add_argument('-X', '--extract-all', metavar='DEST',
-			help='Extract all files from the rs5 archive to DEST')
-	group.add_argument('-C', '--create', metavar='SOURCE',
-			help='Pack the files under SOURCE into a new RS5 file')
-
-	group.add_argument('--analyse', action='store_true')
+	group.add_argument('-x', '--extract', action='store_true',
+			help='Extract files from the archive')
+	group.add_argument('-c', '--create', action='store_true',
+			help='Create a new RS5 file')
 
 	parser.add_argument('-f', '--file', metavar='ARCHIVE', required=True,
 			help='Specify the rs5 ARCHIVE to work on')
+	parser.add_argument('-C', '--directory', metavar='DIR',
+			help='Change to directory DIR before extacting')
+
 	parser.add_argument('--strip', action='store_true',
 			help='Strip the local file headers during extraction')
 	parser.add_argument('--overwrite', action='store_true',
 			help='Overwrite files without asking')
+
+	group.add_argument('--analyse', action='store_true')
 
 	return parser.parse_args()
 
@@ -373,19 +381,22 @@ def main():
 	args = parse_args()
 
 	if args.list:
-		return list_files(args.file)
+		return list_files(args.file, args.files)
 
 	if args.list_chunks:
-		return list_files(args.file, list_chunks=True)
+		return list_files(args.file, args.files, list_chunks=True)
 
 	if args.extract:
-		return extract(args.file, '.', args.extract, args.strip, args.overwrite)
-
-	if args.extract_all:
-		return extract_all(args.file, args.extract_all, args.strip, args.overwrite)
+		directory = args.directory
+		if directory is None:
+			directory = os.path.splitext(os.path.basename(args.file))[0]
+			if directory == args.file:
+				print 'Unable to determine target directory'
+				return
+		return extract(args.file, directory, args.files, args.strip, args.overwrite)
 
 	if args.create:
-		return create_rs5(args.file, args.create, args.overwrite)
+		return create_rs5(args.file, args.files, args.overwrite)
 
 	if args.analyse:
 		return analyse(args.file)
