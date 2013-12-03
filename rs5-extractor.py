@@ -37,6 +37,13 @@ def mkdir_recursive(path):
 class NotAFile(Exception): pass
 
 class Rs5CompressedFile(object):
+	def gen_dir_ent(self):
+		return struct.pack('<QIQ4sQQ',
+				self.data_off, self.compressed_size, self.u1,
+				self.type, self.uncompressed_size << 1 | self.u2,
+				to_win_time(self.modtime)) + self.filename + '\0'
+
+class Rs5CompressedFileDecoder(Rs5CompressedFile):
 	def __init__(self, f, data):
 		self.fp = f
 		(self.data_off, self.compressed_size, self.u1, self.type, self.uncompressed_size,
@@ -109,7 +116,7 @@ class Rs5CompressedFile(object):
 		f.close()
 		os.utime(dest, (self.modtime, self.modtime))
 
-class Rs5CompressedFileEncoder(object):
+class Rs5CompressedFileEncoder(Rs5CompressedFile):
 	def __init__(self, fp, filename):
 		self.modtime = os.stat(filename).st_mtime
 		uncompressed = open(filename, 'rb').read()
@@ -124,11 +131,19 @@ class Rs5CompressedFileEncoder(object):
 		self.data_off = fp.tell()
 		fp.write(compressed)
 
-	def gen_dir_ent(self):
-		return struct.pack('<QIQ4sQQ',
-				self.data_off, self.compressed_size, self.u1,
-				self.type, self.uncompressed_size << 1 | self.u2,
-				to_win_time(self.modtime)) + self.filename + '\0'
+class Rs5CompressedFileRepacker(Rs5CompressedFile):
+	def __init__(self, newfp, oldfile):
+		self.compressed_size = oldfile.compressed_size
+		self.u1 = oldfile.u1
+		self.type = oldfile.type
+		self.uncompressed_size = oldfile.uncompressed_size
+		self.u2 = oldfile.u2
+		self.modtime = oldfile.modtime
+		self.filename = oldfile.filename
+
+		self.data_off = newfp.tell()
+		newfp.write(oldfile._read())
+
 
 
 class Rs5ArchiveDecoder(collections.OrderedDict):
@@ -176,7 +191,7 @@ class Rs5ArchiveDecoder(collections.OrderedDict):
 		for f_off in range(d_off + ent_len, d_off + d_len, ent_len):
 			# print hex(f_off)
 			try:
-				entry = Rs5CompressedFile(f, f.read(ent_len))
+				entry = Rs5CompressedFileDecoder(f, f.read(ent_len))
 				self[entry.filename] = entry
 			except NotAFile:
 				# XXX TODO FIXME: Figure out what these are
@@ -223,6 +238,19 @@ class Rs5ArchiveEncoder(collections.OrderedDict):
 		self._write_header()
 		self.fp.flush()
 		print "Done."
+
+class Rs5ArchiveUpdater(Rs5ArchiveEncoder, Rs5ArchiveDecoder):
+	def __init__(self, fp):
+		self.fp = fp
+		return Rs5ArchiveDecoder.__init__(self, fp)
+
+	def add(self, filename):
+		self.fp.seek(0, 2)
+		return Rs5ArchiveEncoder.add(self, filename)
+
+	def save(self):
+		self.fp.seek(0, 2)
+		return Rs5ArchiveEncoder.save(self)
 
 def list_files(archive, file_list, list_chunks=False):
 	rs5 = Rs5ArchiveDecoder(open(archive, 'rb'))
@@ -278,6 +306,22 @@ def create_rs5(archive, file_list, overwrite):
 			rs5.add(filename)
 
 	rs5.save()
+
+def add_rs5_files(archive, file_list):
+	rs5 = Rs5ArchiveUpdater(open(archive, 'rb+'))
+	for filename in file_list:
+		rs5.add(filename)
+	rs5.save()
+
+def repack_rs5(old_archive, new_archive):
+	old_rs5 = Rs5ArchiveDecoder(open(old_archive, 'rb'))
+	new_rs5 = Rs5ArchiveEncoder(new_archive)
+	for old_file in old_rs5.itervalues():
+		print 'Repacking %s...' % old_file.filename
+		new_entry = Rs5CompressedFileRepacker(new_rs5.fp, old_file)
+		new_rs5[new_entry.filename] = new_entry
+	new_rs5.save()
+
 
 def analyse(filename):
 	rs5 = Rs5ArchiveDecoder(open(filename, 'rb'))
@@ -339,6 +383,10 @@ def parse_args():
 			help='Extract files from the archive')
 	group.add_argument('-c', '--create', action='store_true',
 			help='Create a new RS5 file')
+	group.add_argument('-a', '--add', action='store_true',
+			help='Add/update FILEs in ARCHIVE')
+	group.add_argument('--repack', metavar='NEW_ARCHIVE',
+			help='Decode ARCHIVE and pack into NEW_ARCHIVE, for testing')
 
 	parser.add_argument('-f', '--file', metavar='ARCHIVE', required=True,
 			help='Specify the rs5 ARCHIVE to work on')
@@ -374,6 +422,12 @@ def main():
 
 	if args.create:
 		return create_rs5(args.file, args.files, args.overwrite)
+
+	if args.add:
+		return add_rs5_files(args.file, args.files)
+
+	if args.repack is not None:
+		return repack_rs5(args.file, args.repack)
 
 	if args.analyse:
 		return analyse(args.file)
