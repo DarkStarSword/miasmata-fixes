@@ -75,16 +75,20 @@ specific locations - TODO is the ability to read them directly from main.rs5._
 
 ### smap.py ###
 This script can decode the various SMAP type files in the game and overlay them
-on the game map. If you happen to be interested in the location of a particular
-(non 0xff) byte in the file it can also be used to highlight it's location.
-Useful if you have determined what index is failing some comparison using a
-debugger, e.g. for the Bored Cartographer achievement.
+on the game map.
 
 _Currently it requires certain files to have already been extracted into
 specific locations - TODO is the ability to read them directly from main.rs5._
 
 ### cterr_hmap.py ###
 This script generates a heightmap of the game's map
+
+_Currently it requires certain files to have already been extracted into
+specific locations - TODO is the ability to read them directly from main.rs5._
+
+### exposure_map.py ###
+This script decodes the exposure map field from a saved game & overlays the
+bored cartographer achievement smap to track down any missing pixels.
 
 _Currently it requires certain files to have already been extracted into
 specific locations - TODO is the ability to read them directly from main.rs5._
