@@ -55,16 +55,20 @@ def main():
 
 	recurse_fill(0, 0, size, 0)
 
+	revealed = 0
 	sf = open('extracted/player_map_achievements', 'rb')
-	for (x, y) in smap.smap_iter(sf, size):
+	for (total, (x, y)) in enumerate(smap.smap_iter(sf, size), 1):
 		(r, g, b) = pix[x, y]
 		if g:
 			r = g = b = 64
+			revealed += 1
 		elif r or b:
 			r = 255
 			g = 200
 			b = 64
 		pix[x, y] = (r, g, b)
+
+	print '%i / %i (%i%%) of the coast mapped' % (revealed, total, revealed * 100 / total)
 
 	image.save('test.png')
 	# print 'Remaining:', hex(stream)
