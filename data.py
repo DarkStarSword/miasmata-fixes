@@ -109,6 +109,9 @@ class data_tree(object):
 			ret += name.enc() + child.id + child.enc()
 		return ret + '\0'
 
+	def __getitem__(self, item):
+		return self.children[item]
+
 
 @data_type
 class data_int(int):
@@ -191,20 +194,23 @@ class data_raw(object):
 		return self.raw.encode('hex_codec')
 	def from_json(self, l):
 		self.raw = l.decode('hex_codec')
+	def __str__(self):
+		return ''.join(self.raw)
 
-
-def parse_data(f, outputfd):
+def parse_data(f):
 	try:
 		t = f.read(1)
-		root = parse_type(t, f)
+		return parse_type(t, f)
 	except:
 		print 'Address: 0x%x' % f.tell()
 		raise
-	return dump_json(root, outputfd)
+
+def data2json(f, outputfd):
+	return dump_json(parse_data(f), outputfd)
 
 def parse_chunk(chunk, outputfd):
 	assert(chunk.name == 'DATA')
-	return parse_data(chunk.get_fp(), outputfd)
+	return data2json(chunk.get_fp(), outputfd)
 
 def json2data(j):
 	root = parse_json(j)
@@ -238,7 +244,7 @@ def main():
 	args = parse_args()
 
 	if args.decode_file:
-		return parse_data(args.decode_file, args.output)
+		return data2json(args.decode_file, args.output)
 
 	if args.encode_file:
 		return write_data(args.encode_file, args.output)

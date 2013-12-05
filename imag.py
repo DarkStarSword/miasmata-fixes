@@ -160,10 +160,22 @@ def open_dds(fp, mipmap=None, mode='RGBA'):
 
 	return image
 
+def open_rs5file_imag(file, mipmap=None, mode='RGBA'):
+	return open_dds(file['DATA'].get_fp(), mipmap, mode)
 
 if __name__ == '__main__':
-	f = open('main/TEX/Map_FilledIn.dds', 'rb')
-	# image = open_dds(f)
-	# image = open_dds(f, (2048, 2048))
-	image = open_dds(f, (1024, 1024), 'RGB')
+	# f = open('main/TEX/Map_FilledIn.dds', 'rb')
+	# # image = open_dds(f)
+	# # image = open_dds(f, (2048, 2048))
+	# image = open_dds(f, (1024, 1024), 'RGB')
+	# image.save('test.jpg')
+
+	import rs5archive, rs5file
+	print 'Opening main.rs5...'
+	archive = rs5archive.Rs5ArchiveDecoder(open('main.rs5', 'rb'))
+	print 'Extracting image...'
+	file = rs5file.Rs5ChunkedFileDecoder(archive['TEX\\Map_FilledIn'].decompress())
+	print 'Decoding image...'
+	image = open_rs5file_imag(file, (1024, 1024), 'RGB')
+	print 'Saving image...'
 	image.save('test.jpg')
