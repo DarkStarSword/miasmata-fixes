@@ -60,6 +60,10 @@ class data_null(object):
 		pass
 	def enc(self):
 		return ''
+	def __eq__(self, other):
+		return other is None
+	def __ne__(self, other):
+		return other is not None
 
 @data_type
 class null_str(str):
@@ -112,6 +116,15 @@ class data_tree(object):
 	def __getitem__(self, item):
 		return self.children[item]
 
+	def __iter__(self): return iter(self.children)
+	def keys(self): return self.children.keys()
+	def values(self): return self.children.values()
+	def items(self): return self.children.items()
+	def iterkeys(self): return self.children.iterkeys()
+	def itervalues(self): return self.children.itervalues()
+	def iteritems(self): return self.children.iteritems()
+	def __len__(self): return len(self.children)
+
 
 @data_type
 class data_int(int):
@@ -153,6 +166,12 @@ class data_list(object):
 				i = null_str(i)
 			self.list.append(i)
 		self.len = data_int(len(l))
+
+	def __iter__(self): return iter(self.list)
+	def __getitem__(self, item): return self.list[item]
+	def remove(self, item):
+		self.list.remove(item)
+		self.len = data_int(len(self.list))
 
 @data_type
 class data_int_list(data_list):
@@ -212,9 +231,12 @@ def parse_chunk(chunk, outputfd):
 	assert(chunk.name == 'DATA')
 	return data2json(chunk.get_fp(), outputfd)
 
+def encode(root):
+	return root.id + root.enc()
+
 def json2data(j):
 	root = parse_json(j)
-	return root.id + root.enc()
+	return encode(root)
 
 def write_data(j, outputfd):
 	outputfd.write(json2data(j))
