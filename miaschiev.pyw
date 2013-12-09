@@ -36,19 +36,19 @@ class Miaschiev(QtGui.QWidget):
 		self.ui = Ui_Miaschiev()
 		self.ui.setupUi(self) # doesn't work with a dynamically loaded UI
 
+	def process_paths(self):
 		try:
 			install_path = find_miasmata_install()
 			self.ui.install_path.setText(install_path)
-			self.process_install_path(install_path)
-		except:
-			pass
-
+		except: pass
 		try:
 			save_path = find_miasmata_save()
 			self.ui.save_path.setText(save_path)
-			self.process_save_path(save_path)
-		except:
-			pass
+		except: pass
+		try:	self.process_install_path(install_path)
+		except: pass
+		try:	self.process_save_path(save_path)
+		except: pass
 
 	def __del__(self):
 		del self.ui
@@ -354,6 +354,7 @@ if __name__ == '__main__':
 	dialog = Miaschiev()
 
 	dialog.show()
+	dialog.process_paths()
 	app.exec_()
 	# If using PyQt4, this prevents "python.exe has stopped working..." on
 	# close (Seems unnecessary with PySide):
