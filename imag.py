@@ -81,7 +81,7 @@ class DDSHeader(object):
 		assert(size==124)
 		assert(self.flags & self.Flags.REQUIRED == self.Flags.REQUIRED)
 
-def dtx1(pix, x, y, c0, c1, clookup):
+def dxt1(pix, x, y, c0, c1, clookup):
 	def rgb565(c):
 		return [(c & 0xf800) >> 8,
 			(c & 0x07e0) >> 3,
@@ -93,7 +93,7 @@ def dtx1(pix, x, y, c0, c1, clookup):
 		table.append([ (c1 * 2 + c0) / 3 for (c0, c1) in z ])
 	else:
 		table.append([ (c0     + c1) / 2 for (c0, c1) in z ])
-		table.append([0, 0, 0]) # >Transparent< black? Alpha in DTX1?
+		table.append([0, 0, 0]) # >Transparent< black? Alpha in DXT1?
 
 	for y1 in xrange(y, y+4):
 		for x1 in xrange(x, x+4):
@@ -101,7 +101,7 @@ def dtx1(pix, x, y, c0, c1, clookup):
 			clookup >>= 2
 			pix[x1, y1] = tuple(table[l])
 
-def dtx5(pix, x, y, alpha):
+def dxt5(pix, x, y, alpha):
 	# Byte swapped due to reading in LE
 	a0      = (alpha & 0x00000000000000ff) >> 0
 	a1      = (alpha & 0x000000000000ff00) >> 8
@@ -124,31 +124,48 @@ def dtx5(pix, x, y, alpha):
 			alookup >>= 3
 			pix[x1, y1] = pix[x1, y1][0:3] + (table[l],)
 
-def process_strip((y, mode, buf)):
+def process_strip_dxt1((y, mode, buf)):
+	width = len(buf) / 2
+	buf = StringIO(buf)
+	image = Image.new(mode, (width, 4))
+	pix = image.load()
+	for x in xrange(0, width, 4):
+		(c0, c1, clookup) = struct.unpack('<HHI', buf.read(8))
+		dxt1(pix, x, 0, c0, c1, clookup)
+	return (y, image.tostring())
+
+def process_strip_dxt5((y, mode, buf)):
 	width = len(buf) / 4
 	buf = StringIO(buf)
 	image = Image.new(mode, (width, 4))
 	pix = image.load()
 	for x in xrange(0, width, 4):
 		(alpha, c0, c1, clookup) = struct.unpack('<QHHI', buf.read(16))
-		dtx1(pix, x, 0, c0, c1, clookup)
+		dxt1(pix, x, 0, c0, c1, clookup)
 		if mode == 'RGBA':
-			dtx5(pix, x, 0, alpha)
+			dxt5(pix, x, 0, alpha)
 	return (y, image.tostring())
 
 def open_dds(fp, mipmap=None, mode='RGBA'):
 	if fp.read(4) != 'DDS ':
 		raise ValueError('Not a DDS file')
 	header = DDSHeader(fp)
-	assert(header.pixel_format.four_cc) == 'DXT5'
+
+	assert(header.pixel_format.four_cc) in ('DXT5', 'DXT1')
+	if header.pixel_format.four_cc == 'DXT1':
+		block_size = 8
+		process_strip = process_strip_dxt1
+	else:
+		block_size = 16
+		process_strip = process_strip_dxt5
 
 	(width, height) = (header.width, header.height)
 	if mipmap:
 		while mipmap < (width, height):
-			fp.seek(width * height, 1)
+			fp.seek(width * height * block_size / 16, 1)
 			(width, height) = (width/2, height/2)
 
-	buf = [ (y, mode, fp.read(16 * width / 4)) for y in xrange(0, height, 4) ]
+	buf = [ (y, mode, fp.read(block_size * width / 4)) for y in xrange(0, height, 4) ]
 
 	image = Image.new(mode, (width, height))
 	pix = image.load()
