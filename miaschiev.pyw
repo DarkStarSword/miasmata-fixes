@@ -339,6 +339,11 @@ if __name__ == '__main__':
 		script_dir = os.path.dirname(os.path.join(os.curdir, sys.argv[0]))
 		interpreter = os.path.join(script_dir, 'py.exe')
 		if os.path.isfile(interpreter):
+
+			# HACK TO WORK AROUND CRASH ON CONSOLE OUTPUT WITH BBFREEZE GUI_ONLY
+			from StringIO import StringIO
+			sys.stdout = sys.stderr = StringIO()
+
 			print 'Setting multiprocessing exe to %s' % interpreter
 			multiprocessing.set_executable(interpreter)
 		else:
