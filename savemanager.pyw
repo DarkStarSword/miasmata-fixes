@@ -227,9 +227,11 @@ class MiasmataSaveUtil(QtGui.QWidget):
 			self.ui.reset_notezz.setEnabled(True)
 
 	def count_plants(self, save):
-		plants = save['player']['journal']['plants'].keys()
+		plants = save['player']['journal']['plants']
 		if plants == None:
 			plants = []
+		else:
+			plants = plants.keys()
 		plants = filter(lambda x: x.lower().startswith('plant'), plants)
 		self.ui.plants.setText(str(len(plants)))
 		self.ui.lbl_plants.setEnabled(True)
