@@ -9,6 +9,21 @@ to fix the broken Botanical Bad A\*\* achievement.
 Refer to this thread for more info:
 <http://steamcommunity.com/app/223510/discussions/0/648812305304655075/>
 
+Miaschiev
+---------
+This Python application can show the progress towards several achievements:
+- Shows which parts of the coast have been mapped, and highlights any missing
+  sections.
+- Shows which urns have been lit, and which ones are remaining. Note that this
+  displays everything listed in the saved game, and in some cases camp fires
+  may show up as well for an unknown reason. It does not yet cross-check these
+  with the urns listed in the game's Markers file.
+- Shows how many notes have been collected.
+- Shows the number of unique plants/fungi that have been collected.
+- If it detects that the glitched Sanchez #1 note has been picked up but was
+  not added to the journal (a bug fixed by the community patch), it also gives
+  the option to reset the note so it can be picked up again from the camp where
+  it was originally found.
 
 Miasmata Analysis/Modding Tools
 -------------------------------

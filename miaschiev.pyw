@@ -13,7 +13,7 @@ from PySide import QtCore, QtGui
 sys.modules['PyQt4'] = PySide # ImageQt is hardcoded to use PyQt4
 
 import Image, ImageDraw, ImageQt
-from savemanager_ui import Ui_SaveManager
+from miaschiev_ui import Ui_Miaschiev
 
 def find_miasmata_install():
 	import _winreg
@@ -29,11 +29,11 @@ def find_miasmata_save():
 	# return os.path.join(os.path.expanduser('~'), 'AppData', 'Roaming',
 	# 		'IonFx', 'Miasmata', 'saves.dat')
 
-class MiasmataSaveUtil(QtGui.QWidget):
+class Miaschiev(QtGui.QWidget):
 	def __init__(self, parent=None):
-		super(MiasmataSaveUtil, self).__init__(parent)
+		super(Miaschiev, self).__init__(parent)
 
-		self.ui = Ui_SaveManager()
+		self.ui = Ui_Miaschiev()
 		self.ui.setupUi(self) # doesn't work with a dynamically loaded UI
 
 		try:
@@ -346,7 +346,7 @@ if __name__ == '__main__':
 			print 'Running this as a frozen exe may be unbearably slow!'
 
 	app = QtGui.QApplication(sys.argv)
-	dialog = MiasmataSaveUtil()
+	dialog = Miaschiev()
 
 	dialog.show()
 	app.exec_()
