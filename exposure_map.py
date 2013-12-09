@@ -74,12 +74,10 @@ def overlay_smap(image, shoreline, outline_mask, filledin_mask):
 		if filledin_pix[x, y]:
 			r = g = b = 80
 			revealed += 1
-		elif outline_pix[x, y]:
+		else:
 			r = 255
 			g = 200
 			b = 64
-		else:
-			continue
 		pix[x, y] = (r, g, b)
 
 	print '%i / %i (%i%%) of the coast mapped' % (revealed, total, revealed * 100 / total)
