@@ -158,6 +158,9 @@ def open_dds(fp, mipmap=None, mode='RGBA'):
 	for (y, strip) in pool.imap_unordered(process_strip, buf, height / 16):
 		image.paste(Image.fromstring(mode, (width, 4), strip), (0, y))
 
+	pool.close()
+	pool.join()
+
 	return image
 
 def open_rs5file_imag(file, mipmap=None, mode='RGBA'):
