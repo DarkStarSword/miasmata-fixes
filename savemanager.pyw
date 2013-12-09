@@ -23,8 +23,11 @@ def find_miasmata_install():
 	return _winreg.QueryValueEx(key, 'Install_Path')[0]
 
 def find_miasmata_save():
-	return os.path.join(os.path.expanduser('~'), 'AppData', 'Roaming',
+	import winpaths
+	return os.path.join(winpaths.get_appdata(),
 			'IonFx', 'Miasmata', 'saves.dat')
+	# return os.path.join(os.path.expanduser('~'), 'AppData', 'Roaming',
+	# 		'IonFx', 'Miasmata', 'saves.dat')
 
 class MiasmataSaveUtil(QtGui.QWidget):
 	def __init__(self, parent=None):
@@ -39,11 +42,13 @@ class MiasmataSaveUtil(QtGui.QWidget):
 			self.process_install_path(install_path)
 		except:
 			pass
-		save_path = find_miasmata_save()
-		self.ui.save_path.setText(save_path)
-		self.process_save_path(save_path)
 
-		# print '\n'.join(dir(self))
+		try:
+			save_path = find_miasmata_save()
+			self.ui.save_path.setText(save_path)
+			self.process_save_path(save_path)
+		except:
+			pass
 
 	def __del__(self):
 		del self.ui
