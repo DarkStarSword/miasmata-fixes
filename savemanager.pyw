@@ -333,6 +333,15 @@ class MiasmataSaveUtil(QtGui.QWidget):
 if __name__ == '__main__':
 	import multiprocessing
 	multiprocessing.freeze_support()
+	if hasattr(multiprocessing, 'set_executable'): # Windows
+		script_dir = os.path.dirname(os.path.join(os.curdir, sys.argv[0]))
+		interpreter = os.path.join(script_dir, 'py.exe')
+		if os.path.isfile(interpreter):
+			print 'Setting multiprocessing exe to %s' % interpreter
+			multiprocessing.set_executable(interpreter)
+		else:
+			print 'WARNING: Did not set multiprocessing exe!'
+			print 'Running this as a frozen exe may be unbearably slow!'
 
 	app = QtGui.QApplication(sys.argv)
 	dialog = MiasmataSaveUtil()
