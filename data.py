@@ -85,6 +85,8 @@ class data_tree(object):
 	id = 'T'
 	def __init__(self):
 		self.children = collections.OrderedDict()
+		self.parent = None
+		self.name = None
 	def dec(self, f):
 		while True:
 			name = null_str.dec_new(f)
@@ -93,6 +95,8 @@ class data_tree(object):
 			t = f.read(1)
 			try:
 				child = parse_type(t, f)
+				child.parent = self
+				child.name = name
 				self.children[name] = child
 			except:
 				dump_json(self.children, sys.stderr)

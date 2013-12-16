@@ -15,19 +15,7 @@ sys.modules['PyQt4'] = PySide # ImageQt is hardcoded to use PyQt4
 import Image, ImageDraw, ImageQt
 from miaschiev_ui import Ui_Miaschiev
 
-def find_miasmata_install():
-	import _winreg
-	key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
-			'SOFTWARE\\IonFX\\Miasmata', 0,
-			_winreg.KEY_READ | _winreg.KEY_WOW64_32KEY)
-	return _winreg.QueryValueEx(key, 'Install_Path')[0]
-
-def find_miasmata_save():
-	import winpaths
-	return os.path.join(winpaths.get_appdata(),
-			'IonFx', 'Miasmata', 'saves.dat')
-	# return os.path.join(os.path.expanduser('~'), 'AppData', 'Roaming',
-	# 		'IonFx', 'Miasmata', 'saves.dat')
+import miasutil
 
 class Miaschiev(QtGui.QWidget):
 	def __init__(self, parent=None):
@@ -38,11 +26,11 @@ class Miaschiev(QtGui.QWidget):
 
 	def process_paths(self):
 		try:
-			install_path = find_miasmata_install()
+			install_path = miasutil.find_miasmata_install()
 			self.ui.install_path.setText(install_path)
 		except: pass
 		try:
-			save_path = find_miasmata_save()
+			save_path = miasutil.find_miasmata_save()
 			self.ui.save_path.setText(save_path)
 		except: pass
 		try:	self.process_install_path(install_path)
