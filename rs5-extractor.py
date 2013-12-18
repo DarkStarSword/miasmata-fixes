@@ -39,7 +39,7 @@ def extract(archive, dest, file_list, strip, overwrite):
 		try:
 			print 'Extracting %s %s...' % (repr(rs5[filename].type), filename)
 			rs5[filename].extract(dest, strip, overwrite)
-		except OSError, e:
+		except OSError as e:
 			print>>sys.stderr, 'ERROR EXTRACTING %s: %s, SKIPPING!' % (file.filename, str(e))
 
 def create_rs5(archive, file_list, overwrite):
@@ -88,7 +88,7 @@ def analyse(filename):
 		try:
 			d = file.decompress()
 			size = len(d)
-		except zlib.error, e:
+		except zlib.error as e:
 			# XXX: What are these?
 			print 'ERROR EXTRACTING %s: %s' % (file.filename, str(e))
 			print '%s %x %8i %x    |   %-25s  |  compressed_size: %i' \

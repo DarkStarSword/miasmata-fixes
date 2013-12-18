@@ -95,14 +95,22 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 	def columnCount(self, parent):
 		# print 'columnCount', repr(parent)
 		sys.stdout.flush()
-		return 1
+		return 2
 
 	def data(self, index, role):
 		# print 'data', repr(index), repr(role)
 		sys.stdout.flush()
 		if role == Qt.DisplayRole:
 			node = self._index_to_node(index)
+			if index.column() == 1:
+				if isinstance(node, data.data_tree):
+					return None
+				return str(node)
 			return node.name
+
+	def headerData(self, section, orientation, role):
+		if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+			return {0: 'Key', 1: 'Value'}[section]
 
 
 class MiasmataDataView(QtGui.QWidget):
@@ -114,6 +122,7 @@ class MiasmataDataView(QtGui.QWidget):
 
 		self.model = MiasmataDataModel(root)
 		self.ui.treeView.setModel(self.model)
+		self.ui.treeView.setColumnWidth(0, 256)
 
 	def __del__(self):
 		del self.ui
@@ -131,7 +140,7 @@ class MiasMod(QtGui.QMainWindow):
 			path = miasutil.find_miasmata_save()
 			saves = data.parse_data(open(path, 'rb'))
 			self.ui.tabWidget.addTab(MiasmataDataView(saves), u"saves.dat")
-		except Exception, e:
+		except Exception as e:
 			pass
 
 	def __del__(self):

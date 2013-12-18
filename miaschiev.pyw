@@ -62,7 +62,7 @@ class Miaschiev(QtGui.QWidget):
 		try:
 			self.rs5main = rs5archive.Rs5ArchiveDecoder(open(main_path, 'rb'))
 			self.progress('main.rs5 Loaded')
-		except Exception, e:
+		except Exception as e:
 			self.done('%s loading main.rs5: %s' % (e.__class__.__name__, str(e)))
 			return
 
@@ -95,7 +95,7 @@ class Miaschiev(QtGui.QWidget):
 		try:
 			self.saves = data.parse_data(open(path, 'rb'))
 			self.done('Saves Loaded')
-		except Exception, e:
+		except Exception as e:
 			self.done('%s loading main.rs5: %s' % (e.__class__.__name__, str(e)))
 			return
 		enable_slots = filter(lambda x: self.saves[x]['text_description'] != None,
@@ -234,7 +234,7 @@ class Miaschiev(QtGui.QWidget):
 			timestamp_str = time.strftime('%Y%m%d%H%M%S')
 			backup = '%s~%s' % (save_path, timestamp_str)
 			os.rename(save_path, backup)
-		except Exception, e:
+		except Exception as e:
 			self.done('%s backing up saves.dat: %s' % (e.__class__.__name__, str(e)))
 			return
 
@@ -276,7 +276,7 @@ class Miaschiev(QtGui.QWidget):
 			self.count_plants(self.save)
 			self.gen_map(self.save)
 			self.coast_progress(self.save)
-		except Exception, e:
+		except Exception as e:
 			self.done('%s processing %s: %s' % (e.__class__.__name__, save, str(e)))
 
 	@QtCore.Slot()

@@ -64,6 +64,8 @@ class data_null(object):
 		return other is None
 	def __ne__(self, other):
 		return other is not None
+	def __str__(self):
+		return '<NULL>'
 
 @data_type
 class null_str(str):
@@ -177,6 +179,11 @@ class data_list(object):
 		self.list.remove(item)
 		self.len = data_int(len(self.list))
 
+	def __str__(self):
+		if len(self.list) > 5:
+			return ', '.join(map(str, self.list[:5]) + ['...'])
+		return ', '.join(map(str, self.list))
+
 @data_type
 class data_int_list(data_list):
 	id = 'I'
@@ -218,7 +225,11 @@ class data_raw(object):
 	def from_json(self, l):
 		self.raw = l.decode('hex_codec')
 	def __str__(self):
-		return ''.join(self.raw)
+		r = self.raw[:32]
+		ret = ' '.join(['%.2x' % ord(x) for x in r])
+		if r == self.raw:
+			return ret
+		return ret + '...'
 
 def parse_data(f):
 	try:

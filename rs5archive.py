@@ -84,7 +84,7 @@ class Rs5CompressedFileDecoder(Rs5CompressedFile):
 				f.write(contents.data)
 			else:
 				f.write(data)
-		except zlib.error, e:
+		except zlib.error as e:
 			print>>sys.stderr, 'ERROR EXTRACTING %s: %s. Skipping decompression!' % (dest, str(e))
 			f.write(self._read())
 		f.close()
