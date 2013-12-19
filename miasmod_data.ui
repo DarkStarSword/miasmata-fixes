@@ -70,29 +70,9 @@
         </widget>
        </item>
        <item row="3" column="1">
-        <widget class="QLineEdit" name="value_line">
-         <property name="readOnly">
-          <bool>true</bool>
-         </property>
-        </widget>
+        <widget class="QLineEdit" name="value_line"/>
        </item>
       </layout>
-     </item>
-     <item>
-      <widget class="QListWidget" name="value_list">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>100</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="alternatingRowColors">
-        <bool>true</bool>
-       </property>
-       <property name="uniformItemSizes">
-        <bool>true</bool>
-       </property>
-      </widget>
      </item>
      <item>
       <spacer name="verticalSpacer">
@@ -108,12 +88,38 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="edit">
-       <property name="enabled">
-        <bool>false</bool>
+      <widget class="QListView" name="value_list">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>100</verstretch>
+        </sizepolicy>
        </property>
-       <property name="text">
-        <string>&amp;Edit</string>
+       <property name="alternatingRowColors">
+        <bool>true</bool>
+       </property>
+       <property name="uniformItemSizes">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPlainTextEdit" name="value_hex">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>100</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <family>Courier New</family>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -125,7 +131,7 @@
           <bool>false</bool>
          </property>
          <property name="text">
-          <string>&amp;Save</string>
+          <string>&amp;Save Changes</string>
          </property>
         </widget>
        </item>
@@ -135,7 +141,7 @@
           <bool>false</bool>
          </property>
          <property name="text">
-          <string>&amp;Cancel</string>
+          <string>&amp;Discard Changes</string>
          </property>
         </widget>
        </item>

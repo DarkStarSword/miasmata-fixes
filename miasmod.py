@@ -66,7 +66,7 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 		parent_node = self.index_to_node(parent)
 		# print '-index', row, column, parent_node.name
 		sys.stdout.flush()
-		child = sorted(parent_node.children.values(), cmp=sort_alnum, key=lambda x: x.name)[row]
+		child = sorted(parent_node.values(), cmp=sort_alnum, key=lambda x: x.name)[row]
 		if isinstance(child, (int, float)):
 			child = self.ThisIsNotAFuckingIntDamnit(child)
 			self.keepalive.add(child)
@@ -81,7 +81,7 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 		parent_node = child_node.parent
 		if parent_node == self.root:
 			return QtCore.QModelIndex()
-		parent_row = sorted(parent_node.parent.children.keys(), cmp=sort_alnum).index(parent_node.name)
+		parent_row = sorted(parent_node.parent.keys(), cmp=sort_alnum).index(parent_node.name)
 		return self.createIndex(parent_row, 0, parent_node)
 
 	def rowCount(self, parent):
@@ -110,10 +110,42 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 					return node.summary()
 				return str(node)
 			return node.name
+		if role == Qt.FontRole:
+			node = self.index_to_node(index)
+			if hasattr(node, 'dirty') and node.dirty:
+				return QtGui.QFont(None, weight=QtGui.QFont.Bold)
 
 	def headerData(self, section, orientation, role):
 		if orientation == Qt.Horizontal and role == Qt.DisplayRole:
 			return {0: 'Key', 1: 'Value'}[section]
+
+	def row_updated(self, index):
+		assert(index.column() == 0)
+		# Update all columns - index will point at col 0
+		sel_end = self.index(1, index.column(), index.parent())
+		self.dataChanged.emit(index, sel_end)
+
+	def setDataValue(self, index, value, role = Qt.EditRole):
+		if role == Qt.EditRole:
+			old_node = self.index_to_node(index)
+			parent = old_node.parent
+			# FIXME: Only for int, float, str for now
+			new_node = old_node.__class__(value)
+			new_node.parent = parent
+			new_node.name = old_node.name
+			new_node.dirty = True
+			parent[new_node.name] = new_node
+			self.row_updated(index)
+			return True
+		return False
+
+	# def setData(self, index, value, role = Qt.EditRole):
+	# 	column = index.column()
+	# 	if column == 0:
+	# 		return self.setDataName(index, value, role)
+	# 	elif column == 1:
+	# 		return setDataValue(index, value, role)
+	# 	assert(False)
 
 	# def flags(self, index):
 	# 	if not index.isValid():
@@ -123,12 +155,48 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 	# def insertRows(self, position, rows, index):
 	# 	pass
 
+class MiasmataDataListModel(QtCore.QAbstractListModel):
+	def __init__(self, node, parent_model, parent_selection):
+		QtCore.QAbstractListModel.__init__(self)
+		self.node = node
+		self.parent_model = parent_model
+		self.parent_selection = parent_selection
+
+	def rowCount(self, parent):
+		return len(self.node)
+
+	def data(self, index, role):
+		if role in (Qt.DisplayRole, Qt.EditRole):
+			return str(self.node[index.row()])
+
+	def flags(self, index):
+		if not index.isValid():
+			return
+		return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
+
+	def setData(self, index, value, role):
+		if role == Qt.EditRole:
+			row = index.row()
+			old_item = self.node[row]
+			try:
+				new_item = old_item.__class__(value)
+			except:
+				return False
+			self.node[row] = new_item
+			self.node.dirty = True
+			self.dataChanged.emit(index, index)
+			self.parent_model.row_updated(self.parent_selection)
+			return True
+		return False
+
 class MiasmataDataView(QtGui.QWidget):
 	from miasmod_data_ui import Ui_MiasmataData
 	def __init__(self, root, parent=None):
 		super(MiasmataDataView, self).__init__(parent)
 		self.ui = self.Ui_MiasmataData()
 		self.ui.setupUi(self)
+
+		self.current_node = None
 
 		self.model = MiasmataDataModel(root)
 		self.ui.treeView.setModel(self.model)
@@ -148,6 +216,7 @@ class MiasmataDataView(QtGui.QWidget):
 
 		self.ui.value_line.setVisible(False)
 		self.ui.value_list.setVisible(False)
+		self.ui.value_hex.setVisible(False)
 
 	def __del__(self):
 		del self.ui
@@ -155,7 +224,8 @@ class MiasmataDataView(QtGui.QWidget):
 
 	@QtCore.Slot()
 	def currentChanged(self, current, previous):
-		node = self.model.index_to_node(current)
+		self.cur_node = node = self.model.index_to_node(current)
+		self.selection = current
 
 		self.ui.name.setReadOnly(True)
 		self.ui.name.setText(node.name)
@@ -164,20 +234,36 @@ class MiasmataDataView(QtGui.QWidget):
 		self.ui.value_line.setVisible(False)
 		self.ui.value_line.setText('')
 		self.ui.value_list.setVisible(False)
-		self.ui.value_list.clear()
+		self.ui.value_list.setModel(None)
+		self.ui.value_hex.setVisible(False)
+		self.ui.value_hex.setPlainText('')
 
 		if isinstance(node, data.data_list):
-			# for value in node:
-			items = [ str(value) for value in node ]
-			self.ui.value_list.insertItems(0, items)
+			model = MiasmataDataListModel(node, self.model, current)
+			self.ui.value_list.setModel(model)
 			self.ui.value_list.setVisible(True)
 		elif isinstance(node, data.data_raw):
-			pass
-		elif isinstance(node, data.data_tree):
+			lines = [ node.raw[x:x+8] for x in range(0, len(node.raw), 8) ]
+			lines = map(lambda line: ' '.join([ '%.2x' % ord(x) for x in line ]), lines)
+			self.ui.value_hex.setPlainText('\n'.join(lines))
+			self.ui.value_hex.setVisible(True)
+		elif isinstance(node, (data.data_tree, data.data_null)):
 			pass
 		else:
-			self.ui.value_line.setVisible(True)
 			self.ui.value_line.setText(str(node))
+			if isinstance(node, data.data_int):
+				validator = QtGui.QIntValidator(self)
+			elif isinstance(node, data.data_float):
+				validator = QtGui.QDoubleValidator(self)
+			else:
+				validator = None
+			self.ui.value_line.setValidator(validator)
+			self.ui.value_line.setVisible(True)
+
+	@QtCore.Slot()
+	def on_value_line_editingFinished(self):
+		self.model.setDataValue(self.selection, self.ui.value_line.text())
+
 
 class MiasMod(QtGui.QMainWindow):
 	from miasmod_ui import Ui_MainWindow

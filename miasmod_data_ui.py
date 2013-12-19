@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'miasmod_data.ui'
 #
-# Created: Thu Dec 19 20:58:04 2013
+# Created: Thu Dec 19 23:40:27 2013
 #      by: pyside-uic 0.2.15 running on PySide 1.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -43,11 +43,12 @@ class Ui_MiasmataData(object):
         self.label_3.setObjectName("label_3")
         self.formLayout.setWidget(3, QtGui.QFormLayout.LabelRole, self.label_3)
         self.value_line = QtGui.QLineEdit(MiasmataData)
-        self.value_line.setReadOnly(True)
         self.value_line.setObjectName("value_line")
         self.formLayout.setWidget(3, QtGui.QFormLayout.FieldRole, self.value_line)
         self.verticalLayout_2.addLayout(self.formLayout)
-        self.value_list = QtGui.QListWidget(MiasmataData)
+        spacerItem = QtGui.QSpacerItem(20, 0, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
+        self.verticalLayout_2.addItem(spacerItem)
+        self.value_list = QtGui.QListView(MiasmataData)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(100)
@@ -57,12 +58,20 @@ class Ui_MiasmataData(object):
         self.value_list.setUniformItemSizes(True)
         self.value_list.setObjectName("value_list")
         self.verticalLayout_2.addWidget(self.value_list)
-        spacerItem = QtGui.QSpacerItem(20, 0, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
-        self.verticalLayout_2.addItem(spacerItem)
-        self.edit = QtGui.QPushButton(MiasmataData)
-        self.edit.setEnabled(False)
-        self.edit.setObjectName("edit")
-        self.verticalLayout_2.addWidget(self.edit)
+        self.value_hex = QtGui.QPlainTextEdit(MiasmataData)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(100)
+        sizePolicy.setHeightForWidth(self.value_hex.sizePolicy().hasHeightForWidth())
+        self.value_hex.setSizePolicy(sizePolicy)
+        font = QtGui.QFont()
+        font.setFamily("Courier New")
+        font.setWeight(75)
+        font.setBold(True)
+        self.value_hex.setFont(font)
+        self.value_hex.setReadOnly(True)
+        self.value_hex.setObjectName("value_hex")
+        self.verticalLayout_2.addWidget(self.value_hex)
         self.gridLayout_2 = QtGui.QGridLayout()
         self.gridLayout_2.setObjectName("gridLayout_2")
         self.pushButton = QtGui.QPushButton(MiasmataData)
@@ -89,7 +98,6 @@ class Ui_MiasmataData(object):
         self.label.setText(QtGui.QApplication.translate("MiasmataData", "&Name:", None, QtGui.QApplication.UnicodeUTF8))
         self.label_2.setText(QtGui.QApplication.translate("MiasmataData", "&Type:", None, QtGui.QApplication.UnicodeUTF8))
         self.label_3.setText(QtGui.QApplication.translate("MiasmataData", "Value:", None, QtGui.QApplication.UnicodeUTF8))
-        self.edit.setText(QtGui.QApplication.translate("MiasmataData", "&Edit", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButton.setText(QtGui.QApplication.translate("MiasmataData", "&Save", None, QtGui.QApplication.UnicodeUTF8))
-        self.cancel.setText(QtGui.QApplication.translate("MiasmataData", "&Cancel", None, QtGui.QApplication.UnicodeUTF8))
+        self.pushButton.setText(QtGui.QApplication.translate("MiasmataData", "&Save Changes", None, QtGui.QApplication.UnicodeUTF8))
+        self.cancel.setText(QtGui.QApplication.translate("MiasmataData", "&Discard Changes", None, QtGui.QApplication.UnicodeUTF8))
 

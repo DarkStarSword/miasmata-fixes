@@ -16,6 +16,14 @@ def data_type(c):
 		json_decoders[c.id] = c
 	return c
 
+class MiasmataDataType(object):
+	class meta(type):
+		def __instancecheck__(self, instance):
+			return instance.__class__ in data_types.values()
+		def __subclasscheck__(self, cls):
+			return cls in data_types.values()
+	__metaclass__ = meta
+
 def parse_type(t, f):
 	c = data_types[t]
 	if hasattr(c, 'dec_new'):
@@ -133,6 +141,9 @@ class data_tree(object):
 	def itervalues(self): return self.children.itervalues()
 	def iteritems(self): return self.children.iteritems()
 	def __len__(self): return len(self.children)
+	def __getitem__(self, item): return self.children[item]
+	def __setitem__(self, item, val): self.children[item] = val
+	def __delitem__(self, item): del self.children[item]
 
 
 @data_type
@@ -180,9 +191,12 @@ class data_list(object):
 
 	def __iter__(self): return iter(self.list)
 	def __getitem__(self, item): return self.list[item]
+	def __setitem__(self, item, val): self.list[item] = val
+	def __delitem__(self, item): del self.list[item]
 	def remove(self, item):
 		self.list.remove(item)
 		self.len = data_int(len(self.list))
+	def __len__(self): return len(self.list)
 
 	def summary(self):
 		if len(self.list) > 5:
@@ -227,7 +241,7 @@ class data_mixed_list(data_list):
 @data_type
 class data_raw(object):
 	id = 'R'
-	desc = 'Raw Data'
+	desc = 'Raw Binary Data'
 	def dec(self, f):
 		l = data_int.dec_new(f)
 		self.raw = f.read(l)
