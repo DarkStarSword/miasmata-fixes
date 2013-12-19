@@ -142,7 +142,10 @@ class data_tree(object):
 	def iteritems(self): return self.children.iteritems()
 	def __len__(self): return len(self.children)
 	def __getitem__(self, item): return self.children[item]
-	def __setitem__(self, item, val): self.children[item] = val
+	def __setitem__(self, item, val):
+		val.name = item
+		val.parent = self
+		self.children[item] = val
 	def __delitem__(self, item): del self.children[item]
 
 

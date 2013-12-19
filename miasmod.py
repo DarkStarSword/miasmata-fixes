@@ -66,8 +66,10 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 		parent_node = self.index_to_node(parent)
 		# print '-index', row, column, parent_node.name
 		sys.stdout.flush()
-		child = sorted(parent_node.values(), cmp=sort_alnum, key=lambda x: x.name)[row]
-		if isinstance(child, (int, float)):
+		# TODO: Use QSortFilterProxyModel
+		# child = sorted(parent_node.values(), cmp=sort_alnum, key=lambda x: x.name)[row]
+		child = parent_node.values()[row]
+		if isinstance(child, (int, float, str)):
 			child = self.ThisIsNotAFuckingIntDamnit(child)
 			self.keepalive.add(child)
 		return self.createIndex(row, column, child)
@@ -81,7 +83,9 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 		parent_node = child_node.parent
 		if parent_node == self.root:
 			return QtCore.QModelIndex()
-		parent_row = sorted(parent_node.parent.keys(), cmp=sort_alnum).index(parent_node.name)
+		# TODO: Use QSortFilterProxyModel
+		# parent_row = sorted(parent_node.parent.keys(), cmp=sort_alnum).index(parent_node.name)
+		parent_row = parent_node.parent.keys().index(parent_node.name)
 		return self.createIndex(parent_row, 0, parent_node)
 
 	def rowCount(self, parent):
@@ -120,40 +124,50 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 			return {0: 'Key', 1: 'Value'}[section]
 
 	def row_updated(self, index):
-		assert(index.column() == 0)
+		# assert(index.column() == 0)
 		# Update all columns - index will point at col 0
 		sel_end = self.index(1, index.column(), index.parent())
 		self.dataChanged.emit(index, sel_end)
 
+	def removeRows(self, row, count, parent):
+		parent_node = self.index_to_node(parent)
+		self.beginRemoveRows(parent, row, row + count - 1)
+		while count:
+			del parent_node[parent_node.keys()[row]]
+			count -= 1
+		self.endRemoveRows()
+
+	# def insertRows(self, position, rows, parent):
+	# 	parent_node = self.index_to_node(parent)
+	# 	self.beginInsertRows(parent, position, position + rows - 1)
+	# 	while rows:
+	# 		# TODO: Add new NULL with unique name
+	# 		rows -= 1
+	# 	self.endInsertRows()
+
+	# Would cause crash due to stale index:
 	def setDataValue(self, index, value, role = Qt.EditRole):
 		if role == Qt.EditRole:
 			old_node = self.index_to_node(index)
-			parent = old_node.parent
-			# FIXME: Only for int, float, str for now
+			parent_node = old_node.parent
+			# XXX: Only handles int, float, str.
 			new_node = old_node.__class__(value)
-			new_node.parent = parent
-			new_node.name = old_node.name
 			new_node.dirty = True
-			parent[new_node.name] = new_node
+			parent_node[old_node.name] = new_node
 			self.row_updated(index)
 			return True
 		return False
 
-	# def setData(self, index, value, role = Qt.EditRole):
-	# 	column = index.column()
-	# 	if column == 0:
-	# 		return self.setDataName(index, value, role)
-	# 	elif column == 1:
-	# 		return setDataValue(index, value, role)
-	# 	assert(False)
+class MiasmataDataSortProxy(QtGui.QSortFilterProxyModel):
+	def index_to_node(self, index):
+		return self.sourceModel().index_to_node(self.mapToSource(index))
 
-	# def flags(self, index):
-	# 	if not index.isValid():
-	# 		return
-	# 	return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
+	def setDataValue(self, index, value, role = Qt.EditRole):
+		index = self.mapToSource(index)
+		return self.sourceModel().setDataValue(index, value, role)
 
-	# def insertRows(self, position, rows, index):
-	# 	pass
+	def row_updated(self, index):
+		return self.sourceModel().row_updated(self.mapToSource(index))
 
 class MiasmataDataListModel(QtCore.QAbstractListModel):
 	def __init__(self, node, parent_model, parent_selection):
@@ -199,7 +213,16 @@ class MiasmataDataView(QtGui.QWidget):
 		self.current_node = None
 
 		self.model = MiasmataDataModel(root)
-		self.ui.treeView.setModel(self.model)
+
+		# self.ui.treeView.setModel(self.model)
+
+		self.sort_proxy = MiasmataDataSortProxy(self)
+		self.sort_proxy.setSourceModel(self.model)
+		self.sort_proxy.sort(0, Qt.AscendingOrder)
+		self.sort_proxy.setDynamicSortFilter(True)
+		self.model = self.sort_proxy
+		self.ui.treeView.setModel(self.sort_proxy)
+
 		self.ui.treeView.setColumnWidth(0, 256)
 
 		# Can this be done with the PySide auto signal/slot assign thingy?
@@ -224,6 +247,7 @@ class MiasmataDataView(QtGui.QWidget):
 
 	@QtCore.Slot()
 	def currentChanged(self, current, previous):
+		# print 'current Changed'
 		self.cur_node = node = self.model.index_to_node(current)
 		self.selection = current
 
@@ -262,6 +286,11 @@ class MiasmataDataView(QtGui.QWidget):
 
 	@QtCore.Slot()
 	def on_value_line_editingFinished(self):
+		# print 'editingFinished'
+		# if self.selection is None:
+		# 	return
+		# print 'setDataValue'
+		# selection, self.selection = self.selection, None
 		self.model.setDataValue(self.selection, self.ui.value_line.text())
 
 
@@ -332,7 +361,12 @@ def start_gui_process(pipe):
 	m.start()
 
 	window.show()
+
+	# import trace
+	# t = trace.Trace()
+	# t.runctx('app.exec_()', globals=globals(), locals=locals())
 	app.exec_()
+
 	del window
 
 
