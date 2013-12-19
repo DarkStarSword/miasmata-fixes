@@ -7,7 +7,7 @@ import collections
 
 import rs5file
 
-data_types = {}
+data_types = collections.OrderedDict()
 json_decoders = {}
 def data_type(c):
 	global data_types
@@ -52,6 +52,7 @@ def parse_json(j):
 @data_type
 class data_null(object):
 	id = '.'
+	desc = 'NULL'
 	def dec(self, f):
 		pass
 	def to_json(self):
@@ -70,6 +71,7 @@ class data_null(object):
 @data_type
 class null_str(str):
 	id = 's'
+	desc = 'String'
 	@classmethod
 	def dec_new(cls, f):
 		r = ''
@@ -85,6 +87,7 @@ class null_str(str):
 @data_type
 class data_tree(object):
 	id = 'T'
+	desc = 'Tree Node'
 	def __init__(self):
 		self.children = collections.OrderedDict()
 		self.parent = None
@@ -135,6 +138,7 @@ class data_tree(object):
 @data_type
 class data_int(int):
 	id = 'i'
+	desc = 'Integer'
 	@classmethod
 	def dec_new(cls, f):
 		return int.__new__(cls, struct.unpack('<i', f.read(4))[0])
@@ -144,6 +148,7 @@ class data_int(int):
 @data_type
 class data_float(float):
 	id = 'f'
+	desc = 'Floating Point Number'
 	@classmethod
 	def dec_new(cls, f):
 		return float.__new__(cls, struct.unpack('<f', f.read(4))[0])
@@ -190,21 +195,25 @@ class data_list(object):
 @data_type
 class data_int_list(data_list):
 	id = 'I'
+	desc = 'List of Integers'
 	parse = data_int.dec_new
 
 @data_type
 class data_str_list(data_list):
 	id = 'S'
+	desc = 'List of Strings'
 	parse = null_str.dec_new
 
 @data_type
 class data_float_list(data_list):
 	id = 'F'
+	desc = 'List of Floats'
 	parse = data_float.dec_new
 
 @data_type
 class data_mixed_list(data_list):
 	id = 'M'
+	desc = 'Mixed type List'
 	@staticmethod
 	def parse(f):
 		t = f.read(1)
@@ -218,6 +227,7 @@ class data_mixed_list(data_list):
 @data_type
 class data_raw(object):
 	id = 'R'
+	desc = 'Raw Data'
 	def dec(self, f):
 		l = data_int.dec_new(f)
 		self.raw = f.read(l)

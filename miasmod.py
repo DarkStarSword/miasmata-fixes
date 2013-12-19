@@ -4,6 +4,7 @@ import sys
 
 from PySide import QtCore, QtGui
 from PySide.QtCore import Qt
+
 import multiprocessing
 
 import miasutil
@@ -40,7 +41,7 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 		self.root = root
 		self.keepalive = set()
 
-	def _index_to_node(self, index):
+	def index_to_node(self, index):
 		# print '1'
 		sys.stdout.flush()
 		if not index.isValid():
@@ -62,7 +63,7 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 		sys.stdout.flush()
 		if not self.hasIndex(row, column, parent):
 			return QtCore.QModelIndex()
-		parent_node = self._index_to_node(parent)
+		parent_node = self.index_to_node(parent)
 		# print '-index', row, column, parent_node.name
 		sys.stdout.flush()
 		child = sorted(parent_node.children.values(), cmp=sort_alnum, key=lambda x: x.name)[row]
@@ -74,7 +75,7 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 	def parent(self, index):
 		# print 'parent', repr(index)
 		sys.stdout.flush()
-		child_node = self._index_to_node(index)
+		child_node = self.index_to_node(index)
 		# print '-parent', child_node.name
 		sys.stdout.flush()
 		parent_node = child_node.parent
@@ -86,7 +87,7 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 	def rowCount(self, parent):
 		# print 'rowCount', repr(parent)
 		sys.stdout.flush()
-		node = self._index_to_node(parent)
+		node = self.index_to_node(parent)
 		# print '-rowCount', node.name
 		if isinstance(node, data.data_tree):
 			return len(node)
@@ -101,7 +102,7 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 		# print 'data', repr(index), repr(role)
 		sys.stdout.flush()
 		if role in (Qt.DisplayRole, Qt.EditRole):
-			node = self._index_to_node(index)
+			node = self.index_to_node(index)
 			if index.column() == 1:
 				if isinstance(node, data.data_tree):
 					return None
@@ -119,6 +120,9 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 	# 		return
 	# 	return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
 
+	# def insertRows(self, position, rows, index):
+	# 	pass
+
 class MiasmataDataView(QtGui.QWidget):
 	from miasmod_data_ui import Ui_MiasmataData
 	def __init__(self, root, parent=None):
@@ -130,9 +134,50 @@ class MiasmataDataView(QtGui.QWidget):
 		self.ui.treeView.setModel(self.model)
 		self.ui.treeView.setColumnWidth(0, 256)
 
+		# Can this be done with the PySide auto signal/slot assign thingy?
+		#
+		# XXX: Known bug in PySide - https://bugreports.qt-project.org/browse/PYSIDE-79
+		# Doing this in one line like this results in a crash due to
+		# the selection model being prematurely garbage collected:
+		# self.ui.treeView.selectionModel().currentChanged.connect(self.currentChanged)
+		selection_model = self.ui.treeView.selectionModel()
+		selection_model.currentChanged.connect(self.currentChanged)
+
+		items = [ type.desc for type in data.data_types.values() ]
+		self.ui.type.insertItems(0, items)
+
+		self.ui.value_line.setVisible(False)
+		self.ui.value_list.setVisible(False)
+
 	def __del__(self):
 		del self.ui
 		del self.model
+
+	@QtCore.Slot()
+	def currentChanged(self, current, previous):
+		node = self.model.index_to_node(current)
+
+		self.ui.name.setReadOnly(True)
+		self.ui.name.setText(node.name)
+		self.ui.type.setCurrentIndex(data.data_types.keys().index(node.id))
+
+		self.ui.value_line.setVisible(False)
+		self.ui.value_line.setText('')
+		self.ui.value_list.setVisible(False)
+		self.ui.value_list.clear()
+
+		if isinstance(node, data.data_list):
+			# for value in node:
+			items = [ str(value) for value in node ]
+			self.ui.value_list.insertItems(0, items)
+			self.ui.value_list.setVisible(True)
+		elif isinstance(node, data.data_raw):
+			pass
+		elif isinstance(node, data.data_tree):
+			pass
+		else:
+			self.ui.value_line.setVisible(True)
+			self.ui.value_line.setText(str(node))
 
 class MiasMod(QtGui.QMainWindow):
 	from miasmod_ui import Ui_MainWindow
@@ -144,14 +189,14 @@ class MiasMod(QtGui.QMainWindow):
 
 		try:
 			path = miasutil.find_miasmata_save()
-			saves = data.parse_data(open(path, 'rb'))
-			self.ui.tabWidget.addTab(MiasmataDataView(saves), u"saves.dat")
 		except Exception as e:
-			try:
-				saves = data.parse_data(open('saves.dat', 'rb'))
-				self.ui.tabWidget.addTab(MiasmataDataView(saves), u"saves.dat")
-			except Exception as e:
+			path = 'saves.dat'
+		try:
+			saves = data.parse_data(open(path, 'rb'))
+		except Exception as e:
 				pass
+		else:
+			self.ui.tabWidget.addTab(MiasmataDataView(saves), u"saves.dat")
 
 	def __del__(self):
 		self.ui.tabWidget.clear()
@@ -212,14 +257,14 @@ if __name__ == '__main__':
 
 	(parent_conn, child_conn) = multiprocessing.Pipe()
 
-	# start_gui_process(child_conn)
+	start_gui_process(child_conn)
 
-	gui = multiprocessing.Process(target=start_gui_process, args=(child_conn,))
-	gui.daemon = True
-	gui.start()
-	child_conn.close()
-	parent_conn.send(['test',123,'ab'])
-	try:
-		print parent_conn.recv()
-	except EOFError:
-		print 'Child closed pipe'
+	# gui = multiprocessing.Process(target=start_gui_process, args=(child_conn,))
+	# gui.daemon = True
+	# gui.start()
+	# child_conn.close()
+	# parent_conn.send(['test',123,'ab'])
+	# try:
+	# 	print parent_conn.recv()
+	# except EOFError:
+	# 	print 'Child closed pipe'
