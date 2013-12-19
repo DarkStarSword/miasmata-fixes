@@ -32,7 +32,7 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 	class ThisIsNotAFuckingIntDamnit(object):
 		# God damn fucking overloaded functions and type checking!
 		# Guess I'll have to change these so they don't derive from
-		# int/float :-/
+		# int/float/str :-/
 		def __init__(self, val):
 			self.val = val
 
@@ -42,16 +42,9 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 		self.keepalive = set()
 
 	def index_to_node(self, index):
-		# print '1'
-		sys.stdout.flush()
 		if not index.isValid():
-			# print '2'
-			sys.stdout.flush()
 			return self.root
-		# print '3'
-		sys.stdout.flush()
 		x = index.internalPointer()
-		# print '..', repr(x)
 		if isinstance(x, self.ThisIsNotAFuckingIntDamnit):
 			return x.val
 		return x
@@ -59,15 +52,9 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 
 
 	def index(self, row, column, parent):
-		# print 'index', row, column, repr(parent)
-		sys.stdout.flush()
 		if not self.hasIndex(row, column, parent):
 			return QtCore.QModelIndex()
 		parent_node = self.index_to_node(parent)
-		# print '-index', row, column, parent_node.name
-		sys.stdout.flush()
-		# TODO: Use QSortFilterProxyModel
-		# child = sorted(parent_node.values(), cmp=sort_alnum, key=lambda x: x.name)[row]
 		child = parent_node.values()[row]
 		if isinstance(child, (int, float, str)):
 			child = self.ThisIsNotAFuckingIntDamnit(child)
@@ -75,36 +62,23 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 		return self.createIndex(row, column, child)
 
 	def parent(self, index):
-		# print 'parent', repr(index)
-		sys.stdout.flush()
 		child_node = self.index_to_node(index)
-		# print '-parent', child_node.name
-		sys.stdout.flush()
 		parent_node = child_node.parent
 		if parent_node == self.root:
 			return QtCore.QModelIndex()
-		# TODO: Use QSortFilterProxyModel
-		# parent_row = sorted(parent_node.parent.keys(), cmp=sort_alnum).index(parent_node.name)
 		parent_row = parent_node.parent.keys().index(parent_node.name)
 		return self.createIndex(parent_row, 0, parent_node)
 
 	def rowCount(self, parent):
-		# print 'rowCount', repr(parent)
-		sys.stdout.flush()
 		node = self.index_to_node(parent)
-		# print '-rowCount', node.name
 		if isinstance(node, data.data_tree):
 			return len(node)
 		return 0
 
 	def columnCount(self, parent):
-		# print 'columnCount', repr(parent)
-		sys.stdout.flush()
 		return 2
 
 	def data(self, index, role):
-		# print 'data', repr(index), repr(role)
-		sys.stdout.flush()
 		if role in (Qt.DisplayRole, Qt.EditRole):
 			node = self.index_to_node(index)
 			if index.column() == 1:
@@ -247,7 +221,6 @@ class MiasmataDataView(QtGui.QWidget):
 
 	@QtCore.Slot()
 	def currentChanged(self, current, previous):
-		# print 'current Changed'
 		self.cur_node = node = self.model.index_to_node(current)
 		self.selection = current
 
@@ -286,12 +259,9 @@ class MiasmataDataView(QtGui.QWidget):
 
 	@QtCore.Slot()
 	def on_value_line_editingFinished(self):
-		# print 'editingFinished'
-		# if self.selection is None:
-		# 	return
-		# print 'setDataValue'
-		# selection, self.selection = self.selection, None
-		self.model.setDataValue(self.selection, self.ui.value_line.text())
+		text = self.ui.value_line.text()
+		if str(self.cur_node) != text:
+			self.model.setDataValue(self.selection, text)
 
 
 class MiasMod(QtGui.QMainWindow):
