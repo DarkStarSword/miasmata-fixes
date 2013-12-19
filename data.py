@@ -179,9 +179,12 @@ class data_list(object):
 		self.list.remove(item)
 		self.len = data_int(len(self.list))
 
-	def __str__(self):
+	def summary(self):
 		if len(self.list) > 5:
 			return ', '.join(map(str, self.list[:5]) + ['...'])
+		return ', '.join(map(str, self.list))
+
+	def __str__(self):
 		return ', '.join(map(str, self.list))
 
 @data_type
@@ -224,12 +227,14 @@ class data_raw(object):
 		return self.raw.encode('hex_codec')
 	def from_json(self, l):
 		self.raw = l.decode('hex_codec')
-	def __str__(self):
+	def summary(self):
 		r = self.raw[:32]
 		ret = ' '.join(['%.2x' % ord(x) for x in r])
 		if r == self.raw:
 			return ret
 		return ret + '...'
+	def __str__(self):
+		return ' '.join(['%.2x' % ord(x) for x in self.raw])
 
 def parse_data(f):
 	try:

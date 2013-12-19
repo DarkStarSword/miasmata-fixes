@@ -100,11 +100,13 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 	def data(self, index, role):
 		# print 'data', repr(index), repr(role)
 		sys.stdout.flush()
-		if role == Qt.DisplayRole:
+		if role in (Qt.DisplayRole, Qt.EditRole):
 			node = self._index_to_node(index)
 			if index.column() == 1:
 				if isinstance(node, data.data_tree):
 					return None
+				if role == Qt.DisplayRole and hasattr(node, 'summary'):
+					return node.summary()
 				return str(node)
 			return node.name
 
@@ -112,6 +114,10 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 		if orientation == Qt.Horizontal and role == Qt.DisplayRole:
 			return {0: 'Key', 1: 'Value'}[section]
 
+	# def flags(self, index):
+	# 	if not index.isValid():
+	# 		return
+	# 	return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
 
 class MiasmataDataView(QtGui.QWidget):
 	from miasmod_data_ui import Ui_MiasmataData
@@ -141,7 +147,11 @@ class MiasMod(QtGui.QMainWindow):
 			saves = data.parse_data(open(path, 'rb'))
 			self.ui.tabWidget.addTab(MiasmataDataView(saves), u"saves.dat")
 		except Exception as e:
-			pass
+			try:
+				saves = data.parse_data(open('saves.dat', 'rb'))
+				self.ui.tabWidget.addTab(MiasmataDataView(saves), u"saves.dat")
+			except Exception as e:
+				pass
 
 	def __del__(self):
 		self.ui.tabWidget.clear()
