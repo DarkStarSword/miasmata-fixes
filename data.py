@@ -143,6 +143,15 @@ class data_tree(object):
 		self.children[item] = val
 	def __delitem__(self, item): del self.children[item]
 
+def format_parent(node, skip=1):
+	if node.parent:
+		ret = format_parent(node.parent)
+		if isinstance(ret, int):
+			if ret < 0:
+				return ret+1
+			return node.name
+		return '%s.%s' % (ret, node.name)
+	return -skip
 
 @data_type
 class data_int(int):
