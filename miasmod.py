@@ -10,7 +10,7 @@
 # Save alocalmod.rs5
 # Create x.miasmod files with diffs
 
-import sys
+import sys, copy
 
 from PySide import QtCore, QtGui
 from PySide.QtCore import Qt
@@ -108,10 +108,10 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 			return {0: 'Key', 1: 'Value'}[section]
 
 	def row_updated(self, index):
-		assert(index.column() == 0)
-		# Update all columns - index will point at col 0
-		sel_end = self.index(index.row(), 1, index.parent())
-		self.dataChanged.emit(index, sel_end)
+		# Update all columns - index will point at a specific col
+		sel_start = self.index(index.row(), 0, index.parent())
+		sel_end   = self.index(index.row(), 1, index.parent())
+		self.dataChanged.emit(sel_start, sel_end)
 
 	def removeRows(self, row, count, parent):
 		parent_node = self.index_to_node(parent)
@@ -123,40 +123,61 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 		self.endRemoveRows()
 		return True
 
-	# def insertRows(self, position, rows, parent):
-	# 	parent_node = self.index_to_node(parent)
-	# 	self.beginInsertRows(parent, position, position + rows - 1)
-	# 	while rows:
-	# 		# TODO: Add new NULL with unique name
-	# 		rows -= 1
-	# 	self.endInsertRows()
+	def insert_row(self, node, parent):
+		parent_node = self.index_to_node(parent)
+		insert_pos = len(parent_node)
+		self.beginInsertRows(parent, insert_pos, insert_pos)
+		parent_node[node.name] = node
+		self.endInsertRows()
+		return self.index(insert_pos, 0, parent)
 
 	def setDataValue(self, index, value, role = Qt.EditRole):
 		if role == Qt.EditRole:
 			old_node = self.index_to_node(index)
 			parent_node = old_node.parent
-			# XXX: Only handles int, float, str.
-			new_node = old_node.__class__(value)
-			new_node.dirty = True
-			parent_node[old_node.name] = new_node
+			if not isinstance(value, data.MiasmataDataType):
+				# XXX: Only handles int, float, str.
+				value = old_node.__class__(value)
+			value.dirty = True
+			value.undo = old_node
+			if hasattr(old_node, 'undo'):
+				value.undo = old_node.undo
+			parent_node[old_node.name] = value
 			self.row_updated(index)
 			return True
 		return False
+
+	def undo(self, index):
+		new_node = self.index_to_node(index)
+		if not hasattr(new_node, 'undo'):
+			return False
+		old_node = new_node.undo
+		old_node.parent = parent_node = new_node.parent
+		if old_node.name != new_node.name:
+			if old_node.name in parent_node:
+				return False
+			parent_idx = self.parent(index)
+			self.removeRows(index.row(), 1, parent_idx)
+			return self.insert_row(old_node, parent_idx)
+		parent_node[old_node.name] = old_node
+		self.row_updated(index)
+		return True
 
 	def setDataName(self, index, value, role = Qt.EditRole):
 		if role == Qt.EditRole:
 			node = self.index_to_node(index)
 			if value in node.parent:
 				return None
+			parent_node = node.parent
 			parent_idx = self.parent(index)
+			if not hasattr(node, 'undo'):
+				del node.parent
+				node.undo = copy.deepcopy(node)
+				node.parent = parent_node
 			self.removeRows(index.row(), 1, parent_idx)
 			node.name = value
 			node.dirty = True
-			insert_pos = len(node.parent)
-			self.beginInsertRows(parent_idx, insert_pos, insert_pos)
-			node.parent[node.name] = node
-			self.endInsertRows()
-			return self.index(insert_pos, 0, parent_idx)
+			return self.insert_row(node, parent_idx)
 		return None
 
 class MiasmataDataSortProxy(QtGui.QSortFilterProxyModel):
@@ -175,6 +196,12 @@ class MiasmataDataSortProxy(QtGui.QSortFilterProxyModel):
 
 	def row_updated(self, index):
 		return self.sourceModel().row_updated(self.mapToSource(index))
+
+	def undo(self, index):
+		ret = self.sourceModel().undo(self.mapToSource(index))
+		if isinstance(ret, QtCore.QModelIndex):
+			return self.mapFromSource(ret)
+		return ret
 
 class MiasmataDataListModel(QtCore.QAbstractListModel):
 	def __init__(self, node, parent_model, parent_selection):
@@ -196,6 +223,11 @@ class MiasmataDataListModel(QtCore.QAbstractListModel):
 		return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
 
 	def _setData(self, index, new_item):
+		if not hasattr(self.node, 'undo'):
+			parent = self.node.parent
+			del self.node.parent
+			self.node.undo = copy.deepcopy(self.node)
+			self.node.parent = parent
 		self.node[index.row()] = new_item
 		self.node.dirty = True
 		self.dataChanged.emit(index, index)
@@ -261,6 +293,7 @@ class MiasmataDataView(QtGui.QWidget):
 
 		self.ui.treeView.addAction(self.ui.actionNew_Key)
 		self.ui.treeView.addAction(self.ui.actionNew_Value)
+		self.ui.treeView.addAction(self.ui.actionUndo_Changes)
 		self.ui.treeView.addAction(self.ui.actionDelete)
 
 		# Can this be done with the PySide auto signal/slot assign thingy?
@@ -302,10 +335,17 @@ class MiasmataDataView(QtGui.QWidget):
 
 		if current.parent().isValid():
 			self.ui.name.setReadOnly(False)
+			self.ui.type.setEnabled(True)
 			self.ui.actionDelete.setEnabled(True)
 		else:
 			self.ui.name.setReadOnly(True)
+			self.ui.type.setEnabled(False)
 			self.ui.actionDelete.setEnabled(False)
+
+		if hasattr(self.cur_node, 'undo'):
+			self.ui.actionUndo_Changes.setEnabled(True)
+		else:
+			self.ui.actionUndo_Changes.setEnabled(False)
 
 		if isinstance(node, data.data_list):
 			if isinstance(node, data.data_mixed_list):
@@ -346,6 +386,33 @@ class MiasmataDataView(QtGui.QWidget):
 		if self.cur_node.name != name:
 			selection = self.selection_model.currentIndex()
 			new_index = self.model.setDataName(selection, name)
+			self.selection_model.setCurrentIndex(new_index, \
+					QtGui.QItemSelectionModel.ClearAndSelect \
+					| QtGui.QItemSelectionModel.Rows)
+
+	@QtCore.Slot()
+	def on_type_activated(self):
+		new_type = data.data_types.values()[self.ui.type.currentIndex()]
+		if self.cur_node.__class__ == new_type:
+			return
+		new_item = new_type()
+		if isinstance(self.cur_node, data.MiasmataDataCoercible) and \
+		   issubclass(new_type,      data.MiasmataDataCoercible):
+			try:
+				new_item = new_type(self.cur_node)
+			except:
+				pass
+		selection = self.selection_model.currentIndex()
+		self.model.setDataValue(selection, new_item)
+		self.currentChanged(selection, selection)
+
+	@QtCore.Slot()
+	def on_actionUndo_Changes_triggered(self):
+		selection = self.selection_model.currentIndex()
+		new_index = self.model.undo(selection)
+		if isinstance(new_index, bool):
+			self.currentChanged(selection, selection)
+		else:
 			self.selection_model.setCurrentIndex(new_index, \
 					QtGui.QItemSelectionModel.ClearAndSelect \
 					| QtGui.QItemSelectionModel.Rows)
@@ -419,9 +486,9 @@ def start_gui_process(pipe):
 
 	window = MiasMod()
 
-	m = PipeMonitor(pipe)
-	m.recv.connect(window.recv)
-	m.start()
+	# m = PipeMonitor(pipe)
+	# m.recv.connect(window.recv)
+	# m.start()
 
 	window.show()
 

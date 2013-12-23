@@ -16,14 +16,6 @@ def data_type(c):
 		json_decoders[c.id] = c
 	return c
 
-class MiasmataDataType(object):
-	class meta(type):
-		def __instancecheck__(self, instance):
-			return instance.__class__ in data_types.values()
-		def __subclasscheck__(self, cls):
-			return cls in data_types.values()
-	__metaclass__ = meta
-
 def parse_type(t, f):
 	c = data_types[t]
 	if hasattr(c, 'dec_new'):
@@ -248,6 +240,8 @@ class data_mixed_list(data_list):
 class data_raw(object):
 	id = 'R'
 	desc = 'Raw Binary Data'
+	def __init__(self):
+		self.raw = ''
 	def dec(self, f):
 		l = data_int.dec_new(f)
 		self.raw = f.read(l)
@@ -311,6 +305,24 @@ def parse_args():
 			help='Store the result in OUTPUT')
 
 	return parser.parse_args()
+
+
+class MiasmataDataType(object):
+	class meta(type):
+		def __instancecheck__(self, instance):
+			return instance.__class__ in data_types.values()
+		def __subclasscheck__(self, cls):
+			return cls in data_types.values()
+	__metaclass__ = meta
+
+class MiasmataDataCoercible(object):
+	coercible = null_str, data_int, data_float
+	class meta(type):
+		def __instancecheck__(self, instance):
+			return instance.__class__ in self.coercible
+		def __subclasscheck__(self, cls):
+			return cls in self.coercible
+	__metaclass__ = meta
 
 def main():
 	args = parse_args()

@@ -187,6 +187,11 @@
     <string>New Value</string>
    </property>
   </action>
+  <action name="actionUndo_Changes">
+   <property name="text">
+    <string>Undo Changes</string>
+   </property>
+  </action>
  </widget>
  <tabstops>
   <tabstop>treeView</tabstop>

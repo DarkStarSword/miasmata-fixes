@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'miasmod_data.ui'
 #
-# Created: Tue Dec 24 01:33:10 2013
+# Created: Tue Dec 24 02:48:27 2013
 #      by: pyside-uic 0.2.15 running on PySide 1.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -97,6 +97,8 @@ class Ui_MiasmataData(object):
         self.actionNew_Key.setObjectName("actionNew_Key")
         self.actionNew_Value = QtGui.QAction(MiasmataData)
         self.actionNew_Value.setObjectName("actionNew_Value")
+        self.actionUndo_Changes = QtGui.QAction(MiasmataData)
+        self.actionUndo_Changes.setObjectName("actionUndo_Changes")
         self.label.setBuddy(self.name)
         self.label_2.setBuddy(self.type)
 
@@ -112,4 +114,5 @@ class Ui_MiasmataData(object):
         self.actionDelete.setText(QtGui.QApplication.translate("MiasmataData", "Delete", None, QtGui.QApplication.UnicodeUTF8))
         self.actionNew_Key.setText(QtGui.QApplication.translate("MiasmataData", "New Key", None, QtGui.QApplication.UnicodeUTF8))
         self.actionNew_Value.setText(QtGui.QApplication.translate("MiasmataData", "New Value", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionUndo_Changes.setText(QtGui.QApplication.translate("MiasmataData", "Undo Changes", None, QtGui.QApplication.UnicodeUTF8))
 
