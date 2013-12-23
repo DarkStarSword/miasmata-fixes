@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 # TODO:
-# Handle editing mixed lists
 # Handle changing data types
 # Add context menu to add / remove items
 # Raw data
@@ -196,20 +195,46 @@ class MiasmataDataListModel(QtCore.QAbstractListModel):
 			return
 		return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
 
+	def _setData(self, index, new_item):
+		self.node[index.row()] = new_item
+		self.node.dirty = True
+		self.dataChanged.emit(index, index)
+		self.parent_model.row_updated(self.parent_selection)
+		return True
+
 	def setData(self, index, value, role):
 		if role == Qt.EditRole:
-			row = index.row()
-			old_item = self.node[row]
+			old_item = self.node[index.row()]
 			try:
 				new_item = old_item.__class__(value)
 			except:
 				return False
-			self.node[row] = new_item
-			self.node.dirty = True
-			self.dataChanged.emit(index, index)
-			self.parent_model.row_updated(self.parent_selection)
-			return True
+			return self._setData(index, new_item)
 		return False
+
+class MiasmataDataMixedListModel(MiasmataDataListModel):
+	def data(self, index, role):
+		if role != Qt.EditRole:
+			return MiasmataDataListModel.data(self, index, role)
+		item = self.node[index.row()]
+		if isinstance(item, data.null_str):
+			return '"%s"' % str(item)
+		return str(item)
+
+	def setData(self, index, value, role):
+		if role != Qt.EditRole:
+			return False
+		if len(value) >= 2 and value[0] == value[-1] == '"':
+			return self._setData(index, data.null_str(value[1:-1]))
+		try:
+			new_item = data.data_int(value)
+		except ValueError:
+			try:
+				new_item = data.data_float(value)
+			except ValueError:
+				return False
+		return self._setData(index, new_item)
+
 
 class MiasmataDataView(QtGui.QWidget):
 	from miasmod_data_ui import Ui_MiasmataData
@@ -283,7 +308,10 @@ class MiasmataDataView(QtGui.QWidget):
 			self.ui.actionDelete.setEnabled(False)
 
 		if isinstance(node, data.data_list):
-			model = MiasmataDataListModel(node, self.model, current)
+			if isinstance(node, data.data_mixed_list):
+				model = MiasmataDataMixedListModel(node, self.model, current)
+			else:
+				model = MiasmataDataListModel(node, self.model, current)
 			self.ui.value_list.setModel(model)
 			self.ui.value_list.setVisible(True)
 		elif isinstance(node, data.data_raw):
