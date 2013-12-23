@@ -1,5 +1,16 @@
 #!/usr/bin/env python
 
+# TODO:
+# Handle editing mixed lists
+# Handle changing data types
+# Add context menu to add / remove items
+# Raw data
+#  - save/load file
+#  - Various ways to interpret it
+# Save saves.dat
+# Save alocalmod.rs5
+# Create x.miasmod files with diffs
+
 import sys
 
 from PySide import QtCore, QtGui
@@ -38,7 +49,7 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 
 	def __init__(self, root):
 		QtCore.QAbstractItemModel.__init__(self)
-		self.root = root
+		self.root = data.data_tree((root.name, root))
 		self.keepalive = set()
 
 	def index_to_node(self, index):
@@ -98,18 +109,20 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 			return {0: 'Key', 1: 'Value'}[section]
 
 	def row_updated(self, index):
-		# assert(index.column() == 0)
+		assert(index.column() == 0)
 		# Update all columns - index will point at col 0
-		sel_end = self.index(1, index.column(), index.parent())
+		sel_end = self.index(index.row(), 1, index.parent())
 		self.dataChanged.emit(index, sel_end)
 
 	def removeRows(self, row, count, parent):
 		parent_node = self.index_to_node(parent)
+		parent_node.dirty = True
 		self.beginRemoveRows(parent, row, row + count - 1)
 		while count:
 			del parent_node[parent_node.keys()[row]]
 			count -= 1
 		self.endRemoveRows()
+		return True
 
 	# def insertRows(self, position, rows, parent):
 	# 	parent_node = self.index_to_node(parent)
@@ -119,7 +132,6 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 	# 		rows -= 1
 	# 	self.endInsertRows()
 
-	# Would cause crash due to stale index:
 	def setDataValue(self, index, value, role = Qt.EditRole):
 		if role == Qt.EditRole:
 			old_node = self.index_to_node(index)
@@ -132,6 +144,22 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 			return True
 		return False
 
+	def setDataName(self, index, value, role = Qt.EditRole):
+		if role == Qt.EditRole:
+			node = self.index_to_node(index)
+			if value in node.parent:
+				return None
+			parent_idx = self.parent(index)
+			self.removeRows(index.row(), 1, parent_idx)
+			node.name = value
+			node.dirty = True
+			insert_pos = len(node.parent)
+			self.beginInsertRows(parent_idx, insert_pos, insert_pos)
+			node.parent[node.name] = node
+			self.endInsertRows()
+			return self.index(insert_pos, 0, parent_idx)
+		return None
+
 class MiasmataDataSortProxy(QtGui.QSortFilterProxyModel):
 	def index_to_node(self, index):
 		return self.sourceModel().index_to_node(self.mapToSource(index))
@@ -139,6 +167,12 @@ class MiasmataDataSortProxy(QtGui.QSortFilterProxyModel):
 	def setDataValue(self, index, value, role = Qt.EditRole):
 		index = self.mapToSource(index)
 		return self.sourceModel().setDataValue(index, value, role)
+
+	def setDataName(self, index, value, role = Qt.EditRole):
+		index = self.mapToSource(index)
+		new_index = self.sourceModel().setDataName(index, value, role)
+		if new_index is not None:
+			return self.mapFromSource(new_index)
 
 	def row_updated(self, index):
 		return self.sourceModel().row_updated(self.mapToSource(index))
@@ -196,8 +230,13 @@ class MiasmataDataView(QtGui.QWidget):
 		self.sort_proxy.setDynamicSortFilter(True)
 		self.model = self.sort_proxy
 		self.ui.treeView.setModel(self.sort_proxy)
+		self.ui.treeView.expandToDepth(0)
 
 		self.ui.treeView.setColumnWidth(0, 256)
+
+		self.ui.treeView.addAction(self.ui.actionNew_Key)
+		self.ui.treeView.addAction(self.ui.actionNew_Value)
+		self.ui.treeView.addAction(self.ui.actionDelete)
 
 		# Can this be done with the PySide auto signal/slot assign thingy?
 		#
@@ -205,8 +244,8 @@ class MiasmataDataView(QtGui.QWidget):
 		# Doing this in one line like this results in a crash due to
 		# the selection model being prematurely garbage collected:
 		# self.ui.treeView.selectionModel().currentChanged.connect(self.currentChanged)
-		selection_model = self.ui.treeView.selectionModel()
-		selection_model.currentChanged.connect(self.currentChanged)
+		self.selection_model = self.ui.treeView.selectionModel()
+		self.selection_model.currentChanged.connect(self.currentChanged)
 
 		items = [ type.desc for type in data.data_types.values() ]
 		self.ui.type.insertItems(0, items)
@@ -222,9 +261,7 @@ class MiasmataDataView(QtGui.QWidget):
 	@QtCore.Slot()
 	def currentChanged(self, current, previous):
 		self.cur_node = node = self.model.index_to_node(current)
-		self.selection = current
 
-		self.ui.name.setReadOnly(True)
 		self.ui.name.setText(node.name)
 		self.ui.type.setCurrentIndex(data.data_types.keys().index(node.id))
 
@@ -234,6 +271,16 @@ class MiasmataDataView(QtGui.QWidget):
 		self.ui.value_list.setModel(None)
 		self.ui.value_hex.setVisible(False)
 		self.ui.value_hex.setPlainText('')
+
+		self.ui.actionNew_Key.setEnabled(False)
+		self.ui.actionNew_Value.setEnabled(False)
+
+		if current.parent().isValid():
+			self.ui.name.setReadOnly(False)
+			self.ui.actionDelete.setEnabled(True)
+		else:
+			self.ui.name.setReadOnly(True)
+			self.ui.actionDelete.setEnabled(False)
 
 		if isinstance(node, data.data_list):
 			model = MiasmataDataListModel(node, self.model, current)
@@ -245,7 +292,8 @@ class MiasmataDataView(QtGui.QWidget):
 			self.ui.value_hex.setPlainText('\n'.join(lines))
 			self.ui.value_hex.setVisible(True)
 		elif isinstance(node, (data.data_tree, data.data_null)):
-			pass
+			self.ui.actionNew_Key.setEnabled(True)
+			self.ui.actionNew_Value.setEnabled(True)
 		else:
 			self.ui.value_line.setText(str(node))
 			if isinstance(node, data.data_int):
@@ -261,7 +309,23 @@ class MiasmataDataView(QtGui.QWidget):
 	def on_value_line_editingFinished(self):
 		text = self.ui.value_line.text()
 		if str(self.cur_node) != text:
-			self.model.setDataValue(self.selection, text)
+			selection = self.selection_model.currentIndex()
+			self.model.setDataValue(selection, text)
+
+	@QtCore.Slot()
+	def on_name_editingFinished(self):
+		name = self.ui.name.text()
+		if self.cur_node.name != name:
+			selection = self.selection_model.currentIndex()
+			new_index = self.model.setDataName(selection, name)
+			self.selection_model.setCurrentIndex(new_index, \
+					QtGui.QItemSelectionModel.ClearAndSelect \
+					| QtGui.QItemSelectionModel.Rows)
+
+	@QtCore.Slot()
+	def on_actionDelete_triggered(self):
+		selection = self.selection_model.currentIndex()
+		self.model.removeRows(selection.row(), 1, selection.parent())
 
 
 class MiasMod(QtGui.QMainWindow):
@@ -281,6 +345,7 @@ class MiasMod(QtGui.QMainWindow):
 		except Exception as e:
 				pass
 		else:
+			saves.name = 'saves.dat'
 			self.ui.tabWidget.addTab(MiasmataDataView(saves), u"saves.dat")
 
 	def __del__(self):

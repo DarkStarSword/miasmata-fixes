@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'miasmod_data.ui'
 #
-# Created: Thu Dec 19 23:40:27 2013
+# Created: Tue Dec 24 01:33:10 2013
 #      by: pyside-uic 0.2.15 running on PySide 1.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -16,7 +16,9 @@ class Ui_MiasmataData(object):
         self.horizontalLayout = QtGui.QHBoxLayout(MiasmataData)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.treeView = QtGui.QTreeView(MiasmataData)
+        self.treeView.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
         self.treeView.setAlternatingRowColors(True)
+        self.treeView.setRootIsDecorated(False)
         self.treeView.setUniformRowHeights(True)
         self.treeView.setAllColumnsShowFocus(True)
         self.treeView.setObjectName("treeView")
@@ -54,6 +56,7 @@ class Ui_MiasmataData(object):
         sizePolicy.setVerticalStretch(100)
         sizePolicy.setHeightForWidth(self.value_list.sizePolicy().hasHeightForWidth())
         self.value_list.setSizePolicy(sizePolicy)
+        self.value_list.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
         self.value_list.setAlternatingRowColors(True)
         self.value_list.setUniformItemSizes(True)
         self.value_list.setObjectName("value_list")
@@ -88,6 +91,12 @@ class Ui_MiasmataData(object):
         self.horizontalLayout.addLayout(self.verticalLayout_2)
         self.horizontalLayout.setStretch(0, 3)
         self.horizontalLayout.setStretch(1, 2)
+        self.actionDelete = QtGui.QAction(MiasmataData)
+        self.actionDelete.setObjectName("actionDelete")
+        self.actionNew_Key = QtGui.QAction(MiasmataData)
+        self.actionNew_Key.setObjectName("actionNew_Key")
+        self.actionNew_Value = QtGui.QAction(MiasmataData)
+        self.actionNew_Value.setObjectName("actionNew_Value")
         self.label.setBuddy(self.name)
         self.label_2.setBuddy(self.type)
 
@@ -100,4 +109,7 @@ class Ui_MiasmataData(object):
         self.label_3.setText(QtGui.QApplication.translate("MiasmataData", "Value:", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButton.setText(QtGui.QApplication.translate("MiasmataData", "&Save Changes", None, QtGui.QApplication.UnicodeUTF8))
         self.cancel.setText(QtGui.QApplication.translate("MiasmataData", "&Discard Changes", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionDelete.setText(QtGui.QApplication.translate("MiasmataData", "Delete", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionNew_Key.setText(QtGui.QApplication.translate("MiasmataData", "New Key", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionNew_Value.setText(QtGui.QApplication.translate("MiasmataData", "New Value", None, QtGui.QApplication.UnicodeUTF8))
 

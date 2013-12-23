@@ -13,8 +13,14 @@
   <layout class="QHBoxLayout" name="horizontalLayout" stretch="3,2">
    <item>
     <widget class="QTreeView" name="treeView">
+     <property name="contextMenuPolicy">
+      <enum>Qt::ActionsContextMenu</enum>
+     </property>
      <property name="alternatingRowColors">
       <bool>true</bool>
+     </property>
+     <property name="rootIsDecorated">
+      <bool>false</bool>
      </property>
      <property name="uniformRowHeights">
       <bool>true</bool>
@@ -95,6 +101,9 @@
          <verstretch>100</verstretch>
         </sizepolicy>
        </property>
+       <property name="contextMenuPolicy">
+        <enum>Qt::ActionsContextMenu</enum>
+       </property>
        <property name="alternatingRowColors">
         <bool>true</bool>
        </property>
@@ -163,6 +172,21 @@
     </layout>
    </item>
   </layout>
+  <action name="actionDelete">
+   <property name="text">
+    <string>Delete</string>
+   </property>
+  </action>
+  <action name="actionNew_Key">
+   <property name="text">
+    <string>New Key</string>
+   </property>
+  </action>
+  <action name="actionNew_Value">
+   <property name="text">
+    <string>New Value</string>
+   </property>
+  </action>
  </widget>
  <tabstops>
   <tabstop>treeView</tabstop>

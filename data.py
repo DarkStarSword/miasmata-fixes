@@ -96,8 +96,11 @@ class null_str(str):
 class data_tree(object):
 	id = 'T'
 	desc = 'Tree Node'
-	def __init__(self):
-		self.children = collections.OrderedDict()
+	def __init__(self, *args):
+		self.children = collections.OrderedDict(args)
+		for (name, child) in self.children.iteritems():
+			child.parent = self
+			child.name = name
 		self.parent = None
 		self.name = None
 	def dec(self, f):
