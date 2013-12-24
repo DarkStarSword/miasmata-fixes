@@ -12,12 +12,15 @@ def parse_environment(f, outputfd):
 	assert(chunks.u2 == 1)
 	assert(len(chunks) == 1)
 
-	data.parse_chunk(chunks['DATA'], outputfd)
+	data.chunk2json(chunks['DATA'], outputfd)
+
+def make_chunks(buf):
+	chunk = data.make_chunk(buf)
+	chunks = rs5file.Rs5ChunkedFileEncoder('RAW.', 'environment', 1, chunk)
+	return chunks.encode()
 
 def json2env(j, outputfd):
-	chunk = data.make_chunk(data.json2data(j))
-	chunks = rs5file.Rs5ChunkedFileEncoder('RAW.', 'environment', 1, chunk)
-	outputfd.write(chunks.encode())
+	outputfd.write(make_chunks(data.json2data(j)))
 
 def parse_args():
 	import argparse

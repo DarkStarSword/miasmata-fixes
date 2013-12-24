@@ -1,14 +1,25 @@
 #!/usr/bin/env python
 
 # TODO:
+#
+# - Play nice with rs5 archives that have other files inside them
+# - Detect if saves.dat has been modified externally & ask to reload
+# - Menus to re-open saves.dat & arbitrary environment files
+#   - Prevent opening same file multiple times
+# - Figure out why the dirty bold indicator isn't always being cleared on save.
+#   Just rendering (no dataChanged emitted), or flag actually not cleared?
+#   Could it be related to the undo deep copy?
+#
+# - Ability to diff environments (save as *.miasmod files)
+# - Merge all diffs into alocalmod.rs5
+# - Detect if alocalmod.rs5 is out of sync from diffs
+#
 # Raw data
 #  - save/load file
 #  - Various ways to interpret it
-# Save saves.dat
-# Save alocalmod.rs5
-# Create x.miasmod files with diffs
 
-import sys
+import sys, os
+from glob import glob
 
 from PySide import QtCore, QtGui
 from PySide.QtCore import Qt
@@ -16,7 +27,9 @@ from PySide.QtCore import Qt
 import multiprocessing
 
 import miasutil
-
+import rs5archive
+import rs5file
+import environment
 import data
 
 
@@ -44,6 +57,7 @@ def mark_dirty(object):
 def clear_dirty():
 	for object in dirty_objects:
 		del object.dirty
+		# TODO: Emit dataChanged
 	dirty_objects.clear()
 
 def add_undo_data(object):
@@ -102,6 +116,10 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 			return len(node)
 		return 0
 
+	def hasChildren(self, parent):
+		node = self.index_to_node(parent)
+		return isinstance(node, data.data_tree)
+
 	def columnCount(self, parent):
 		return 2
 
@@ -142,6 +160,7 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 
 	def insert_row(self, node, parent):
 		parent_node = self.index_to_node(parent)
+		mark_dirty(node)
 		insert_pos = len(parent_node)
 		self.beginInsertRows(parent, insert_pos, insert_pos)
 		parent_node[node.name] = node
@@ -220,6 +239,9 @@ class MiasmataDataSortProxy(QtGui.QSortFilterProxyModel):
 	def insert_row(self, node, parent):
 		ret = self.sourceModel().insert_row(node, self.mapToSource(parent))
 		return self.mapFromSource(ret)
+
+	def hasChildren(self, parent):
+		return self.sourceModel().hasChildren(self.mapToSource(parent))
 
 class MiasmataDataListModel(QtCore.QAbstractListModel):
 	def __init__(self, node, parent_model, parent_selection):
@@ -327,23 +349,26 @@ class MiasmataDataMixedListModel(MiasmataDataListModel):
 
 class MiasmataDataView(QtGui.QWidget):
 	from miasmod_data_ui import Ui_MiasmataData
-	def __init__(self, root, save_path=None, parent=None):
+	def __init__(self, root, sort=True, save_path=None, rs5_path=None, parent=None):
 		super(MiasmataDataView, self).__init__(parent)
 		self.ui = self.Ui_MiasmataData()
 		self.ui.setupUi(self)
 
 		self.cur_node = None
 		self.save_path = save_path
+		self.rs5_path = rs5_path
 		self.root = root
 
 		self.model = MiasmataDataModel(root)
-		# self.ui.treeView.setModel(self.model)
-		self.sort_proxy = MiasmataDataSortProxy(self)
-		self.sort_proxy.setSourceModel(self.model)
-		self.sort_proxy.sort(0, Qt.AscendingOrder)
-		self.sort_proxy.setDynamicSortFilter(True)
-		self.model = self.sort_proxy
-		self.ui.treeView.setModel(self.sort_proxy)
+		if sort:
+			self.sort_proxy = MiasmataDataSortProxy(self)
+			self.sort_proxy.setSourceModel(self.model)
+			self.sort_proxy.sort(0, Qt.AscendingOrder)
+			self.sort_proxy.setDynamicSortFilter(True)
+			self.model = self.sort_proxy
+			self.ui.treeView.setModel(self.sort_proxy)
+		else:
+			self.ui.treeView.setModel(self.model)
 		self.model.dataChanged.connect(self.dataChanged)
 		self.model.rowsInserted.connect(self.enable_save)
 		self.model.rowsRemoved.connect(self.enable_save)
@@ -475,14 +500,14 @@ class MiasmataDataView(QtGui.QWidget):
 		return json1.getvalue() == json2.getvalue()
 
 	def write_saves_dat(self):
-		import time, os
+		import time
 		try:
 			buf = data.encode(self.root)
 		except Exception as e:
 			QtGui.QMessageBox.warning(self, 'MiasMod',
 				'%s while encoding data\n\n%s\n\nRefusing to write saves.dat!\n\nThis means there is a bug in MiasMod, please report this to DarkStarSword!' \
 				% (e.__class__.__name__, str(e)))
-			return -1
+			return
 
 		if not self.verify(buf):
 			QtGui.QMessageBox.warning(self, 'MiasMod',
@@ -498,7 +523,7 @@ class MiasmataDataView(QtGui.QWidget):
 			QtGui.QMessageBox.warning(self, 'MiasMod',
 				'%s while backing up saves.dat\n\n%s\n\nRefusing to write saves.dat!' \
 				% (e.__class__.__name__, str(e)))
-			return -1
+			return
 
                 try:
 			open(self.save_path, 'wb').write(buf)
@@ -518,15 +543,51 @@ class MiasmataDataView(QtGui.QWidget):
 				QtGui.QMessageBox.warning(self, 'MiasMod',
 					'%s while restoring %s\n\n%s' \
 					% (e.__class__.__name__, backup, str(e)))
-			return -1
-
-	@QtCore.Slot()
-	def on_save_clicked(self):
-		if self.write_saves_dat():
 			return
+		return True
+
+	def write_rs5(self):
+		try:
+			buf = data.encode(self.root)
+		except Exception as e:
+			QtGui.QMessageBox.warning(self, 'MiasMod',
+				'%s while encoding data\n\n%s\n\nRefusing to write saves.dat!\n\nThis means there is a bug in MiasMod, please report this to DarkStarSword!' \
+				% (e.__class__.__name__, str(e)))
+			return
+
+		buf = environment.make_chunks(buf)
+
+		if os.path.exists(self.rs5_path):
+			# TODO: If archive only contains environment, blow it
+			# away and create a fresh one to prevent wasted space.
+			# TODO: Prompt to repack archive to save space
+			archive = rs5archive.Rs5ArchiveUpdater(open(self.rs5_path, 'rb+'))
+		else:
+			archive = rs5archive.Rs5ArchiveEncoder(self.rs5_path)
+
+		archive.add_from_buf(buf)
+		archive.save()
+
+		return True
+
+	def is_dirty(self):
+		return self.ui.save.isEnabled()
+
+	def save(self):
+		if self.save_path is not None:
+			if self.write_saves_dat() != True:
+				return
+
+		if self.rs5_path is not None:
+			if self.write_rs5() != True:
+				return
 
 		clear_dirty()
 		self.ui.save.setEnabled(False)
+
+	@QtCore.Slot()
+	def on_save_clicked(self):
+		self.save()
 
 	@QtCore.Slot()
 	def on_value_line_editingFinished(self):
@@ -631,6 +692,7 @@ class MiasMod(QtGui.QMainWindow):
 		self.ui = self.Ui_MainWindow()
 		self.ui.setupUi(self)
 
+	def open_saves_dat(self):
 		try:
 			path = miasutil.find_miasmata_save()
 		except Exception as e:
@@ -638,50 +700,122 @@ class MiasMod(QtGui.QMainWindow):
 		try:
 			saves = data.parse_data(open(path, 'rb'))
 		except Exception as e:
-				pass
-		else:
-			saves.name = data.null_str('saves.dat')
-			self.ui.tabWidget.addTab(MiasmataDataView(saves, save_path = path), u"saves.dat")
+			return
+
+		saves.name = data.null_str('saves.dat')
+		self.ui.tabWidget.addTab(MiasmataDataView(saves, sort=True, save_path = path), u"saves.dat")
+
+	def open_environment(self, install_path, filename, save_path=None):
+		f = open(filename, 'rb')
+		archive = rs5archive.Rs5ArchiveDecoder(f)
+		chunks = rs5file.Rs5ChunkedFileDecoder(archive['environment'].decompress())
+		env = data.parse_chunk(chunks['DATA'])
+		if save_path == None:
+			save_path = filename
+		env.name = data.null_str('%s/environment' % os.path.basename(save_path))
+		# save_path = os.path.join(install_path, 'alocalmod.rs5')
+
+		view = MiasmataDataView(env, rs5_path = save_path)
+		self.ui.tabWidget.addTab(view, unicode(env.name))
+
+	def open_all_environments(self):
+		try:
+			install_path = miasutil.find_miasmata_install()
+		except Exception as e:
+			return
+
+		for filename in glob(os.path.join(install_path, '*.rs5')):
+			if os.path.basename(filename).lower() == 'main.rs5':
+				continue
+			try:
+				self.open_environment(install_path, filename)
+			except:
+				continue
+
+	def open_active_environment(self):
+		try:
+			install_path = miasutil.find_miasmata_install()
+		except Exception as e:
+			return
+
+		files = sorted([ os.path.basename(file).lower() for file in glob(os.path.join(install_path, '*.rs5')) ])
+		if 'main.rs5' in files:
+			files.remove('main.rs5')
+		active = os.path.join(install_path, files[0])
+		save_path = os.path.join(install_path, 'alocalmod.rs5')
+		try:
+			self.open_environment(install_path, active, save_path=save_path)
+		except:
+			return
 
 	def __del__(self):
 		self.ui.tabWidget.clear()
 		del self.ui
 
-	@QtCore.Slot(list)
-	def recv(self, v):
-		print v
+	def ask_save(self, name):
+		dialog = QtGui.QMessageBox()
+		dialog.setWindowTitle('MiasMod')
+		dialog.setText('%s has been modified, save?' % name)
+		dialog.setStandardButtons(QtGui.QMessageBox.Yes | QtGui.QMessageBox.No | QtGui.QMessageBox.Cancel)
+		dialog.setDefaultButton(QtGui.QMessageBox.Yes)
+		return dialog.exec_()
 
-class PipeMonitor(QtCore.QObject):
-	# Unnecessary on a Unix based environment - QSocketNotifier should work
-	# with the pipe's fileno() and integrate with Qt's main loop like you
-	# would expect with any select()/epoll() based event loop.
-	#
-	# On Windows however...
-	#
-	# For future reference - the "pipe" is implemented as a Windows Named
-	# Pipe. Qt5 does have some mechanisms to deal with those, but AFAICT to
-	# use Qt5 I would need to use PyQt (not PySide which is still Qt 4.8)
-	# with Python 3, but some of the modules I'm using still depend on
-	# Python 2 (certainly bbfreeze & I think py2exe as well).
+	def ask_save_tab(self, tab_index):
+		tab = self.ui.tabWidget.widget(tab_index)
+		if tab.is_dirty():
+			response = self.ask_save(self.ui.tabWidget.tabText(tab_index))
+			if response == QtGui.QMessageBox.Yes:
+				tab.save()
+			return response
 
-	import threading
-	recv = QtCore.Signal(list)
+	def closeEvent(self, event):
+		for i in range(self.ui.tabWidget.count()):
+			if self.ask_save_tab(i) == QtGui.QMessageBox.Cancel:
+				event.ignore()
+				return
+		event.accept()
 
-	def __init__(self, pipe):
-		QtCore.QObject.__init__(self)
-		self.pipe = pipe
+	@QtCore.Slot(int)
+	def on_tabWidget_tabCloseRequested(self, index):
+		if self.ask_save_tab(index) == QtGui.QMessageBox.Cancel:
+			return
+		self.ui.tabWidget.removeTab(index)
 
-	def _start(self):
-		while True:
-			v = self.pipe.recv()
-			self.recv.emit(v)
+	# @QtCore.Slot(list)
+	# def recv(self, v):
+	# 	print v
 
-	def start(self):
-		self.thread = self.threading.Thread(target=self._start)
-		self.thread.daemon = True
-		self.thread.start()
+# class PipeMonitor(QtCore.QObject):
+# 	# Unnecessary on a Unix based environment - QSocketNotifier should work
+# 	# with the pipe's fileno() and integrate with Qt's main loop like you
+# 	# would expect with any select()/epoll() based event loop.
+# 	#
+# 	# On Windows however...
+# 	#
+# 	# For future reference - the "pipe" is implemented as a Windows Named
+# 	# Pipe. Qt5 does have some mechanisms to deal with those, but AFAICT to
+# 	# use Qt5 I would need to use PyQt (not PySide which is still Qt 4.8)
+# 	# with Python 3, but some of the modules I'm using still depend on
+# 	# Python 2 (certainly bbfreeze & I think py2exe as well).
+# 
+# 	import threading
+# 	recv = QtCore.Signal(list)
+# 
+# 	def __init__(self, pipe):
+# 		QtCore.QObject.__init__(self)
+# 		self.pipe = pipe
+# 
+# 	def _start(self):
+# 		while True:
+# 			v = self.pipe.recv()
+# 			self.recv.emit(v)
+# 
+# 	def start(self):
+# 		self.thread = self.threading.Thread(target=self._start)
+# 		self.thread.daemon = True
+# 		self.thread.start()
 
-def start_gui_process(pipe):
+def start_gui_process(pipe=None):
 	app = QtGui.QApplication(sys.argv)
 
 	window = MiasMod()
@@ -691,6 +825,9 @@ def start_gui_process(pipe):
 	# m.start()
 
 	window.show()
+	window.open_saves_dat()
+	window.open_active_environment()
+	# window.open_all_environments()
 
 	# import trace
 	# t = trace.Trace()
@@ -705,9 +842,9 @@ if __name__ == '__main__':
 	# if hasattr(multiprocessing, 'set_executable'):
 		# Set python interpreter
 
-	(parent_conn, child_conn) = multiprocessing.Pipe()
+	# (parent_conn, child_conn) = multiprocessing.Pipe()
 
-	start_gui_process(child_conn)
+	start_gui_process()
 
 	# gui = multiprocessing.Process(target=start_gui_process, args=(child_conn,))
 	# gui.daemon = True

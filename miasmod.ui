@@ -20,6 +20,9 @@
       <property name="currentIndex">
        <number>-1</number>
       </property>
+      <property name="tabsClosable">
+       <bool>true</bool>
+      </property>
      </widget>
     </item>
    </layout>
@@ -30,7 +33,7 @@
      <x>0</x>
      <y>0</y>
      <width>935</width>
-     <height>20</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

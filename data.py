@@ -285,7 +285,11 @@ def parse_data(f):
 def data2json(f, outputfd):
 	return dump_json(parse_data(f), outputfd)
 
-def parse_chunk(chunk, outputfd):
+def parse_chunk(chunk):
+	assert(chunk.name == 'DATA')
+	return parse_data(chunk.get_fp())
+
+def chunk2json(chunk, outputfd):
 	assert(chunk.name == 'DATA')
 	return data2json(chunk.get_fp(), outputfd)
 

@@ -91,9 +91,14 @@ class Rs5CompressedFileDecoder(Rs5CompressedFile):
 		os.utime(dest, (self.modtime, self.modtime))
 
 class Rs5CompressedFileEncoder(Rs5CompressedFile):
-	def __init__(self, fp, filename):
-		self.modtime = os.stat(filename).st_mtime
-		uncompressed = open(filename, 'rb').read()
+	def __init__(self, fp, filename = None, buf = None):
+		if filename is not None:
+			self.modtime = os.stat(filename).st_mtime
+			uncompressed = open(filename, 'rb').read()
+		else:
+			import time
+			self.modtime = time.time()
+			uncompressed = buf
 		self.uncompressed_size = len(uncompressed)
 		contents = rs5file.Rs5FileDecoder(uncompressed)
 		(self.type, self.filename) = (contents.magic, contents.filename)
@@ -124,8 +129,7 @@ class Rs5ArchiveDecoder(collections.OrderedDict):
 	def __init__(self, f):
 		magic = f.read(8)
 		if magic != 'CFILEHDR':
-			print 'Invalid file header'
-			return 1
+			raise ValueError('Invalid file header')
 
 		(d_off, ent_len, u1) = struct.unpack('<QII', f.read(16))
 
@@ -161,6 +165,11 @@ class Rs5ArchiveEncoder(collections.OrderedDict):
 		entry = Rs5CompressedFileEncoder(self.fp, filename)
 		self[entry.filename] = entry
 
+	def add_from_buf(self, buf):
+		entry = Rs5CompressedFileEncoder(self.fp, buf=buf)
+		print "Adding %s..." % entry.filename
+		self[entry.filename] = entry
+
 	def _write_directory(self):
 		print "Writing central directory..."
 		self.d_off = self.fp.tell()
@@ -193,6 +202,10 @@ class Rs5ArchiveUpdater(Rs5ArchiveEncoder, Rs5ArchiveDecoder):
 	def add(self, filename):
 		self.fp.seek(0, 2)
 		return Rs5ArchiveEncoder.add(self, filename)
+
+	def add_from_buf(self, buf):
+		self.fp.seek(0, 2)
+		return Rs5ArchiveEncoder.add_from_buf(self, buf)
 
 	def save(self):
 		self.fp.seek(0, 2)
