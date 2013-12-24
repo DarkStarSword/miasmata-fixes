@@ -239,5 +239,140 @@
   <tabstop>delete_node</tabstop>
  </tabstops>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>actionNew_Key</sender>
+   <signal>triggered()</signal>
+   <receiver>MiasmataData</receiver>
+   <slot>insert_key()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>356</x>
+     <y>244</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionNew_Value</sender>
+   <signal>triggered()</signal>
+   <receiver>MiasmataData</receiver>
+   <slot>insert_value()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>356</x>
+     <y>244</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>new_key</sender>
+   <signal>clicked()</signal>
+   <receiver>MiasmataData</receiver>
+   <slot>insert_key()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>476</x>
+     <y>427</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>356</x>
+     <y>244</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>new_value</sender>
+   <signal>clicked()</signal>
+   <receiver>MiasmataData</receiver>
+   <slot>insert_value()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>513</x>
+     <y>465</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>407</x>
+     <y>532</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>delete_node</sender>
+   <signal>clicked()</signal>
+   <receiver>MiasmataData</receiver>
+   <slot>delete_node()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>626</x>
+     <y>462</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>626</x>
+     <y>553</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>undo</sender>
+   <signal>clicked()</signal>
+   <receiver>MiasmataData</receiver>
+   <slot>undo()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>659</x>
+     <y>428</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>686</x>
+     <y>553</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionUndo_Changes</sender>
+   <signal>triggered()</signal>
+   <receiver>MiasmataData</receiver>
+   <slot>undo()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>356</x>
+     <y>244</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionDelete</sender>
+   <signal>triggered()</signal>
+   <receiver>MiasmataData</receiver>
+   <slot>delete_node()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>356</x>
+     <y>244</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>insert_key()</slot>
+  <slot>insert_value()</slot>
+  <slot>undo()</slot>
+  <slot>delete_node()</slot>
+ </slots>
 </ui>

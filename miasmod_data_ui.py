@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'miasmod_data.ui'
 #
-# Created: Wed Dec 25 00:12:42 2013
+# Created: Wed Dec 25 01:13:04 2013
 #      by: pyside-uic 0.2.15 running on PySide 1.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -116,6 +116,14 @@ class Ui_MiasmataData(object):
         self.label_3.setBuddy(self.value_line)
 
         self.retranslateUi(MiasmataData)
+        QtCore.QObject.connect(self.actionNew_Key, QtCore.SIGNAL("triggered()"), MiasmataData.insert_key)
+        QtCore.QObject.connect(self.actionNew_Value, QtCore.SIGNAL("triggered()"), MiasmataData.insert_value)
+        QtCore.QObject.connect(self.new_key, QtCore.SIGNAL("clicked()"), MiasmataData.insert_key)
+        QtCore.QObject.connect(self.new_value, QtCore.SIGNAL("clicked()"), MiasmataData.insert_value)
+        QtCore.QObject.connect(self.delete_node, QtCore.SIGNAL("clicked()"), MiasmataData.delete_node)
+        QtCore.QObject.connect(self.undo, QtCore.SIGNAL("clicked()"), MiasmataData.undo)
+        QtCore.QObject.connect(self.actionUndo_Changes, QtCore.SIGNAL("triggered()"), MiasmataData.undo)
+        QtCore.QObject.connect(self.actionDelete, QtCore.SIGNAL("triggered()"), MiasmataData.delete_node)
         QtCore.QMetaObject.connectSlotsByName(MiasmataData)
         MiasmataData.setTabOrder(self.treeView, self.name)
         MiasmataData.setTabOrder(self.name, self.type)

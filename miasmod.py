@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 # TODO:
-# Context menu to add items
-#    ... & to list view
 # Raw data
 #  - save/load file
 #  - Various ways to interpret it
@@ -209,6 +207,10 @@ class MiasmataDataSortProxy(QtGui.QSortFilterProxyModel):
 			return self.mapFromSource(ret)
 		return ret
 
+	def insert_row(self, node, parent):
+		ret = self.sourceModel().insert_row(node, self.mapToSource(parent))
+		return self.mapFromSource(ret)
+
 class MiasmataDataListModel(QtCore.QAbstractListModel):
 	def __init__(self, node, parent_model, parent_selection):
 		QtCore.QAbstractListModel.__init__(self)
@@ -386,7 +388,7 @@ class MiasmataDataView(QtGui.QWidget):
 			self.ui.actionDelete.setEnabled(False)
 			self.ui.delete_node.setEnabled(False)
 
-		if hasattr(self.cur_node, 'undo'):
+		if hasattr(self.cur_node, 'undo') and self.cur_node.undo is not None:
 			self.ui.actionUndo_Changes.setEnabled(True)
 			self.ui.undo.setEnabled(True)
 		else:
@@ -417,9 +419,13 @@ class MiasmataDataView(QtGui.QWidget):
 		if isinstance(node, data.data_tree):
 			self.ui.actionNew_Key.setEnabled(True)
 			self.ui.actionNew_Value.setEnabled(True)
+			self.ui.new_key.setEnabled(True)
+			self.ui.new_value.setEnabled(True)
 		else:
 			self.ui.actionNew_Key.setEnabled(False)
 			self.ui.actionNew_Value.setEnabled(False)
+			self.ui.new_key.setEnabled(False)
+			self.ui.new_value.setEnabled(False)
 
 		if isinstance(node, (data.null_str, data.data_int, data.data_float)):
 			self.ui.value_line.setText(str(node))
@@ -478,6 +484,35 @@ class MiasmataDataView(QtGui.QWidget):
 		selection = self.selection_model.currentIndex()
 		self.model.setDataValue(selection, new_item)
 
+
+	def insert_node(self, node, name_prefix):
+		parent_idx = self.selection_model.currentIndex()
+		i = 0
+		while True:
+			name = '%s_%i' % (name_prefix, i)
+			if name not in self.cur_node:
+				node.name = name
+				break
+			i += 1
+		node.undo = None
+		new_index = self.model.insert_row(node, parent_idx)
+		self.selection_model.setCurrentIndex(new_index, \
+					QtGui.QItemSelectionModel.ClearAndSelect \
+					| QtGui.QItemSelectionModel.Rows)
+		self.ui.name.setFocus()
+		self.ui.name.selectAll()
+
+	@QtCore.Slot()
+	def insert_value(self):
+		node = data.data_null()
+		return self.insert_node(node, 'Item')
+
+	@QtCore.Slot()
+	def insert_key(self):
+		node = data.data_tree()
+		return self.insert_node(node, 'Key')
+
+	@QtCore.Slot()
 	def undo(self):
 		selection = self.selection_model.currentIndex()
 		new_index = self.model.undo(selection)
@@ -486,12 +521,6 @@ class MiasmataDataView(QtGui.QWidget):
 					QtGui.QItemSelectionModel.ClearAndSelect \
 					| QtGui.QItemSelectionModel.Rows)
 	@QtCore.Slot()
-	def on_actionUndo_Changes_triggered(self):
-		return self.undo()
-	@QtCore.Slot()
-	def on_undo_clicked(self):
-		return self.undo()
-
 	def delete_node(self):
 		selection = self.selection_model.currentIndex()
 		dialog = QtGui.QMessageBox()
@@ -503,20 +532,6 @@ class MiasmataDataView(QtGui.QWidget):
 		ret = dialog.exec_()
 		if ret == QtGui.QMessageBox.Yes:
 			self.model.removeRows(selection.row(), 1, selection.parent())
-	@QtCore.Slot()
-	def on_delete_node_clicked(self):
-		return self.delete_node()
-	@QtCore.Slot()
-	def on_actionDelete_triggered(self):
-		return self.delete_node()
-
-	@QtCore.Slot()
-	def on_actionNew_Key_triggered(self):
-		pass
-	@QtCore.Slot()
-	def on_actionNew_Value_triggered(self):
-		pass
-
 
 	@QtCore.Slot()
 	def on_actionInsert_Row_triggered(self):
