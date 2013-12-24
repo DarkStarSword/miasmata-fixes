@@ -10,7 +10,7 @@
 # Save alocalmod.rs5
 # Create x.miasmod files with diffs
 
-import sys, copy
+import sys
 
 from PySide import QtCore, QtGui
 from PySide.QtCore import Qt
@@ -22,21 +22,30 @@ import miasutil
 import data
 
 
-import re
-_re_dig = re.compile(r'\d+')
-def sort_alnum(val1, val2):
-	if not val1 or not val2 or val1 == val2:
-		return cmp(val1, val2)
-	a = val1[0]
-	b = val2[0]
-	if a.isdigit() and b.isdigit():
-		a = val1[:_re_dig.match(val1).end()]
-		b = val2[:_re_dig.match(val2).end()]
-		if a != b:
-			return cmp(int(a), int(b))
-	elif a != b:
-		return cmp(a, b)
-	return sort_alnum(val1[len(a):], val2[len(b):])
+# import re
+# _re_dig = re.compile(r'\d+')
+# def sort_alnum(val1, val2):
+# 	if not val1 or not val2 or val1 == val2:
+# 		return cmp(val1, val2)
+# 	a = val1[0]
+# 	b = val2[0]
+# 	if a.isdigit() and b.isdigit():
+# 		a = val1[:_re_dig.match(val1).end()]
+# 		b = val2[:_re_dig.match(val2).end()]
+# 		if a != b:
+# 			return cmp(int(a), int(b))
+# 	elif a != b:
+# 		return cmp(a, b)
+# 	return sort_alnum(val1[len(a):], val2[len(b):])
+
+def add_undo_data(object):
+	import copy
+	if hasattr(object, 'undo'):
+		return
+	parent = object.parent
+	del object.parent
+	object.undo = copy.deepcopy(object)
+	object.parent = parent
 
 class MiasmataDataModel(QtCore.QAbstractItemModel):
 	class ThisIsNotAFuckingIntDamnit(object):
@@ -170,10 +179,7 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 				return None
 			parent_node = node.parent
 			parent_idx = self.parent(index)
-			if not hasattr(node, 'undo'):
-				del node.parent
-				node.undo = copy.deepcopy(node)
-				node.parent = parent_node
+			add_undo_data(node)
 			self.removeRows(index.row(), 1, parent_idx)
 			node.name = value
 			node.dirty = True
@@ -211,9 +217,16 @@ class MiasmataDataListModel(QtCore.QAbstractListModel):
 		self.parent_selection = parent_selection
 
 	def rowCount(self, parent):
-		return len(self.node)
+		return len(self.node) + 1
 
 	def data(self, index, role):
+		if index.row() >= len(self.node):
+			if role == Qt.DisplayRole:
+				return 'New Entry...'
+			if role == Qt.EditRole:
+				return str(self.new_entry())
+			if role == Qt.FontRole:
+				return QtGui.QFont(None, italic=True)
 		if role in (Qt.DisplayRole, Qt.EditRole):
 			return str(self.node[index.row()])
 
@@ -222,20 +235,21 @@ class MiasmataDataListModel(QtCore.QAbstractListModel):
 			return
 		return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
 
-	def _setData(self, index, new_item):
-		if not hasattr(self.node, 'undo'):
-			parent = self.node.parent
-			del self.node.parent
-			self.node.undo = copy.deepcopy(self.node)
-			self.node.parent = parent
-		self.node[index.row()] = new_item
+	def notify_parent_model(self):
 		self.node.dirty = True
-		self.dataChanged.emit(index, index)
 		self.parent_model.row_updated(self.parent_selection)
+
+	def _setData(self, index, new_item):
+		add_undo_data(self.node)
+		self.node[index.row()] = new_item
+		self.dataChanged.emit(index, index)
+		self.notify_parent_model()
 		return True
 
 	def setData(self, index, value, role):
 		if role == Qt.EditRole:
+			if index.row() >= len(self.node):
+				self.insertRows(index.row(), 1)
 			old_item = self.node[index.row()]
 			try:
 				new_item = old_item.__class__(value)
@@ -244,10 +258,35 @@ class MiasmataDataListModel(QtCore.QAbstractListModel):
 			return self._setData(index, new_item)
 		return False
 
+	def new_entry(self):
+		return self.node.type()
+
+	def insertRows(self, row, count, parent = QtCore.QModelIndex()):
+		add_undo_data(self.node)
+		self.beginInsertRows(parent, row, row + count - 1)
+		while count:
+			self.node.insert(row, self.new_entry())
+			count -= 1
+		self.endInsertRows()
+		self.notify_parent_model()
+		return True
+
+	def removeRows(self, row, count, parent = QtCore.QModelIndex()):
+		add_undo_data(self.node)
+		self.beginRemoveRows(parent, row, row + count - 1)
+		while count:
+			del self.node[row]
+			count -= 1
+		self.endRemoveRows()
+		self.notify_parent_model()
+		return True
+
 class MiasmataDataMixedListModel(MiasmataDataListModel):
 	def data(self, index, role):
 		if role != Qt.EditRole:
 			return MiasmataDataListModel.data(self, index, role)
+		if index.row() >= len(self.node):
+			return '""'
 		item = self.node[index.row()]
 		if isinstance(item, data.null_str):
 			return '"%s"' % str(item)
@@ -256,6 +295,8 @@ class MiasmataDataMixedListModel(MiasmataDataListModel):
 	def setData(self, index, value, role):
 		if role != Qt.EditRole:
 			return False
+		if index.row() >= len(self.node):
+			self.insertRows(index.row(), 1)
 		if len(value) >= 2 and value[0] == value[-1] == '"':
 			return self._setData(index, data.null_str(value[1:-1]))
 		try:
@@ -266,6 +307,10 @@ class MiasmataDataMixedListModel(MiasmataDataListModel):
 			except ValueError:
 				return False
 		return self._setData(index, new_item)
+
+	@staticmethod
+	def new_entry():
+		return data.null_str()
 
 
 class MiasmataDataView(QtGui.QWidget):
@@ -317,8 +362,8 @@ class MiasmataDataView(QtGui.QWidget):
 		self.ui.value_list.setVisible(False)
 		self.ui.value_hex.setVisible(False)
 
-		self.ui.value_line.addAction(self.ui.actionInsert_Row)
-		self.ui.value_line.addAction(self.ui.actionRemove_Row)
+		self.ui.value_list.addAction(self.ui.actionInsert_Row)
+		self.ui.value_list.addAction(self.ui.actionRemove_Row)
 
 	def __del__(self):
 		del self.ui
@@ -329,19 +374,6 @@ class MiasmataDataView(QtGui.QWidget):
 
 		self.ui.name.setText(node.name)
 		self.ui.type.setCurrentIndex(data.data_types.keys().index(node.id))
-
-		if isinstance(node, (data.data_list, data.data_raw, data.data_tree, data.data_null)):
-			self.ui.value_line.setVisible(False)
-			self.ui.value_line.setText('')
-		if not isinstance(node, data.data_list):
-			self.ui.value_list.setVisible(False)
-			self.ui.value_list.setModel(None)
-		if not isinstance(node, data.data_raw):
-			self.ui.value_hex.setVisible(False)
-			self.ui.value_hex.setPlainText('')
-
-		self.ui.actionNew_Key.setEnabled(False)
-		self.ui.actionNew_Value.setEnabled(False)
 
 		if current.parent().isValid():
 			self.ui.name.setReadOnly(False)
@@ -369,15 +401,27 @@ class MiasmataDataView(QtGui.QWidget):
 			if self.cur_node != previous:
 				self.ui.value_list.setModel(model)
 			self.ui.value_list.setVisible(True)
-		elif isinstance(node, data.data_raw):
+		else:
+			self.ui.value_list.setVisible(False)
+			self.ui.value_list.setModel(None)
+
+		if isinstance(node, data.data_raw):
 			lines = [ node.raw[x:x+8] for x in range(0, len(node.raw), 8) ]
 			lines = map(lambda line: ' '.join([ '%.2x' % ord(x) for x in line ]), lines)
 			self.ui.value_hex.setPlainText('\n'.join(lines))
 			self.ui.value_hex.setVisible(True)
-		elif isinstance(node, (data.data_tree, data.data_null)):
+		else:
+			self.ui.value_hex.setVisible(False)
+			self.ui.value_hex.setPlainText('')
+
+		if isinstance(node, data.data_tree):
 			self.ui.actionNew_Key.setEnabled(True)
 			self.ui.actionNew_Value.setEnabled(True)
 		else:
+			self.ui.actionNew_Key.setEnabled(False)
+			self.ui.actionNew_Value.setEnabled(False)
+
+		if isinstance(node, (data.null_str, data.data_int, data.data_float)):
 			self.ui.value_line.setText(str(node))
 			if isinstance(node, data.data_int):
 				validator = QtGui.QIntValidator(self)
@@ -387,6 +431,10 @@ class MiasmataDataView(QtGui.QWidget):
 				validator = None
 			self.ui.value_line.setValidator(validator)
 			self.ui.value_line.setVisible(True)
+		else:
+			self.ui.value_line.setVisible(False)
+			self.ui.value_line.setText('')
+
 
 	@QtCore.Slot()
 	def currentChanged(self, current, previous):
@@ -462,6 +510,24 @@ class MiasmataDataView(QtGui.QWidget):
 	def on_actionDelete_triggered(self):
 		return self.delete_node()
 
+	@QtCore.Slot()
+	def on_actionNew_Key_triggered(self):
+		pass
+	@QtCore.Slot()
+	def on_actionNew_Value_triggered(self):
+		pass
+
+
+	@QtCore.Slot()
+	def on_actionInsert_Row_triggered(self):
+		index = self.ui.value_list.selectionModel().currentIndex()
+		self.ui.value_list.model().insertRows(index.row(), 1)
+		self.ui.value_list.edit(index, QtGui.QAbstractItemView.AllEditTriggers, None)
+
+	@QtCore.Slot()
+	def on_actionRemove_Row_triggered(self):
+		index = self.ui.value_list.selectionModel().currentIndex()
+		self.ui.value_list.model().removeRows(index.row(), 1)
 
 
 class MiasMod(QtGui.QMainWindow):

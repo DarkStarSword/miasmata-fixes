@@ -73,7 +73,7 @@ class null_str(str):
 	id = 's'
 	desc = 'String'
 	@classmethod
-	def dec_new(cls, f):
+	def dec_new(cls, f=''):
 		r = ''
 		while True:
 			c = f.read(1)
@@ -158,7 +158,7 @@ class data_int(int):
 	id = 'i'
 	desc = 'Integer'
 	@classmethod
-	def dec_new(cls, f):
+	def dec_new(cls, f = 0):
 		return int.__new__(cls, struct.unpack('<i', f.read(4))[0])
 	def enc(self):
 		return struct.pack('<i', self)
@@ -168,7 +168,7 @@ class data_float(float):
 	id = 'f'
 	desc = 'Floating Point Number'
 	@classmethod
-	def dec_new(cls, f):
+	def dec_new(cls, f = 0.0):
 		return float.__new__(cls, struct.unpack('<f', f.read(4))[0])
 	def enc(self):
 		return struct.pack('<f', self)
@@ -200,6 +200,8 @@ class data_list(object):
 	def __getitem__(self, item): return self.list[item]
 	def __setitem__(self, item, val): self.list[item] = val
 	def __delitem__(self, item): del self.list[item]
+	def insert(self, index, object):
+		return self.list.insert(index, object)
 	def remove(self, item):
 		self.list.remove(item)
 		self.len = data_int(len(self.list))
@@ -217,18 +219,21 @@ class data_list(object):
 class data_int_list(data_list):
 	id = 'I'
 	desc = 'List of Integers'
+	type = data_int
 	parse = data_int.dec_new
 
 @data_type
 class data_str_list(data_list):
 	id = 'S'
 	desc = 'List of Strings'
+	type = null_str
 	parse = null_str.dec_new
 
 @data_type
 class data_float_list(data_list):
 	id = 'F'
 	desc = 'List of Floats'
+	type = data_float
 	parse = data_float.dec_new
 
 @data_type
