@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'miasmod_data.ui'
 #
-# Created: Wed Dec 25 01:13:04 2013
+# Created: Wed Dec 25 03:16:15 2013
 #      by: pyside-uic 0.2.15 running on PySide 1.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -13,7 +13,18 @@ class Ui_MiasmataData(object):
     def setupUi(self, MiasmataData):
         MiasmataData.setObjectName("MiasmataData")
         MiasmataData.resize(713, 490)
-        self.horizontalLayout = QtGui.QHBoxLayout(MiasmataData)
+        self.verticalLayout_3 = QtGui.QVBoxLayout(MiasmataData)
+        self.verticalLayout_3.setObjectName("verticalLayout_3")
+        self.horizontalLayout_2 = QtGui.QHBoxLayout()
+        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.save = QtGui.QPushButton(MiasmataData)
+        self.save.setEnabled(False)
+        self.save.setObjectName("save")
+        self.horizontalLayout_2.addWidget(self.save)
+        spacerItem = QtGui.QSpacerItem(20, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayout_2.addItem(spacerItem)
+        self.verticalLayout_3.addLayout(self.horizontalLayout_2)
+        self.horizontalLayout = QtGui.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.treeView = QtGui.QTreeView(MiasmataData)
         self.treeView.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
@@ -48,8 +59,8 @@ class Ui_MiasmataData(object):
         self.value_line.setObjectName("value_line")
         self.formLayout.setWidget(3, QtGui.QFormLayout.FieldRole, self.value_line)
         self.verticalLayout_2.addLayout(self.formLayout)
-        spacerItem = QtGui.QSpacerItem(20, 0, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
-        self.verticalLayout_2.addItem(spacerItem)
+        spacerItem1 = QtGui.QSpacerItem(20, 0, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
+        self.verticalLayout_2.addItem(spacerItem1)
         self.value_list = QtGui.QListView(MiasmataData)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -77,8 +88,8 @@ class Ui_MiasmataData(object):
         self.verticalLayout_2.addWidget(self.value_hex)
         self.gridLayout_2 = QtGui.QGridLayout()
         self.gridLayout_2.setObjectName("gridLayout_2")
-        spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.gridLayout_2.addItem(spacerItem1, 2, 1, 1, 1)
+        spacerItem2 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.gridLayout_2.addItem(spacerItem2, 2, 1, 1, 1)
         self.new_key = QtGui.QPushButton(MiasmataData)
         self.new_key.setEnabled(False)
         self.new_key.setObjectName("new_key")
@@ -99,6 +110,7 @@ class Ui_MiasmataData(object):
         self.horizontalLayout.addLayout(self.verticalLayout_2)
         self.horizontalLayout.setStretch(0, 3)
         self.horizontalLayout.setStretch(1, 2)
+        self.verticalLayout_3.addLayout(self.horizontalLayout)
         self.actionNew_Key = QtGui.QAction(MiasmataData)
         self.actionNew_Key.setObjectName("actionNew_Key")
         self.actionNew_Value = QtGui.QAction(MiasmataData)
@@ -125,7 +137,6 @@ class Ui_MiasmataData(object):
         QtCore.QObject.connect(self.actionUndo_Changes, QtCore.SIGNAL("triggered()"), MiasmataData.undo)
         QtCore.QObject.connect(self.actionDelete, QtCore.SIGNAL("triggered()"), MiasmataData.delete_node)
         QtCore.QMetaObject.connectSlotsByName(MiasmataData)
-        MiasmataData.setTabOrder(self.treeView, self.name)
         MiasmataData.setTabOrder(self.name, self.type)
         MiasmataData.setTabOrder(self.type, self.value_line)
         MiasmataData.setTabOrder(self.value_line, self.value_list)
@@ -136,6 +147,7 @@ class Ui_MiasmataData(object):
         MiasmataData.setTabOrder(self.undo, self.delete_node)
 
     def retranslateUi(self, MiasmataData):
+        self.save.setText(QtGui.QApplication.translate("MiasmataData", "&Save...", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setText(QtGui.QApplication.translate("MiasmataData", "&Name:", None, QtGui.QApplication.UnicodeUTF8))
         self.label_2.setText(QtGui.QApplication.translate("MiasmataData", "&Type:", None, QtGui.QApplication.UnicodeUTF8))
         self.label_3.setText(QtGui.QApplication.translate("MiasmataData", "&Value:", None, QtGui.QApplication.UnicodeUTF8))

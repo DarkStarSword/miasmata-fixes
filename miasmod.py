@@ -36,6 +36,16 @@ import data
 # 		return cmp(a, b)
 # 	return sort_alnum(val1[len(a):], val2[len(b):])
 
+dirty_objects = set()
+def mark_dirty(object):
+	object.dirty = True
+	dirty_objects.add(object)
+
+def clear_dirty():
+	for object in dirty_objects:
+		del object.dirty
+	dirty_objects.clear()
+
 def add_undo_data(object):
 	import copy
 	if hasattr(object, 'undo'):
@@ -122,7 +132,7 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 
 	def removeRows(self, row, count, parent):
 		parent_node = self.index_to_node(parent)
-		parent_node.dirty = True
+		mark_dirty(parent_node)
 		self.beginRemoveRows(parent, row, row + count - 1)
 		while count:
 			del parent_node[parent_node.keys()[row]]
@@ -145,7 +155,7 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 			if not isinstance(value, data.MiasmataDataType):
 				# XXX: Only handles int, float, str.
 				value = old_node.__class__(value)
-			value.dirty = True
+			mark_dirty(value)
 			value.undo = old_node
 			if hasattr(old_node, 'undo'):
 				value.undo = old_node.undo
@@ -179,8 +189,8 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 			parent_idx = self.parent(index)
 			add_undo_data(node)
 			self.removeRows(index.row(), 1, parent_idx)
-			node.name = value
-			node.dirty = True
+			node.name = data.null_str(value)
+			mark_dirty(node)
 			return self.insert_row(node, parent_idx)
 		return None
 
@@ -238,7 +248,7 @@ class MiasmataDataListModel(QtCore.QAbstractListModel):
 		return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
 
 	def notify_parent_model(self):
-		self.node.dirty = True
+		mark_dirty(self.node)
 		self.parent_model.row_updated(self.parent_selection)
 
 	def _setData(self, index, new_item):
@@ -307,7 +317,7 @@ class MiasmataDataMixedListModel(MiasmataDataListModel):
 			try:
 				new_item = data.data_float(value)
 			except ValueError:
-				return False
+				new_item = data.null_str(value)
 		return self._setData(index, new_item)
 
 	@staticmethod
@@ -317,17 +327,17 @@ class MiasmataDataMixedListModel(MiasmataDataListModel):
 
 class MiasmataDataView(QtGui.QWidget):
 	from miasmod_data_ui import Ui_MiasmataData
-	def __init__(self, root, parent=None):
+	def __init__(self, root, save_path=None, parent=None):
 		super(MiasmataDataView, self).__init__(parent)
 		self.ui = self.Ui_MiasmataData()
 		self.ui.setupUi(self)
 
 		self.cur_node = None
+		self.save_path = save_path
+		self.root = root
 
 		self.model = MiasmataDataModel(root)
-
 		# self.ui.treeView.setModel(self.model)
-
 		self.sort_proxy = MiasmataDataSortProxy(self)
 		self.sort_proxy.setSourceModel(self.model)
 		self.sort_proxy.sort(0, Qt.AscendingOrder)
@@ -335,8 +345,9 @@ class MiasmataDataView(QtGui.QWidget):
 		self.model = self.sort_proxy
 		self.ui.treeView.setModel(self.sort_proxy)
 		self.model.dataChanged.connect(self.dataChanged)
+		self.model.rowsInserted.connect(self.enable_save)
+		self.model.rowsRemoved.connect(self.enable_save)
 		self.ui.treeView.expandToDepth(0)
-
 		self.ui.treeView.setColumnWidth(0, 256)
 
 		self.ui.actionNew_Key.setEnabled(False)
@@ -448,7 +459,74 @@ class MiasmataDataView(QtGui.QWidget):
 
 	@QtCore.Slot()
 	def dataChanged(self, topLeft, bottomRight):
+		self.ui.save.setEnabled(True)
 		return self.update_view(topLeft, self.cur_node)
+
+	@QtCore.Slot()
+	def enable_save(self, parent, start, end):
+		self.ui.save.setEnabled(True)
+
+	def verify(self, encoded):
+		from StringIO import StringIO
+		json1 = StringIO()
+		json2 = StringIO()
+		data.dump_json(self.root, json1)
+		data.data2json(StringIO(encoded), json2)
+		return json1.getvalue() == json2.getvalue()
+
+	def write_saves_dat(self):
+		import time, os
+		try:
+			buf = data.encode(self.root)
+		except Exception as e:
+			QtGui.QMessageBox.warning(self, 'MiasMod',
+				'%s while encoding data\n\n%s\n\nRefusing to write saves.dat!\n\nThis means there is a bug in MiasMod, please report this to DarkStarSword!' \
+				% (e.__class__.__name__, str(e)))
+			return -1
+
+		if not self.verify(buf):
+			QtGui.QMessageBox.warning(self, 'MiasMod',
+				'Verification pass failed, refusing to write saves.dat!\n\nThis means there is a bug in MiasMod, please report this to DarkStarSword!' \
+				% (e.__class__.__name__, str(e)))
+			return
+
+                try:
+			timestamp_str = time.strftime('%Y%m%d%H%M%S')
+			backup = '%s~%s' % (self.save_path, timestamp_str)
+			os.rename(self.save_path, backup)
+		except Exception as e:
+			QtGui.QMessageBox.warning(self, 'MiasMod',
+				'%s while backing up saves.dat\n\n%s\n\nRefusing to write saves.dat!' \
+				% (e.__class__.__name__, str(e)))
+			return -1
+
+                try:
+			open(self.save_path, 'wb').write(buf)
+		except Exception as e:
+			QtGui.QMessageBox.warning(self, 'MiasMod',
+				'%s while writing saves.dat\n\n%s\n\nWill attempt to restore backup %s...' \
+				% (e.__class__.__name__, str(e), backup))
+			try:
+				os.remove(self.save_path)
+			except:
+				pass # May just not have been created yet
+			try:
+				os.rename(backup, self.save_path)
+				QtGui.QMessageBox.information(self, 'MiasMod',
+					'Succesfully restored backup')
+			except:
+				QtGui.QMessageBox.warning(self, 'MiasMod',
+					'%s while restoring %s\n\n%s' \
+					% (e.__class__.__name__, backup, str(e)))
+			return -1
+
+	@QtCore.Slot()
+	def on_save_clicked(self):
+		if self.write_saves_dat():
+			return
+
+		clear_dirty()
+		self.ui.save.setEnabled(False)
 
 	@QtCore.Slot()
 	def on_value_line_editingFinished(self):
@@ -465,7 +543,7 @@ class MiasmataDataView(QtGui.QWidget):
 		if self.cur_node.name != name:
 			selection = self.selection_model.currentIndex()
 			new_index = self.model.setDataName(selection, name)
-			self.selection_model.setCurrentIndex(new_index, \
+			self.selection_model.setCurrentIndex(new_index,
 					QtGui.QItemSelectionModel.ClearAndSelect \
 					| QtGui.QItemSelectionModel.Rows)
 
@@ -489,14 +567,14 @@ class MiasmataDataView(QtGui.QWidget):
 		parent_idx = self.selection_model.currentIndex()
 		i = 0
 		while True:
-			name = '%s_%i' % (name_prefix, i)
+			name = data.null_str('%s_%i' % (name_prefix, i))
 			if name not in self.cur_node:
 				node.name = name
 				break
 			i += 1
 		node.undo = None
 		new_index = self.model.insert_row(node, parent_idx)
-		self.selection_model.setCurrentIndex(new_index, \
+		self.selection_model.setCurrentIndex(new_index,
 					QtGui.QItemSelectionModel.ClearAndSelect \
 					| QtGui.QItemSelectionModel.Rows)
 		self.ui.name.setFocus()
@@ -517,7 +595,7 @@ class MiasmataDataView(QtGui.QWidget):
 		selection = self.selection_model.currentIndex()
 		new_index = self.model.undo(selection)
 		if isinstance(new_index, QtCore.QModelIndex):
-			self.selection_model.setCurrentIndex(new_index, \
+			self.selection_model.setCurrentIndex(new_index,
 					QtGui.QItemSelectionModel.ClearAndSelect \
 					| QtGui.QItemSelectionModel.Rows)
 	@QtCore.Slot()
@@ -526,7 +604,7 @@ class MiasmataDataView(QtGui.QWidget):
 		dialog = QtGui.QMessageBox()
 		dialog.setWindowTitle('MiasMod')
 		dialog.setText('Confirm Deletion')
-		dialog.setInformativeText('Really delete "%s"? This action cannot be undone.' % data.format_parent(self.cur_node))
+		dialog.setInformativeText('Really delete "%s"?\nThis action cannot be undone.' % data.format_parent(self.cur_node))
 		dialog.setStandardButtons(QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
 		dialog.setDefaultButton(QtGui.QMessageBox.Yes)
 		ret = dialog.exec_()
@@ -562,8 +640,8 @@ class MiasMod(QtGui.QMainWindow):
 		except Exception as e:
 				pass
 		else:
-			saves.name = 'saves.dat'
-			self.ui.tabWidget.addTab(MiasmataDataView(saves), u"saves.dat")
+			saves.name = data.null_str('saves.dat')
+			self.ui.tabWidget.addTab(MiasmataDataView(saves, save_path = path), u"saves.dat")
 
 	def __del__(self):
 		self.ui.tabWidget.clear()
