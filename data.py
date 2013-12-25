@@ -42,6 +42,8 @@ def decode_json_types(dct):
 
 def dump_json(node, outputfd):
 	return json.dump(node, outputfd, default=encode_json_types, ensure_ascii=True, indent=4, separators=(',', ': '))
+def dumps_json(node):
+	return json.dumps(node, default=encode_json_types, ensure_ascii=True, indent=4, separators=(',', ': '))
 
 def parse_json(j):
 	j = json.load(j, object_pairs_hook=decode_json_types, parse_int=data_int, parse_float=data_float)
@@ -141,27 +143,25 @@ class data_tree(object):
 		my_children = set(self.children)
 		other_children = set(other.children)
 
-		added = []
-		removed = []
 		changed = []
 
-		for child in other_children.difference(my_children):
-			added.extend(expand_node(other[child]))
-		for child in my_children.difference(other_children):
-			removed.extend(expand_node(self[child]))
+		added = [ (parent_list(other[child]), other[child]) \
+				for child in other_children.difference(my_children) ]
+		removed = [ parent_list(self[child]) \
+				for child in my_children.difference(other_children) ]
 
 		for child in my_children.intersection(other_children):
 			my_child = self[child]
 			other_child = other[child]
 			if type(my_child) != type(other_child):
-				changed.extend(expand_node(other_child))
+				changed.append( (parent_list(other_child), other_child) )
 			elif isinstance(my_child, data_tree):
 				(a, r, c) = my_child.diff(other_child)
 				added.extend(a)
 				removed.extend(r)
 				changed.extend(c)
 			elif my_child != other_child:
-				changed.append(other_child)
+				changed.append( (parent_list(other_child), other_child) )
 		return (added, removed, changed)
 
 
@@ -183,15 +183,18 @@ class data_tree(object):
 		self.children[item] = val
 	def __delitem__(self, item): del self.children[item]
 
-def format_parent(node, skip=0):
+def parent_list(node, skip=0):
 	if node.parent:
-		ret = format_parent(node.parent)
+		ret = parent_list(node.parent)
 		if isinstance(ret, int):
 			if ret < 0:
 				return ret+1
-			return node.name
-		return '%s.%s' % (ret, node.name)
+			return [node.name]
+		return ret + [node.name]
 	return -skip
+
+def format_parent(node, skip=0):
+	return '.'.join(parent_list(node, skip))
 
 @data_type
 class data_int(int):
@@ -325,13 +328,19 @@ class data_raw(object):
 def diff_data(tree1, tree2):
 	import itertools
 	(added, removed, changed) = tree1.diff(tree2)
-	added = itertools.izip_longest(added, [], fillvalue='+ ')
-	removed = itertools.izip_longest(removed, [], fillvalue='- ')
-	changed = itertools.izip_longest(changed, [], fillvalue='> ')
-	combined = itertools.chain(added, removed, changed)
-	combined = sorted([ (format_parent(v[0]), v[1]) for v in combined ])
-	fmt = [ '%s%s' % (v[1], v[0]) for v in combined ]
-	print '\n'.join(fmt)
+
+	removed = itertools.izip_longest(removed, [], fillvalue=None)
+
+	added = itertools.izip_longest(added, [], fillvalue='+')
+	removed = itertools.izip_longest(removed, [], fillvalue='-')
+	changed = itertools.izip_longest(changed, [], fillvalue='>')
+	combined = sorted(itertools.chain(added, removed, changed))
+
+	for ((plist, node), prefix) in combined:
+		if node is not None:
+			print '%s %s: %s' % (prefix, '->'.join(plist), dumps_json(node))
+		else:
+			print '%s %s' % (prefix, '->'.join(plist))
 
 def parse_data(f):
 	try:
