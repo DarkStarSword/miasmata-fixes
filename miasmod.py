@@ -665,7 +665,7 @@ class MiasmataDataView(QtGui.QWidget):
 		dialog = QtGui.QMessageBox()
 		dialog.setWindowTitle('MiasMod')
 		dialog.setText('Confirm Deletion')
-		dialog.setInformativeText('Really delete "%s"?\nThis action cannot be undone.' % data.format_parent(self.cur_node))
+		dialog.setInformativeText('Really delete "%s"?\nThis action cannot be undone.' % data.format_parent(self.cur_node, skip=1))
 		dialog.setStandardButtons(QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
 		dialog.setDefaultButton(QtGui.QMessageBox.Yes)
 		ret = dialog.exec_()

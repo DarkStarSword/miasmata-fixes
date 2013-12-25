@@ -62,9 +62,9 @@ class data_null(object):
 	def enc(self):
 		return ''
 	def __eq__(self, other):
-		return other is None
+		return other == None
 	def __ne__(self, other):
-		return other is not None
+		return other != None
 	def __str__(self):
 		return '<NULL>'
 
@@ -103,27 +103,67 @@ class data_tree(object):
 			t = f.read(1)
 			try:
 				child = parse_type(t, f)
-				child.parent = self
-				child.name = name
-				self.children[name] = child
+				self[name] = child
 			except:
 				dump_json(self.children, sys.stderr)
 				raise
 	def to_json(self):
 		r = collections.OrderedDict()
-		for (name, child) in self.children.iteritems():
+		for (name, child) in self.iteritems():
 			r['%s:%s' % (child.id, name)] = child
 		return r
 	def from_json(self, c):
 		for (name, child) in c.iteritems():
 			if isinstance(child, unicode):
 				child = null_str(child)
-			self.children[null_str(name[2:])] = child
+			self[null_str(name[2:])] = child
 	def enc(self):
 		ret = ''
-		for (name, child) in self.children.iteritems():
+		for (name, child) in self.iteritems():
 			ret += name.enc() + child.id + child.enc()
 		return ret + '\0'
+
+	def expand_tree(self):
+		ret = [self]
+		for child in self.itervalues():
+			if isinstance(child, data_tree):
+				ret.extend(child.expand_tree())
+			else:
+				ret.append(child)
+		return ret
+
+	def diff(self, other):
+		def expand_node(node):
+			if isinstance(node, data_tree):
+				return node.expand_tree()
+			return [node]
+
+		my_children = set(self.children)
+		other_children = set(other.children)
+
+		added = []
+		removed = []
+		changed = []
+
+		for child in other_children.difference(my_children):
+			added.extend(expand_node(other[child]))
+		for child in my_children.difference(other_children):
+			removed.extend(expand_node(self[child]))
+
+		for child in my_children.intersection(other_children):
+			my_child = self[child]
+			other_child = other[child]
+			if type(my_child) != type(other_child):
+				changed.extend(expand_node(other_child))
+			elif isinstance(my_child, data_tree):
+				(a, r, c) = my_child.diff(other_child)
+				added.extend(a)
+				removed.extend(r)
+				changed.extend(c)
+			elif my_child != other_child:
+				changed.append(other_child)
+		return (added, removed, changed)
+
 
 	def __getitem__(self, item):
 		return self.children[item]
@@ -143,7 +183,7 @@ class data_tree(object):
 		self.children[item] = val
 	def __delitem__(self, item): del self.children[item]
 
-def format_parent(node, skip=1):
+def format_parent(node, skip=0):
 	if node.parent:
 		ret = format_parent(node.parent)
 		if isinstance(ret, int):
@@ -214,6 +254,10 @@ class data_list(object):
 
 	def __str__(self):
 		return ', '.join(map(str, self.list))
+	def __eq__(self, other):
+		return self.list == other.list
+	def __ne__(self, other):
+		return self.list != other.list
 
 @data_type
 class data_int_list(data_list):
@@ -273,6 +317,21 @@ class data_raw(object):
 		return ret + '...'
 	def __str__(self):
 		return ' '.join(['%.2x' % ord(x) for x in self.raw])
+	def __eq__(self, other):
+		return self.raw == other.raw
+	def __ne__(self, other):
+		return self.raw != other.raw
+
+def diff_data(tree1, tree2):
+	import itertools
+	(added, removed, changed) = tree1.diff(tree2)
+	added = itertools.izip_longest(added, [], fillvalue='+ ')
+	removed = itertools.izip_longest(removed, [], fillvalue='- ')
+	changed = itertools.izip_longest(changed, [], fillvalue='> ')
+	combined = itertools.chain(added, removed, changed)
+	combined = sorted([ (format_parent(v[0]), v[1]) for v in combined ])
+	fmt = [ '%s%s' % (v[1], v[0]) for v in combined ]
+	print '\n'.join(fmt)
 
 def parse_data(f):
 	try:
