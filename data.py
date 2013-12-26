@@ -4,6 +4,7 @@ import sys
 import struct
 import json
 import collections
+import itertools
 
 import rs5file
 
@@ -44,12 +45,21 @@ def dump_json(node, outputfd):
 	return json.dump(node, outputfd, default=encode_json_types, ensure_ascii=True, indent=4, separators=(',', ': '))
 def dumps_json(node):
 	return json.dumps(node, default=encode_json_types, ensure_ascii=True, indent=4, separators=(',', ': '))
+def dumps_json_node(node):
+	return json.dumps((node.id, node), default=encode_json_types, ensure_ascii=True, separators=(',', ': '))
 
 def parse_json(j):
 	j = json.load(j, object_pairs_hook=decode_json_types, parse_int=data_int, parse_float=data_float)
 	root = data_tree()
 	root.from_json(j)
 	return root
+def parse_json_node(j):
+	(type, node) = json.loads(j, object_pairs_hook=decode_json_types, parse_int=data_int, parse_float=data_float)
+	if type in json_decoders:
+		r = json_decoders[type]()
+		r.from_json(node)
+		return r
+	return data_types[type](node)
 
 @data_type
 class data_null(object):
@@ -122,7 +132,11 @@ class data_tree(object):
 	def enc(self):
 		ret = ''
 		for (name, child) in self.iteritems():
-			ret += name.enc() + child.id + child.enc()
+			try:
+				ret += name.enc() + child.id + child.enc()
+			except:
+				print name, type(name), child
+				raise
 		return ret + '\0'
 
 	def expand_tree(self):
@@ -143,13 +157,12 @@ class data_tree(object):
 		my_children = set(self.children)
 		other_children = set(other.children)
 
-		changed = []
-
 		added = [ (parent_list(other[child]), other[child]) \
 				for child in other_children.difference(my_children) ]
 		removed = [ parent_list(self[child]) \
 				for child in my_children.difference(other_children) ]
 
+		changed = []
 		for child in my_children.intersection(other_children):
 			my_child = self[child]
 			other_child = other[child]
@@ -326,14 +339,51 @@ class data_raw(object):
 		return self.raw != other.raw
 
 def diff_data(tree1, tree2):
-	import itertools
 	(added, removed, changed) = tree1.diff(tree2)
+	return {'added': added, 'removed': removed, 'changed': changed}
 
-	removed = itertools.izip_longest(removed, [], fillvalue=None)
+def apply_diff(root, diff):
+	def find_parent_node(plist):
+		node = root
+		for name in plist[:-1]:
+			node = node[name]
+		return node
 
-	added = itertools.izip_longest(added, [], fillvalue='+')
+	for plist in diff['removed']:
+		try:
+			parent = find_parent_node(plist)
+			del parent[plist[-1]]
+		except ValueError:
+			raise # XXX: For testing
+			continue
+	for (plist, node) in itertools.chain(diff['added'], diff['changed']):
+		assert type(node) in data_types.values()
+		try:
+			parent = find_parent_node(plist)
+		except ValueError:
+			raise # XXX: For testing
+			continue
+		name = null_str(plist[-1])
+		parent[name] = node
+
+def json_encode_diff(diff, outputfd):
+	tmp = diff.copy()
+	tmp['added']   = [ (plist, dumps_json_node(node)) for (plist, node) in diff['added'] ]
+	tmp['changed'] = [ (plist, dumps_json_node(node)) for (plist, node) in diff['changed'] ]
+
+	json.dump(tmp, outputfd, indent=4)
+
+def json_decode_diff(inputfd):
+	diff = json.load(inputfd)
+	diff['added']   = [ (plist, parse_json_node(j)) for (plist, j) in diff['added'] ]
+	diff['changed'] = [ (plist, parse_json_node(j)) for (plist, j) in diff['changed'] ]
+	return diff
+
+def pretty_print_diff(diff):
+	removed = itertools.izip_longest(diff['removed'], [], fillvalue=None)
 	removed = itertools.izip_longest(removed, [], fillvalue='-')
-	changed = itertools.izip_longest(changed, [], fillvalue='>')
+	added = itertools.izip_longest(diff['added'], [], fillvalue='+')
+	changed = itertools.izip_longest(diff['changed'], [], fillvalue='>')
 	combined = sorted(itertools.chain(added, removed, changed))
 
 	for ((plist, node), prefix) in combined:
