@@ -3,6 +3,7 @@
 import sys
 
 import data
+import rs5archive
 import rs5file
 
 def get_env_chunk(f):
@@ -22,6 +23,13 @@ def make_chunks(buf):
 	chunk = data.make_chunk(buf)
 	chunks = rs5file.Rs5ChunkedFileEncoder('RAW.', 'environment', 1, chunk)
 	return chunks.encode()
+
+def extract_from_archive(filename):
+	f = open(filename, 'rb')
+	archive = rs5archive.Rs5ArchiveDecoder(f)
+	chunks = rs5file.Rs5ChunkedFileDecoder(archive['environment'].decompress())
+	return data.parse_chunk(chunks['DATA'])
+
 
 def json2env(j, outputfd):
 	outputfd.write(make_chunks(data.json2data(j)))

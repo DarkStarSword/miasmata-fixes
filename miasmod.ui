@@ -14,15 +14,89 @@
    <string>Miasmata Advanced Configuration</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="0">
+   <layout class="QVBoxLayout" name="verticalLayout_3">
+    <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>-1</number>
+       <number>0</number>
       </property>
       <property name="tabsClosable">
        <bool>true</bool>
       </property>
+      <widget class="QWidget" name="mods_tab">
+       <attribute name="title">
+        <string>Mod List</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <item>
+           <widget class="QPushButton" name="open_environment">
+            <property name="text">
+             <string>Open &amp;environment...</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="open_saves_dat">
+            <property name="text">
+             <string>Open &amp;saves.dat...</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="refresh_mod_list">
+            <property name="text">
+             <string>&amp;Refresh Mod List</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="synchronise_local_mod">
+            <property name="text">
+             <string>&amp;Synchronise alocalmod.rs5</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QTableView" name="mod_list">
+          <property name="alternatingRowColors">
+           <bool>true</bool>
+          </property>
+          <property name="selectionMode">
+           <enum>QAbstractItemView::SingleSelection</enum>
+          </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectRows</enum>
+          </property>
+          <property name="showGrid">
+           <bool>false</bool>
+          </property>
+          <attribute name="verticalHeaderVisible">
+           <bool>false</bool>
+          </attribute>
+         </widget>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_2"/>
+        </item>
+       </layout>
+      </widget>
      </widget>
     </item>
    </layout>
@@ -40,5 +114,76 @@
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>open_environment</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>open_active_environment()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>90</x>
+     <y>94</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>369</x>
+     <y>641</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>open_saves_dat</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>open_saves_dat()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>128</x>
+     <y>122</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>5</x>
+     <y>348</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>refresh_mod_list</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>refresh_mod_list()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>35</x>
+     <y>165</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>6</x>
+     <y>397</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>synchronise_local_mod</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>synchronise_alocalmod()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>71</x>
+     <y>201</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>3</x>
+     <y>438</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>open_active_environment()</slot>
+  <slot>open_saves_dat()</slot>
+  <slot>refresh_mod_list()</slot>
+  <slot>synchronise_alocalmod()</slot>
+ </slots>
 </ui>

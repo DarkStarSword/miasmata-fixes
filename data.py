@@ -347,20 +347,22 @@ def apply_diff(root, diff):
 		node = root
 		for name in plist[:-1]:
 			node = node[name]
+			if not isinstance(node, data_tree):
+				raise TypeError('%s is not a tree node' % name)
 		return node
 
 	for plist in diff['removed']:
 		try:
 			parent = find_parent_node(plist)
 			del parent[plist[-1]]
-		except ValueError:
+		except (KeyError, ValueError):
 			raise # XXX: For testing
 			continue
-	for (plist, node) in itertools.chain(diff['added'], diff['changed']):
+	for (plist, node) in sorted(itertools.chain(diff['added'], diff['changed'])):
 		assert type(node) in data_types.values()
 		try:
 			parent = find_parent_node(plist)
-		except ValueError:
+		except (KeyError, ValueError):
 			raise # XXX: For testing
 			continue
 		name = null_str(plist[-1])
