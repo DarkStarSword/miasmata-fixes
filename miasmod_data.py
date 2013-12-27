@@ -27,21 +27,6 @@ def add_undo_data(object):
 	object.undo = copy.deepcopy(object)
 	object.parent = parent
 
-def time_execution(fn):
-	import time, functools
-	@functools.wraps(fn)
-	def wrap(*args, **kwargs):
-		# print>>sys.stderr, '%s {' % fn.__name__
-		start = time.time()
-		ret = fn(*args, **kwargs)
-		t = time.time() - start
-		# print>>sys.stderr, '} %f' % t
-		if t > 0.0001:
-			print>>sys.stderr, '%s: %f' % (fn.__name__, t)
-		return ret
-	return wrap
-
-
 class MiasmataDataModel(QtCore.QAbstractItemModel):
 	class ThisIsNotAFuckingIntDamnit(object):
 		# God damn fucking overloaded functions and type checking!
@@ -55,7 +40,6 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 		self.root = data.data_tree((root.name, root))
 		self.keepalive = set()
 
-	@time_execution
 	def index_to_node(self, index):
 		if not index.isValid():
 			return self.root
@@ -64,47 +48,37 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 			return x.val
 		return x
 
-	@time_execution
 	def index(self, row, column, parent):
 		if not self.hasIndex(row, column, parent):
 			return QtCore.QModelIndex()
 		parent_node = self.index_to_node(parent)
-		# print>>sys.stderr, 'index', parent_node.name, row, column; sys.stdout.flush()
 		child = parent_node.values()[row]
 		if isinstance(child, (int, float, str)):
 			child = self.ThisIsNotAFuckingIntDamnit(child)
 			self.keepalive.add(child)
 		return self.createIndex(row, column, child)
 
-	@time_execution
 	def parent(self, index):
 		child_node = self.index_to_node(index)
-		# print>>sys.stderr, 'parent', child_node.name; sys.stdout.flush()
 		parent_node = child_node.parent
-		if parent_node == self.root:
+		if parent_node is self.root:
 			return QtCore.QModelIndex()
 		parent_row = parent_node.parent.keys().index(parent_node.name)
 		return self.createIndex(parent_row, 0, parent_node)
 
-	@time_execution
 	def rowCount(self, parent):
 		node = self.index_to_node(parent)
-		# print>>sys.stderr, 'rowCount', node.name; sys.stdout.flush()
 		if isinstance(node, data.data_tree):
 			return len(node)
 		return 0
 
-	@time_execution
 	def hasChildren(self, parent):
 		node = self.index_to_node(parent)
-		print>>sys.stderr, 'hasChildren', node.name; sys.stdout.flush()
 		return isinstance(node, data.data_tree)
 
-	@time_execution
 	def columnCount(self, parent):
 		return 2
 
-	@time_execution
 	def data(self, index, role):
 		if role in (Qt.DisplayRole, Qt.EditRole):
 			node = self.index_to_node(index)
@@ -120,19 +94,16 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 			if hasattr(node, 'dirty') and node.dirty:
 				return QtGui.QFont(None, weight=QtGui.QFont.Bold)
 
-	@time_execution
 	def headerData(self, section, orientation, role):
 		if orientation == Qt.Horizontal and role == Qt.DisplayRole:
 			return {0: 'Key', 1: 'Value'}[section]
 
-	@time_execution
 	def row_updated(self, index):
 		# Update all columns - index will point at a specific col
 		sel_start = self.index(index.row(), 0, index.parent())
 		sel_end   = self.index(index.row(), 1, index.parent())
 		self.dataChanged.emit(sel_start, sel_end)
 
-	@time_execution
 	def removeRows(self, row, count, parent):
 		parent_node = self.index_to_node(parent)
 		mark_dirty(parent_node)
@@ -143,7 +114,6 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 		self.endRemoveRows()
 		return True
 
-	@time_execution
 	def insert_row(self, node, parent):
 		parent_node = self.index_to_node(parent)
 		mark_dirty(node)
@@ -153,7 +123,6 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 		self.endInsertRows()
 		return self.index(insert_pos, 0, parent)
 
-	@time_execution
 	def setDataValue(self, index, value, role = Qt.EditRole):
 		if role == Qt.EditRole:
 			old_node = self.index_to_node(index)
@@ -170,7 +139,6 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 			return True
 		return False
 
-	@time_execution
 	def undo(self, index):
 		new_node = self.index_to_node(index)
 		if not hasattr(new_node, 'undo'):
@@ -187,7 +155,6 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 		self.row_updated(index)
 		return True
 
-	@time_execution
 	def setDataName(self, index, value, role = Qt.EditRole):
 		if role == Qt.EditRole:
 			node = self.index_to_node(index)
@@ -203,39 +170,32 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 		return None
 
 class MiasmataDataSortProxy(QtGui.QSortFilterProxyModel):
-	@time_execution
 	def index_to_node(self, index):
 		return self.sourceModel().index_to_node(self.mapToSource(index))
 
-	@time_execution
 	def setDataValue(self, index, value, role = Qt.EditRole):
 		index = self.mapToSource(index)
 		return self.sourceModel().setDataValue(index, value, role)
 
-	@time_execution
 	def setDataName(self, index, value, role = Qt.EditRole):
 		index = self.mapToSource(index)
 		new_index = self.sourceModel().setDataName(index, value, role)
 		if new_index is not None:
 			return self.mapFromSource(new_index)
 
-	@time_execution
 	def row_updated(self, index):
 		return self.sourceModel().row_updated(self.mapToSource(index))
 
-	@time_execution
 	def undo(self, index):
 		ret = self.sourceModel().undo(self.mapToSource(index))
 		if isinstance(ret, QtCore.QModelIndex):
 			return self.mapFromSource(ret)
 		return ret
 
-	@time_execution
 	def insert_row(self, node, parent):
 		ret = self.sourceModel().insert_row(node, self.mapToSource(parent))
 		return self.mapFromSource(ret)
 
-	@time_execution
 	def hasChildren(self, parent):
 		return self.sourceModel().hasChildren(self.mapToSource(parent))
 

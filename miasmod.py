@@ -494,9 +494,9 @@ def start_gui_process(pipe=None):
 	window = MiasMod()
 
 	window.show()
-	window.open_saves_dat()
-	window.open_active_environment()
-	# window.refresh_mod_list()
+	# window.open_saves_dat()
+	# window.open_active_environment()
+	window.refresh_mod_list()
 
 	# import trace
 	# t = trace.Trace()
