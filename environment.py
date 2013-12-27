@@ -28,8 +28,29 @@ def extract_from_archive(filename):
 	f = open(filename, 'rb')
 	archive = rs5archive.Rs5ArchiveDecoder(f)
 	chunks = rs5file.Rs5ChunkedFileDecoder(archive['environment'].decompress())
-	return data.parse_chunk(chunks['DATA'])
+	return chunks['DATA']
 
+def parse_from_archive(filename):
+	return data.parse_chunk(extract_from_archive(filename))
+
+def encode_to_archive(root, path):
+	import os
+
+	buf = data.encode(root)
+	buf = make_chunks(buf)
+
+	if os.path.exists(path):
+		# TODO: Prompt to repack archive to save space
+		archive = rs5archive.Rs5ArchiveUpdater(open(path, 'rb+'))
+		if len(archive) == 1 and 'environment' in archive:
+			# Blow it away and create a fresh one to prevent wasted
+			# space.
+			archive = rs5archive.Rs5ArchiveEncoder(path)
+	else:
+		archive = rs5archive.Rs5ArchiveEncoder(path)
+
+	archive.add_from_buf(buf)
+	archive.save()
 
 def json2env(j, outputfd):
 	outputfd.write(make_chunks(data.json2data(j)))

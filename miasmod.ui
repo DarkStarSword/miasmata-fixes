@@ -33,7 +33,14 @@
           <item>
            <widget class="QPushButton" name="open_environment">
             <property name="text">
-             <string>Open &amp;environment...</string>
+             <string>Open local &amp;environment...</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="new_mod">
+            <property name="text">
+             <string>&amp;New Mod...</string>
             </property>
            </widget>
           </item>
@@ -92,9 +99,6 @@
           </attribute>
          </widget>
         </item>
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_2"/>
-        </item>
        </layout>
       </widget>
      </widget>
@@ -113,6 +117,14 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <tabstops>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>open_environment</tabstop>
+  <tabstop>new_mod</tabstop>
+  <tabstop>refresh_mod_list</tabstop>
+  <tabstop>synchronise_local_mod</tabstop>
+  <tabstop>mod_list</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

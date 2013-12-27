@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'miasmod.ui'
 #
-# Created: Fri Dec 27 00:34:23 2013
+# Created: Fri Dec 27 04:14:46 2013
 #      by: pyside-uic 0.2.15 running on PySide 1.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -29,6 +29,9 @@ class Ui_MainWindow(object):
         self.open_environment = QtGui.QPushButton(self.mods_tab)
         self.open_environment.setObjectName("open_environment")
         self.verticalLayout.addWidget(self.open_environment)
+        self.new_mod = QtGui.QPushButton(self.mods_tab)
+        self.new_mod.setObjectName("new_mod")
+        self.verticalLayout.addWidget(self.new_mod)
         self.open_saves_dat = QtGui.QPushButton(self.mods_tab)
         self.open_saves_dat.setObjectName("open_saves_dat")
         self.verticalLayout.addWidget(self.open_saves_dat)
@@ -49,9 +52,6 @@ class Ui_MainWindow(object):
         self.mod_list.setObjectName("mod_list")
         self.mod_list.verticalHeader().setVisible(False)
         self.horizontalLayout_2.addWidget(self.mod_list)
-        self.verticalLayout_2 = QtGui.QVBoxLayout()
-        self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.horizontalLayout_2.addLayout(self.verticalLayout_2)
         self.tabWidget.addTab(self.mods_tab, "")
         self.verticalLayout_3.addWidget(self.tabWidget)
         MainWindow.setCentralWidget(self.centralwidget)
@@ -70,10 +70,16 @@ class Ui_MainWindow(object):
         QtCore.QObject.connect(self.refresh_mod_list, QtCore.SIGNAL("clicked()"), MainWindow.refresh_mod_list)
         QtCore.QObject.connect(self.synchronise_local_mod, QtCore.SIGNAL("clicked()"), MainWindow.synchronise_alocalmod)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        MainWindow.setTabOrder(self.tabWidget, self.open_environment)
+        MainWindow.setTabOrder(self.open_environment, self.new_mod)
+        MainWindow.setTabOrder(self.new_mod, self.refresh_mod_list)
+        MainWindow.setTabOrder(self.refresh_mod_list, self.synchronise_local_mod)
+        MainWindow.setTabOrder(self.synchronise_local_mod, self.mod_list)
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "Miasmata Advanced Configuration", None, QtGui.QApplication.UnicodeUTF8))
-        self.open_environment.setText(QtGui.QApplication.translate("MainWindow", "Open &environment...", None, QtGui.QApplication.UnicodeUTF8))
+        self.open_environment.setText(QtGui.QApplication.translate("MainWindow", "Open local &environment...", None, QtGui.QApplication.UnicodeUTF8))
+        self.new_mod.setText(QtGui.QApplication.translate("MainWindow", "&New Mod...", None, QtGui.QApplication.UnicodeUTF8))
         self.open_saves_dat.setText(QtGui.QApplication.translate("MainWindow", "Open &saves.dat...", None, QtGui.QApplication.UnicodeUTF8))
         self.refresh_mod_list.setText(QtGui.QApplication.translate("MainWindow", "&Refresh Mod List", None, QtGui.QApplication.UnicodeUTF8))
         self.synchronise_local_mod.setText(QtGui.QApplication.translate("MainWindow", "&Synchronise alocalmod.rs5", None, QtGui.QApplication.UnicodeUTF8))

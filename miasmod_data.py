@@ -307,13 +307,15 @@ class MiasmataDataMixedListModel(MiasmataDataListModel):
 
 class MiasmataDataView(QtGui.QWidget):
 	from miasmod_data_ui import Ui_MiasmataData
-	def __init__(self, root, sort=True, save_path=None, rs5_path=None, parent=None):
+	def __init__(self, root, sort=True, save_path=None, diff_base=None, miasmod_path=None, rs5_path=None, parent=None):
 		super(MiasmataDataView, self).__init__(parent)
 		self.ui = self.Ui_MiasmataData()
 		self.ui.setupUi(self)
 
 		self.cur_node = None
 		self.save_path = save_path
+		self.diff_base = diff_base
+		self.miasmod_path = miasmod_path
 		self.rs5_path = rs5_path
 		self.root = root
 
@@ -394,7 +396,7 @@ class MiasmataDataView(QtGui.QWidget):
 				model = MiasmataDataMixedListModel(node, self.model, current)
 			else:
 				model = MiasmataDataListModel(node, self.model, current)
-			if self.cur_node != previous:
+			if self.cur_node is not previous:
 				self.ui.value_list.setModel(model)
 			self.ui.value_list.setVisible(True)
 		else:
@@ -504,13 +506,18 @@ class MiasmataDataView(QtGui.QWidget):
 			return
 		return True
 
+	def write_miasmod(self):
+		diff = data.diff_data(self.diff_base, self.root)
+		data.json_encode_diff(diff, open(self.miasmod_path, 'wb'))
+		return True
+
 	def write_rs5(self):
 		try:
 			buf = data.encode(self.root)
 		except Exception as e:
 			QtGui.QMessageBox.warning(self, 'MiasMod',
-				'%s while encoding data\n\n%s\n\nRefusing to write saves.dat!\n\nThis means there is a bug in MiasMod, please report this to DarkStarSword!' \
-				% (e.__class__.__name__, str(e)))
+				'%s while encoding data\n\n%s\n\nRefusing to write %s!\n\nThis means there is a bug in MiasMod, please report this to DarkStarSword!' \
+				% (e.__class__.__name__, str(e), self.rs5_name))
 			return
 
 		buf = environment.make_chunks(buf)
@@ -534,6 +541,10 @@ class MiasmataDataView(QtGui.QWidget):
 	def save(self):
 		if self.save_path is not None:
 			if self.write_saves_dat() != True:
+				return
+
+		if self.miasmod_path is not None and self.diff_base is not None:
+			if self.write_miasmod() != True:
 				return
 
 		if self.rs5_path is not None:

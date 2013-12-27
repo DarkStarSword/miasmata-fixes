@@ -148,6 +148,29 @@ class data_tree(object):
 				ret.append(child)
 		return ret
 
+	def copy(self):
+		ret = data_tree()
+		j = self.to_json()
+		ret.from_json(j)
+		ret.name = self.name
+		assert(self == ret)
+		return ret
+
+	def __eq__(self, other):
+		if not isinstance(other, data_tree):
+			return False
+		my_children = set(self.children)
+		other_children = set(other.children)
+		if my_children != other_children:
+			return False
+		for child in self:
+			if self[child] != other[child]:
+				return False
+		return True
+
+	def __ne__(self, other):
+		return not self == other
+
 	def diff(self, other):
 		def expand_node(node):
 			if isinstance(node, data_tree):
@@ -271,9 +294,11 @@ class data_list(object):
 	def __str__(self):
 		return ', '.join(map(str, self.list))
 	def __eq__(self, other):
+		if not type(self) == type(other):
+			return False
 		return self.list == other.list
 	def __ne__(self, other):
-		return self.list != other.list
+		return not self == other
 
 @data_type
 class data_int_list(data_list):
@@ -334,9 +359,11 @@ class data_raw(object):
 	def __str__(self):
 		return ' '.join(['%.2x' % ord(x) for x in self.raw])
 	def __eq__(self, other):
+		if not isinstance(other, data_raw):
+			return False
 		return self.raw == other.raw
 	def __ne__(self, other):
-		return self.raw != other.raw
+		return not self == other
 
 def diff_data(tree1, tree2):
 	(added, removed, changed) = tree1.diff(tree2)

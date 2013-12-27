@@ -24,7 +24,6 @@ from glob import glob
 from PySide import QtCore, QtGui
 from PySide.QtCore import Qt
 
-import multiprocessing
 import collections
 
 import miasutil
@@ -35,36 +34,41 @@ import data
 
 import miasmod_data
 
-# import re
-# _re_dig = re.compile(r'\d+')
-# def sort_alnum(val1, val2):
-# 	if not val1 or not val2 or val1 == val2:
-# 		return cmp(val1, val2)
-# 	a = val1[0]
-# 	b = val2[0]
-# 	if a.isdigit() and b.isdigit():
-# 		a = val1[:_re_dig.match(val1).end()]
-# 		b = val2[:_re_dig.match(val2).end()]
-# 		if a != b:
-# 			return cmp(int(a), int(b))
-# 	elif a != b:
-# 		return cmp(a, b)
-# 	return sort_alnum(val1[len(a):], val2[len(b):])
+def catch_error(f):
+	import functools
+	@functools.wraps(f)
+	def catch_unhandled_exceptions(*args, **kwargs):
+		try:
+			return f(*args, **kwargs)
+		except Exception as e:
+			import traceback
+			traceback.print_exc()
+			sys.stderr.flush()
+			dialog = QtGui.QMessageBox()
+			dialog.setWindowTitle('MiasMod')
+			dialog.setIcon(QtGui.QMessageBox.Critical)
+			dialog.setText('Unhandled Exception')
+			dialog.setInformativeText('%s: %s' % (e.__class__.__name__, str(e)))
+			dialog.setDetailedText(traceback.format_exc())
+			dialog.exec_()
+			return
+	return catch_unhandled_exceptions
+
 
 class ModList(object):
 	class mod(object):
-		def __init__(self, name, filename, basename, type, note=None):
+		def __init__(self, name, path, basename, type, note=None):
 			self.rs5_name = None
-			self.rs5_filename = None
+			self.rs5_path = None
 			self.miasmod_name = None
-			self.miasmod_filename = None
+			self.miasmod_path = None
 			self.name = name
 			self.note = (None, None)
-			self.add(filename, basename, type, note)
-		def add(self, filename, basename, type, note=None):
+			self.add(path, basename, type, note)
+		def add(self, path, basename, type, note=None):
 			if type == 'rs5':
 				basename = '%s/environment' % basename
-			setattr(self, '%s_filename' % type, filename)
+			setattr(self, '%s_path' % type, path)
 			setattr(self, '%s_name' % type, basename)
 			self.note = note or self.note
 		@property
@@ -79,32 +83,40 @@ class ModList(object):
 				ret.append('rs5')
 			return ret
 		@property
-		def filename(self):
-			return self.miasmod_filename or self.rs5_filename
+		def path(self):
+			return self.miasmod_path or self.rs5_path
 
 	def __init__(self):
 		self.mods = collections.OrderedDict()
 		self.mods_last = collections.OrderedDict()
+		self.active = 'environment'
 
-	def add(self, filename):
-		basename = os.path.basename(filename)
+	def add(self, path):
+		basename = os.path.basename(path)
 		(name, ext) = [ x.lower() for x in os.path.splitext(basename) ]
 		ext = ext[1:]
 
 		note = None
 		if ext == 'rs5':
+			if name < self.active:
+				self.active = name
 			if name < 'alocalmod':
-				note = ('WARNING: Filename will override alocalmod.rs5!', 'MiasMod combines mods into alocalmod.rs5, which should come first alphabetically to be used by Miasmata')
+				note = ('WARNING: Filename will override alocalmod.rs5!',
+					'MiasMod combines mods into' \
+					' alocalmod.rs5, which should come first' \
+					' alphabetically to be used by Miasmata')
 			if name > 'environment':
-				note = ('WARNING: Filename may cause crash on load!', 'To avoid crashes, environment.rs5 should come last alphabetically')
+				note = ('WARNING: Filename may cause crash on load!',
+					'To avoid crashes, environment.rs5' \
+					' should come last alphabetically')
 
 		l = self.mods
 		if name == 'alocalmod':
 			l = self.mods_last
 		if name in l:
-			l[name].add(filename, basename, ext, note)
+			l[name].add(path, basename, ext, note)
 		else:
-			l[name] = ModList.mod(name, filename, basename, ext, note)
+			l[name] = ModList.mod(name, path, basename, ext, note)
 
 	def extend(self, iterable):
 		for item in iterable:
@@ -112,11 +124,12 @@ class ModList(object):
 	def __len__(self):
 		return len(self.mods) + len(self.mods_last)
 	def __getitem__(self, idx):
-		if idx < 0:
-			idx = len(self) - idx
-		if idx < len(self.mods):
-			return self.mods.values()[idx]
-		return self.mods_last.values()[idx - len(self.mods)]
+		# if idx < 0:
+		# 	idx = len(self) - idx
+		# if idx < len(self.mods):
+		# 	return self.mods.values()[idx]
+		# return self.mods_last.values()[idx - len(self.mods)]
+		return (self.mods.values() + self.mods_last.values())[idx]
 
 class ModListModel(QtCore.QAbstractTableModel):
 	def __init__(self, mod_list):
@@ -130,19 +143,29 @@ class ModListModel(QtCore.QAbstractTableModel):
 		return 3
 
 	def data(self, index, role):
+		mod = self.mod_list[index.row()]
 		if role == Qt.DisplayRole:
 			if index.column() == 0:
-				return self.mod_list[index.row()].miasmod_name
+				return mod.miasmod_name
 			if index.column() == 1:
-				return self.mod_list[index.row()].rs5_name
+				return mod.rs5_name
 			if index.column() == 2:
-				return self.mod_list[index.row()].note[0]
+				note = mod.note[0]
+				if note is None and mod.name == self.mod_list.active:
+					return 'Active'
+				return note
 		if role == Qt.ToolTipRole:
 			if index.column() == 2:
-				return self.mod_list[index.row()].note[1]
+				note = mod.note[1]
+				if note is None and mod.name == self.mod_list.active:
+					return 'Based on the filename, Miasmata will use the environment found in this RS5 file'
+				return note
 		if role == Qt.ForegroundRole:
-			if index.column() == 2:
+			if index.column() == 2 and mod.note[0]:
 				return QtGui.QBrush(Qt.red)
+		if role == Qt.FontRole:
+			if index.column() == 2:
+				return QtGui.QFont(None, italic=True)
 
 	def headerData(self, section, orientation, role):
 		if role == Qt.DisplayRole and orientation == Qt.Horizontal:
@@ -151,7 +174,7 @@ class ModListModel(QtCore.QAbstractTableModel):
 			if section == 1:
 				return 'RS5 Files'
 			if section == 2:
-				return 'Warnings'
+				return 'Notes'
 
 	def __getitem__(self, item):
 		return self.mod_list[item]
@@ -168,6 +191,19 @@ class MiasMod(QtGui.QMainWindow):
 
 		self.find_install_path()
 
+		self.busy = False
+
+	def progress(self, msg):
+		if not self.busy:
+			QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+		self.busy = True
+		self.statusBar().showMessage(msg)
+
+	def done(self):
+		QtGui.QApplication.restoreOverrideCursor()
+		self.busy = False
+		self.statusBar().clearMessage()
+
 	def find_install_path(self):
 		try:
 			self.install_path = miasutil.find_miasmata_install()
@@ -180,6 +216,7 @@ class MiasMod(QtGui.QMainWindow):
 			self.install_path = dialog.selectedFiles()[0]
 
 	@QtCore.Slot()
+	@catch_error
 	def open_saves_dat(self):
 		try:
 			path = miasutil.find_miasmata_save()
@@ -194,10 +231,10 @@ class MiasMod(QtGui.QMainWindow):
 		self.ui.tabWidget.addTab(miasmod_data.MiasmataDataView(saves, sort=True, save_path = path), u"saves.dat")
 		self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.count() - 1)
 
-	def open_environment(self, filename, save_path=None):
-		env = environment.extract_from_archive(filename)
+	def open_environment(self, path, save_path=None):
+		env = environment.parse_from_archive(path)
 		if save_path == None:
-			save_path = filename
+			save_path = path
 		env.name = data.null_str('%s/environment' % os.path.basename(save_path))
 
 		view = miasmod_data.MiasmataDataView(env, rs5_path = save_path)
@@ -205,21 +242,22 @@ class MiasMod(QtGui.QMainWindow):
 		self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.count() - 1)
 
 	@QtCore.Slot()
+	@catch_error
 	def refresh_mod_list(self):
 		mod_list = ModList()
 
-		for filename in sorted(glob(os.path.join(self.install_path, '*.rs5')), reverse=True):
-			basename = os.path.basename(filename)
+		for path in sorted(glob(os.path.join(self.install_path, '*.rs5')), reverse=True):
+			basename = os.path.basename(path)
 			if basename.lower() == 'main.rs5':
 				continue
 			try:
-				f = open(filename, 'rb')
+				f = open(path, 'rb')
 				archive = rs5archive.Rs5ArchiveDecoder(f)
 			except:
 				continue
 			if 'environment' not in archive:
 				continue
-			mod_list.add(filename)
+			mod_list.add(path)
 
 		mod_list.extend(sorted(glob(os.path.join(self.install_path, '*.miasmod'))))
 
@@ -228,7 +266,9 @@ class MiasMod(QtGui.QMainWindow):
 		self.ui.mod_list.resizeColumnsToContents()
 
 	@QtCore.Slot()
+	@catch_error
 	def open_active_environment(self):
+		# FIXME: Open miasmod, sync, etc
 		files = sorted([ os.path.basename(file).lower() for file in glob(os.path.join(self.install_path, '*.rs5')) ])
 		if 'main.rs5' in files:
 			files.remove('main.rs5')
@@ -267,6 +307,7 @@ class MiasMod(QtGui.QMainWindow):
 		event.accept()
 
 	@QtCore.Slot(int)
+	@catch_error
 	def on_tabWidget_tabCloseRequested(self, index):
 		if index == 0:
 			return
@@ -275,115 +316,187 @@ class MiasMod(QtGui.QMainWindow):
 		self.ui.tabWidget.removeTab(index)
 
 	@QtCore.Slot()
+	@catch_error
 	def synchronise_alocalmod(self):
 		pass
+
+	def open_mod_and_environment(self, diff_base, mod_name, mod_path, rs5_env, rs5_name, rs5_path):
+		rs5_env.name = '%s + %s' % (mod_name, rs5_name)
+		view = miasmod_data.MiasmataDataView(rs5_env, diff_base = diff_base, miasmod_path = miasmod_path, rs5_path = rs5_path)
+		self.ui.tabWidget.addTab(view, unicode(mod_name))
+		self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.count() - 1)
+
+	def ask_edit(self, mod, msg1, msg2, edit_mod, edit_rs5):
+		dialog = QtGui.QMessageBox()
+		dialog.setWindowTitle('MiasMod')
+		dialog.setText(msg1)
+		dialog.setInformativeText(msg2)
+		edit_mod = dialog.addButton(edit_mod, dialog.AcceptRole)
+		edit_rs5 = dialog.addButton(edit_rs5, dialog.DestructiveRole)
+		cancel = dialog.addButton(QtGui.QMessageBox.Cancel)
+		dialog.exec_()
+		return {
+			edit_mod: 'edit_mod',
+			edit_rs5: 'edit_rs5',
+			cancel: 'cancel'
+		}[dialog.clickedButton()]
+
+	def confirm_edit_special_mod(self, mod):
+		msg1 = 'Confirm editing %s' % mod.basename
+		edit_mod = 'Edit alocalmod.miasmod'
+		edit_rs5 = 'Edit %s (not recommended)' % mod.basename
+		if mod.name == 'environment':
+			msg2 = 'It is not recommended to directly edit' \
+			' envioronment.rs5, rather it is suggested to work with' \
+			' "miasmod" files that automatically get combined into' \
+			' alocalmod.rs5/environment which is picked up by the' \
+			" game. If you aren't sure you should probably edit" \
+			' alocalmod.miasmod instead.\n\nWhat would you like to' \
+			' do?'
+		else:
+			assert(mod.name == 'communitypatch')
+			msg2 ='Are you sure you wish to edit the community' \
+			' patch? Unless you know what you are doing you probably' \
+			' should edit a local mod (e.g. alocalmod.miasmod)' \
+			' instead.'
+
+		return self.ask_edit(mod, msg1, msg2, edit_mod, edit_rs5)
 
 	def find_diff_base(self, row):
 		i = row - 1
 		while i >= 0:
 			mod = self.mod_list[i]
 			if 'rs5' in mod.types:
-				return mod
+				return (i, mod)
 			i -= 1
+		return (None, None)
 
-	def generate_miasmod_diff(self, f1, f2, output):
-		(env1, env2) = [ environment.extract_from_archive(f) for f in (f1, f2) ]
+	def guess_rs5_source_diffs(self, row, mod, include_cur_row):
+		(diff_base_row, diff_base) = self.find_diff_base(row)
+		if diff_base is None:
+			return None, []
+		ret = self.mod_list[diff_base_row], self.mod_list[diff_base_row + 1 : row + include_cur_row]
+		return ret
+
+	def ask_generate_mod_diff(self, row, mod):
+		rs5_base, include_mods = self.guess_rs5_source_diffs(row, mod, False)
+		if rs5_base is None:
+			return 'edit_rs5'
+		include_mods = [rs5_base.rs5_name] + [ x.miasmod_name for x in include_mods ] + [mod.rs5_name]
+		mod_name = '%s.miasmod' % mod.name
+
+		msg1 = 'Generate %s?' % mod_name
+		msg2 = 'No miasmod file exists for the selected mod. Would you' \
+			' like to create "%s" based on the the differences' \
+			' between these files?:\n\n%s' \
+			% (mod_name, '\n'.join(include_mods))
+		edit_mod = 'Generate %s' % mod_name
+		edit_rs5 = 'Edit %s' % mod.basename
+		return self.ask_edit(mod, msg1, msg2, edit_mod, edit_rs5)
+
+	def ask_resolve_mod_sync(self, row, mod):
+		rs5_base, include_mods = self.guess_rs5_source_diffs(row, mod, True)
+		if rs5_base is None:
+			raise ValueError('No preceding mods found')
+		include_mods = [rs5_base.rs5_name] + [ x.miasmod_name for x in include_mods ]
+
+		msg1 = '%s appears to be out of sync!' % mod.rs5_name
+		msg2 = 'Would to like to syncronise it from the following' \
+			' files?\nIf you recently installed or updated any mods' \
+			' listed below, or removed a different mod, you should' \
+			' choose "synchronise %s". However, if you updated %s' \
+			' itself you should choose "Discard %s"\n\n%s' \
+			% (mod.rs5_name, os.path.basename(mod.rs5_path),
+				mod.miasmod_name, '\n'.join(include_mods))
+		edit_mod = 'Synchronise %s' % mod.rs5_name
+		edit_rs5 = 'Discard %s' % mod.miasmod_name
+		return self.ask_edit(mod, msg1, msg2, edit_mod, edit_rs5)
+
+	def generate_env_from_diffs(self, row, mod, include_cur_row):
+		rs5_base, include_mods = self.guess_rs5_source_diffs(row, mod, include_cur_row)
+		env = environment.parse_from_archive(rs5_base.rs5_path)
+		for m in include_mods:
+			diff = data.json_decode_diff(open(m.miasmod_path, 'rb'))
+			data.apply_diff(env, diff)
+		return env
+
+	def generate_mod_diff(self, row, mod):
+		mod_name = '%s.miasmod' % mod.name
+		self.progress('Generating %s...' % mod_name)
+		env1 = self.generate_env_from_diffs(row, mod, False)
+		env2 = environment.parse_from_archive(mod.rs5_path)
 		diff = data.diff_data(env1, env2)
-		data.json_encode_diff(diff, open(output, 'wb'))
+		mod_path = os.path.join(self.install_path, mod_name)
+		data.json_encode_diff(diff, open(mod_path, 'wb'))
+		self.refresh_mod_list()
+		self.done()
+
+	def rs5_synched(self, row, mod):
+		self.progress('Checking if %s is synched...' % mod.rs5_name)
+		env1 = self.generate_env_from_diffs(row, mod, True)
+		env2 = environment.parse_from_archive(mod.rs5_path)
+		self.done()
+		return env1 == env2
+
+	def sync_rs5(self, row, mod):
+		env = self.generate_env_from_diffs(row, mod, True)
+		environment.encode_to_archive(env, mod.rs5_path)
 		self.refresh_mod_list()
 
-	def open_mod(self, row, mod):
-		if 'miasmod' not in mod.types and mod.name != 'environment':
-			diff_base = self.find_diff_base(row)
-			mod_name = '%s.miasmod' % mod.name
-			dialog = QtGui.QMessageBox()
-			dialog.setWindowTitle('MiasMod')
-			dialog.setText('Generate %s?' % mod_name)
-			dialog.setInformativeText('No "miasmod" file exists for the selected mod. Would you like to create "%s" based on the differences between "%s" and "%s"?' % (mod_name, diff_base.rs5_name, mod.rs5_name))
-			create_mod = dialog.addButton('Generate %s' % mod_name, dialog.AcceptRole)
-			edit_rs5 = dialog.addButton('Edit %s' % mod.basename, dialog.DestructiveRole)
-			cancel = dialog.addButton(QtGui.QMessageBox.Cancel)
-			dialog.exec_()
+	def open_mod_rs5_only(self, row, mod):
+		QtGui.QMessageBox.information(self, 'MiasMod', 'open rs5 only')
 
-			if dialog.clickedButton() == cancel:
-				return
-			if dialog.clickedButton() == create_mod:
-				self.generate_miasmod_diff(diff_base.rs5_filename, mod.rs5_filename, os.path.join(self.install_path, mod_name))
+	def open_mod_both(self, row, mod):
+		QtGui.QMessageBox.information(self, 'MiasMod', 'open both')
+
+	def open_mod_miasmod_only(self, row, mod):
+		QtGui.QMessageBox.information(self, 'MiasMod', 'open miasmod only')
 
 	@QtCore.Slot(QtCore.QModelIndex)
+	@catch_error
 	def on_mod_list_activated(self, index):
 		row = index.row()
 		mod = self.mod_list[row]
 
-		if mod.name == 'environment':
-			msg = '''It is not recommended to directly edit envioronment.rs5, rather it is suggested to work with "miasmod" files that automatically get combined into alocalmod.rs5/environment which is picked up by the game. If you aren't sure you should probably edit alocalmod.miasmod instead.\n\nWhat would you like to do?'''
-		elif mod.name == 'communitypatch':
-			msg ='''Are you sure you wish to edit the community patch? Unless you know what you are doing you probably should edit a local mod (e.g. alocalmod.miasmod) instead.'''
-		else:
-			return self.open_mod(row, mod)
+		if mod.name in ('environment', 'communitypatch'):
+			answer = self.confirm_edit_special_mod(mod)
+			if answer == 'cancel':
+				return
+			if answer == 'edit_mod':
+				return self.open_alocalmod()
 
-		dialog = QtGui.QMessageBox()
-		dialog.setWindowTitle('MiasMod')
-		dialog.setText('Confirm editing %s' % mod.basename)
-		dialog.setInformativeText(msg)
-		edit_mod = dialog.addButton('Edit alocalmod.miasmod', dialog.AcceptRole)
-		edit_rs5 = dialog.addButton('Edit %s (not recommended)' % mod.basename, dialog.DestructiveRole)
-		cancel = dialog.addButton(QtGui.QMessageBox.Cancel)
-		dialog.exec_()
+		if 'miasmod' not in mod.types: # rs5 only
+			answer = self.ask_generate_mod_diff(row, mod)
+			if answer == 'cancel':
+				return
+			if answer == 'edit_mod':
+				self.generate_mod_diff(row, mod)
+				return self.open_mod_both(row, mod)
+			return self.open_mod_rs5_only(row, mod)
 
-		if dialog.clickedButton() == cancel:
-			return
-		if dialog.clickedButton() == edit_mod:
-			return self.open_miasmod(os.path.join(self.install_path, 'alocalmod.miasmod'))
-		return self.open_mod(row, mod)
+		if 'rs5' in mod.types: # Both rs5 + miasmod
+			if not self.rs5_synched(row, mod):
+				answer = self.ask_resolve_mod_sync(row, mod)
+				if answer == 'cancel':
+					return
+				if answer == 'edit_rs5':
+					self.generate_mod_diff(row, mod)
+					return self.open_mod_both(row, mod)
+				self.sync_rs5(row, mod)
+			return self.open_mod_both(row, mod)
 
-	# @QtCore.Slot(list)
-	# def recv(self, v):
-	# 	print v
-
-# class PipeMonitor(QtCore.QObject):
-# 	# Unnecessary on a Unix based environment - QSocketNotifier should work
-# 	# with the pipe's fileno() and integrate with Qt's main loop like you
-# 	# would expect with any select()/epoll() based event loop.
-# 	#
-# 	# On Windows however...
-# 	#
-# 	# For future reference - the "pipe" is implemented as a Windows Named
-# 	# Pipe. Qt5 does have some mechanisms to deal with those, but AFAICT to
-# 	# use Qt5 I would need to use PyQt (not PySide which is still Qt 4.8)
-# 	# with Python 3, but some of the modules I'm using still depend on
-# 	# Python 2 (certainly bbfreeze & I think py2exe as well).
-# 
-# 	import threading
-# 	recv = QtCore.Signal(list)
-# 
-# 	def __init__(self, pipe):
-# 		QtCore.QObject.__init__(self)
-# 		self.pipe = pipe
-# 
-# 	def _start(self):
-# 		while True:
-# 			v = self.pipe.recv()
-# 			self.recv.emit(v)
-# 
-# 	def start(self):
-# 		self.thread = self.threading.Thread(target=self._start)
-# 		self.thread.daemon = True
-# 		self.thread.start()
+		# miasmod only
+		return self.open_mod_miasmod_only(mod)
 
 def start_gui_process(pipe=None):
 	app = QtGui.QApplication(sys.argv)
 
 	window = MiasMod()
 
-	# m = PipeMonitor(pipe)
-	# m.recv.connect(window.recv)
-	# m.start()
-
 	window.show()
-	# window.open_saves_dat()
-	# window.open_active_environment()
-	window.refresh_mod_list()
+	window.open_saves_dat()
+	window.open_active_environment()
+	# window.refresh_mod_list()
 
 	# import trace
 	# t = trace.Trace()
@@ -394,20 +507,4 @@ def start_gui_process(pipe=None):
 
 
 if __name__ == '__main__':
-	multiprocessing.freeze_support()
-	# if hasattr(multiprocessing, 'set_executable'):
-		# Set python interpreter
-
-	# (parent_conn, child_conn) = multiprocessing.Pipe()
-
 	start_gui_process()
-
-	# gui = multiprocessing.Process(target=start_gui_process, args=(child_conn,))
-	# gui.daemon = True
-	# gui.start()
-	# child_conn.close()
-	# parent_conn.send(['test',123,'ab'])
-	# try:
-	# 	print parent_conn.recv()
-	# except EOFError:
-	# 	print 'Child closed pipe'
