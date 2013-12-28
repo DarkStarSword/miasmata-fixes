@@ -64,7 +64,9 @@ class ModList(object):
 			self.miasmod_path = None
 			self.name = name
 			self.note = (None, None)
+
 			self.add(path, basename, type, note)
+
 		def add(self, path, basename, type, note=None):
 			if type == 'rs5':
 				basename = '%s/environment' % basename
@@ -124,11 +126,6 @@ class ModList(object):
 	def __len__(self):
 		return len(self.mods) + len(self.mods_last)
 	def __getitem__(self, idx):
-		# if idx < 0:
-		# 	idx = len(self) - idx
-		# if idx < len(self.mods):
-		# 	return self.mods.values()[idx]
-		# return self.mods_last.values()[idx - len(self.mods)]
 		return (self.mods.values() + self.mods_last.values())[idx]
 
 class ModListModel(QtCore.QAbstractTableModel):
@@ -179,6 +176,9 @@ class ModListModel(QtCore.QAbstractTableModel):
 	def __getitem__(self, item):
 		return self.mod_list[item]
 
+	def __len__(self):
+		return len(self.mod_list)
+
 class MiasMod(QtGui.QMainWindow):
 	from miasmod_ui import Ui_MainWindow
 	def __init__(self, parent=None):
@@ -188,6 +188,7 @@ class MiasMod(QtGui.QMainWindow):
 		self.ui.setupUi(self)
 
 		self.ui.tabWidget.tabBar().tabButton(0, QtGui.QTabBar.RightSide).resize(0, 0)
+		self.open_tabs = {}
 
 		self.find_install_path()
 
@@ -218,6 +219,9 @@ class MiasMod(QtGui.QMainWindow):
 	@QtCore.Slot()
 	@catch_error
 	def open_saves_dat(self):
+		if 'saves.dat' in self.open_tabs:
+			return self.activate_tab('saves.dat')
+
 		try:
 			path = miasutil.find_miasmata_save()
 		except Exception as e:
@@ -228,18 +232,8 @@ class MiasMod(QtGui.QMainWindow):
 			return
 
 		saves.name = data.null_str('saves.dat')
-		self.ui.tabWidget.addTab(miasmod_data.MiasmataDataView(saves, sort=True, save_path = path), u"saves.dat")
-		self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.count() - 1)
-
-	def open_environment(self, path, save_path=None):
-		env = environment.parse_from_archive(path)
-		if save_path == None:
-			save_path = path
-		env.name = data.null_str('%s/environment' % os.path.basename(save_path))
-
-		view = miasmod_data.MiasmataDataView(env, rs5_path = save_path)
-		self.ui.tabWidget.addTab(view, unicode(env.name))
-		self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.count() - 1)
+		view = miasmod_data.MiasmataDataView(saves, sort=True, save_path = path)
+		self.add_tab(view, 'saves.dat', 'saves.dat')
 
 	@QtCore.Slot()
 	@catch_error
@@ -264,20 +258,6 @@ class MiasMod(QtGui.QMainWindow):
 		self.mod_list = ModListModel(mod_list)
 		self.ui.mod_list.setModel(self.mod_list)
 		self.ui.mod_list.resizeColumnsToContents()
-
-	@QtCore.Slot()
-	@catch_error
-	def open_active_environment(self):
-		# FIXME: Open miasmod, sync, etc
-		files = sorted([ os.path.basename(file).lower() for file in glob(os.path.join(self.install_path, '*.rs5')) ])
-		if 'main.rs5' in files:
-			files.remove('main.rs5')
-		active = os.path.join(self.install_path, files[0])
-		save_path = os.path.join(self.install_path, 'alocalmod.rs5')
-		try:
-			self.open_environment(active, save_path=save_path)
-		except:
-			return
 
 	def __del__(self):
 		self.ui.tabWidget.clear()
@@ -306,6 +286,11 @@ class MiasMod(QtGui.QMainWindow):
 				return
 		event.accept()
 
+	def keyPressEvent(self, event):
+		if event.key() == Qt.Key.Key_F5:
+			return self.refresh_mod_list()
+		super(MiasMod, self).keyPressEvent(event)
+
 	@QtCore.Slot(int)
 	@catch_error
 	def on_tabWidget_tabCloseRequested(self, index):
@@ -313,18 +298,12 @@ class MiasMod(QtGui.QMainWindow):
 			return
 		if self.ask_save_tab(index) == QtGui.QMessageBox.Cancel:
 			return
-		self.ui.tabWidget.removeTab(index)
+		self.remove_tab(index)
 
 	@QtCore.Slot()
 	@catch_error
 	def synchronise_alocalmod(self):
 		pass
-
-	def open_mod_and_environment(self, diff_base, mod_name, mod_path, rs5_env, rs5_name, rs5_path):
-		rs5_env.name = '%s + %s' % (mod_name, rs5_name)
-		view = miasmod_data.MiasmataDataView(rs5_env, diff_base = diff_base, miasmod_path = miasmod_path, rs5_path = rs5_path)
-		self.ui.tabWidget.addTab(view, unicode(mod_name))
-		self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.count() - 1)
 
 	def ask_edit(self, mod, msg1, msg2, edit_mod, edit_rs5):
 		dialog = QtGui.QMessageBox()
@@ -375,7 +354,7 @@ class MiasMod(QtGui.QMainWindow):
 		(diff_base_row, diff_base) = self.find_diff_base(row)
 		if diff_base is None:
 			return None, []
-		ret = self.mod_list[diff_base_row], self.mod_list[diff_base_row + 1 : row + include_cur_row]
+		ret = diff_base, self.mod_list[diff_base_row + 1 : row + include_cur_row]
 		return ret
 
 	def ask_generate_mod_diff(self, row, mod):
@@ -420,6 +399,14 @@ class MiasMod(QtGui.QMainWindow):
 			data.apply_diff(env, diff)
 		return env
 
+	def generate_env_from_single_diff(self, row, mod):
+		(diff_base_row, diff_base) = self.find_diff_base(row)
+		env1 = environment.parse_from_archive(diff_base.rs5_path)
+		env2 = env1.copy()
+		diff = data.json_decode_diff(open(mod.miasmod_path, 'rb'))
+		data.apply_diff(env2, diff)
+		return (env1, env2)
+
 	def generate_mod_diff(self, row, mod):
 		mod_name = '%s.miasmod' % mod.name
 		self.progress('Generating %s...' % mod_name)
@@ -443,20 +430,90 @@ class MiasMod(QtGui.QMainWindow):
 		environment.encode_to_archive(env, mod.rs5_path)
 		self.refresh_mod_list()
 
+	def add_tab(self, view, name, mod_name):
+		self.ui.tabWidget.addTab(view, unicode(name))
+		self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.count() - 1)
+		self.open_tabs[mod_name] = view
+
+	def remove_tab(self, index):
+		view = self.ui.tabWidget.widget(index)
+		if view.name in self.open_tabs:
+			del self.open_tabs[view.name]
+		self.ui.tabWidget.removeTab(index)
+
+	def activate_tab(self, mod_name):
+		view = self.open_tabs[mod_name]
+		tab = self.ui.tabWidget.indexOf(view)
+		self.ui.tabWidget.setCurrentIndex(tab)
+
 	def open_mod_rs5_only(self, row, mod):
-		QtGui.QMessageBox.information(self, 'MiasMod', 'open rs5 only')
+		self.progress('Opening %s...' % mod.rs5_name)
+		env = environment.parse_from_archive(mod.rs5_path)
+		env.name = mod.rs5_name
+		view = miasmod_data.MiasmataDataView(env, name = mod.name, rs5_path = mod.rs5_path)
+		self.add_tab(view, mod.rs5_name, mod.name)
+		self.done()
 
 	def open_mod_both(self, row, mod):
-		QtGui.QMessageBox.information(self, 'MiasMod', 'open both')
+		name = '%s + %s' % (mod.miasmod_name, mod.rs5_name)
+		self.progress('Opening %s...' % name)
+		diff_base = self.generate_env_from_diffs(row, mod, False)
+		env = environment.parse_from_archive(mod.rs5_path)
+		env.name = mod.name
+
+		view = miasmod_data.MiasmataDataView(env, name = mod.name, diff_base = diff_base, miasmod_path = mod.miasmod_path, rs5_path = mod.rs5_path)
+		self.add_tab(view, mod.name, mod.name)
+		self.done()
 
 	def open_mod_miasmod_only(self, row, mod):
-		QtGui.QMessageBox.information(self, 'MiasMod', 'open miasmod only')
+		self.progress('Opening %s...' % mod.miasmod_name)
+		(diff_base, env) = self.generate_env_from_single_diff(row, mod)
+		env.name = mod.miasmod_name
+
+		view = miasmod_data.MiasmataDataView(env, name = mod.name, diff_base = diff_base, miasmod_path = mod.miasmod_path)
+		self.add_tab(view, mod.miasmod_name, mod.name)
+		self.done()
+
+
+	@QtCore.Slot()
+	@catch_error
+	def open_active_environment(self):
+		return self.open_alocalmod()
+
+	def open_alocalmod(self):
+		if 'alocalmod' in self.open_tabs:
+			return self.activate_tab('alocalmod')
+
+		row = len(self.mod_list) - 1
+		mod = self.mod_list[row]
+		if mod.name == 'alocalmod':
+			return self.open_mod(row)
+		self.progress('Opening alocalmod...')
+
+		path = os.path.join(self.install_path, 'alocalmod.miasmod')
+		mod = ModList.mod('alocalmod', path, os.path.basename(path), 'miasmod')
+		path = os.path.join(self.install_path, 'alocalmod.rs5')
+		mod.add('alocalmod', path, os.path.basename(path), 'rs5')
+
+		env1 = self.generate_env_from_diffs(row, mod, True)
+		env2 = env1.copy()
+		env2.name = 'alocalmod'
+
+		view = miasmod_data.MiasmataDataView(env2, name = mod.name, diff_base = env1, miasmod_path = mod.miasmod_path, rs5_path = mod.rs5_path)
+		self.add_tab(view, mod.name, mod.name)
+		self.done()
 
 	@QtCore.Slot(QtCore.QModelIndex)
 	@catch_error
 	def on_mod_list_activated(self, index):
 		row = index.row()
+		return self.open_mod(row)
+
+	def open_mod(self, row):
 		mod = self.mod_list[row]
+
+		if mod.name in self.open_tabs:
+			return self.activate_tab(mod.name)
 
 		if mod.name in ('environment', 'communitypatch'):
 			answer = self.confirm_edit_special_mod(mod)
@@ -486,7 +543,7 @@ class MiasMod(QtGui.QMainWindow):
 			return self.open_mod_both(row, mod)
 
 		# miasmod only
-		return self.open_mod_miasmod_only(mod)
+		return self.open_mod_miasmod_only(row, mod)
 
 def start_gui_process(pipe=None):
 	app = QtGui.QApplication(sys.argv)

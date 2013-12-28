@@ -149,9 +149,8 @@ class data_tree(object):
 		return ret
 
 	def copy(self):
-		ret = data_tree()
-		j = self.to_json()
-		ret.from_json(j)
+		j = dumps_json_node(self)
+		ret = parse_json_node(j)
 		ret.name = self.name
 		assert(self == ret)
 		return ret
@@ -171,7 +170,7 @@ class data_tree(object):
 	def __ne__(self, other):
 		return not self == other
 
-	def diff(self, other):
+	def diff(self, other, root=None, other_root=None):
 		def expand_node(node):
 			if isinstance(node, data_tree):
 				return node.expand_tree()
@@ -180,9 +179,9 @@ class data_tree(object):
 		my_children = set(self.children)
 		other_children = set(other.children)
 
-		added = [ (parent_list(other[child]), other[child]) \
+		added = [ (parent_list(other[child], root=other_root), other[child]) \
 				for child in other_children.difference(my_children) ]
-		removed = [ parent_list(self[child]) \
+		removed = [ parent_list(self[child], root=root) \
 				for child in my_children.difference(other_children) ]
 
 		changed = []
@@ -190,16 +189,24 @@ class data_tree(object):
 			my_child = self[child]
 			other_child = other[child]
 			if type(my_child) != type(other_child):
-				changed.append( (parent_list(other_child), other_child) )
+				changed.append( (parent_list(other_child, root=other_root), other_child) )
 			elif isinstance(my_child, data_tree):
-				(a, r, c) = my_child.diff(other_child)
+				(a, r, c) = my_child.diff(other_child, root=root, other_root=other_root)
 				added.extend(a)
 				removed.extend(r)
 				changed.extend(c)
 			elif my_child != other_child:
-				changed.append( (parent_list(other_child), other_child) )
+				changed.append( (parent_list(other_child, root=other_root), other_child) )
 		return (added, removed, changed)
 
+	def check_parent_invariant(self):
+		for (name, child) in self.iteritems():
+			if not hasattr(child, 'parent'):
+				print>>sys.stderr, 'WARNING: Detected Broken Invariant: %s[%s].parent is missing' % (format_parent(self), name)
+			elif child.parent is not self:
+				print>>sys.stderr, 'WARNING: Detected Broken Invariant: %s[%s].parent is not self' % (format_parent(self), name)
+			if isinstance(child, data_tree):
+				child.check_parent_invariant()
 
 	def __getitem__(self, item):
 		return self.children[item]
@@ -219,15 +226,21 @@ class data_tree(object):
 		self.children[item] = val
 	def __delitem__(self, item): del self.children[item]
 
-def parent_list(node, skip=0):
-	if node.parent:
-		ret = parent_list(node.parent)
+def _parent_list(node, skip=0, root=None):
+	if node.parent and node is not root:
+		ret = _parent_list(node.parent, skip, root=root)
 		if isinstance(ret, int):
 			if ret < 0:
 				return ret+1
 			return [node.name]
 		return ret + [node.name]
 	return -skip
+
+def parent_list(node, skip=0, root=None):
+	ret = _parent_list(node, skip, root)
+	if isinstance(ret, int):
+		return ['<root>']
+	return ret
 
 def format_parent(node, skip=0):
 	return '.'.join(parent_list(node, skip))
@@ -366,7 +379,7 @@ class data_raw(object):
 		return not self == other
 
 def diff_data(tree1, tree2):
-	(added, removed, changed) = tree1.diff(tree2)
+	(added, removed, changed) = tree1.diff(tree2, root=tree1, other_root=tree2)
 	return {'added': added, 'removed': removed, 'changed': changed}
 
 def apply_diff(root, diff):

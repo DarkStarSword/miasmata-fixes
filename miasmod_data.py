@@ -305,7 +305,7 @@ class MiasmataDataMixedListModel(MiasmataDataListModel):
 
 class MiasmataDataView(QtGui.QWidget):
 	from miasmod_data_ui import Ui_MiasmataData
-	def __init__(self, root, sort=True, save_path=None, diff_base=None, miasmod_path=None, rs5_path=None, parent=None):
+	def __init__(self, root, sort=True, save_path=None, diff_base=None, miasmod_path=None, rs5_path=None, parent=None, name=None):
 		super(MiasmataDataView, self).__init__(parent)
 		self.ui = self.Ui_MiasmataData()
 		self.ui.setupUi(self)
@@ -316,6 +316,7 @@ class MiasmataDataView(QtGui.QWidget):
 		self.miasmod_path = miasmod_path
 		self.rs5_path = rs5_path
 		self.root = root
+		self.name = name
 
 		self.model = MiasmataDataModel(root)
 		if sort:
@@ -510,27 +511,7 @@ class MiasmataDataView(QtGui.QWidget):
 		return True
 
 	def write_rs5(self):
-		try:
-			buf = data.encode(self.root)
-		except Exception as e:
-			QtGui.QMessageBox.warning(self, 'MiasMod',
-				'%s while encoding data\n\n%s\n\nRefusing to write %s!\n\nThis means there is a bug in MiasMod, please report this to DarkStarSword!' \
-				% (e.__class__.__name__, str(e), self.rs5_name))
-			return
-
-		buf = environment.make_chunks(buf)
-
-		if os.path.exists(self.rs5_path):
-			# TODO: If archive only contains environment, blow it
-			# away and create a fresh one to prevent wasted space.
-			# TODO: Prompt to repack archive to save space
-			archive = rs5archive.Rs5ArchiveUpdater(open(self.rs5_path, 'rb+'))
-		else:
-			archive = rs5archive.Rs5ArchiveEncoder(self.rs5_path)
-
-		archive.add_from_buf(buf)
-		archive.save()
-
+		environment.encode_to_archive(self.root, self.rs5_path)
 		return True
 
 	def is_dirty(self):
