@@ -287,7 +287,7 @@ class MiasMod(QtGui.QMainWindow):
 		event.accept()
 
 	def keyPressEvent(self, event):
-		if event.key() == Qt.Key.Key_F5:
+		if event.matches(QtGui.QKeySequence.Refresh):
 			return self.refresh_mod_list()
 		super(MiasMod, self).keyPressEvent(event)
 
@@ -408,12 +408,12 @@ class MiasMod(QtGui.QMainWindow):
 		return (env1, env2)
 
 	def generate_mod_diff(self, row, mod):
-		mod_name = '%s.miasmod' % mod.name
-		self.progress('Generating %s...' % mod_name)
+		mod.miasmod_name = '%s.miasmod' % mod.name
+		self.progress('Generating %s...' % mod.miasmod_name)
 		env1 = self.generate_env_from_diffs(row, mod, False)
 		env2 = environment.parse_from_archive(mod.rs5_path)
 		diff = data.diff_data(env1, env2)
-		mod_path = os.path.join(self.install_path, mod_name)
+		mod_path = os.path.join(self.install_path, mod.miasmod_name)
 		data.json_encode_diff(diff, open(mod_path, 'wb'))
 		self.refresh_mod_list()
 		self.done()
@@ -493,7 +493,7 @@ class MiasMod(QtGui.QMainWindow):
 		path = os.path.join(self.install_path, 'alocalmod.miasmod')
 		mod = ModList.mod('alocalmod', path, os.path.basename(path), 'miasmod')
 		path = os.path.join(self.install_path, 'alocalmod.rs5')
-		mod.add('alocalmod', path, os.path.basename(path), 'rs5')
+		mod.add(path, os.path.basename(path), 'rs5')
 
 		env1 = self.generate_env_from_diffs(row, mod, True)
 		env2 = env1.copy()

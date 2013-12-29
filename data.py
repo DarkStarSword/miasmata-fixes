@@ -208,6 +208,17 @@ class data_tree(object):
 			if isinstance(child, data_tree):
 				child.check_parent_invariant()
 
+	def check_dirty_flag(self):
+		if hasattr(self, 'dirty') and self.dirty:
+			print>>sys.stderr, 'WARNING: Dirty flag not cleared on: %s (%s)' % (format_parent(self), self)
+			del self.dirty
+		for (name, child) in self.iteritems():
+			if hasattr(child, 'dirty') and child.dirty:
+				print>>sys.stderr, 'WARNING: Dirty flag not cleared on: %s[%s] (%s)' % (format_parent(self), name, child)
+				del child.dirty
+			if isinstance(child, data_tree):
+				child.check_dirty_flag()
+
 	def __getitem__(self, item):
 		return self.children[item]
 
