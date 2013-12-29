@@ -189,14 +189,14 @@ class data_tree(object):
 			my_child = self[child]
 			other_child = other[child]
 			if type(my_child) != type(other_child):
-				changed.append( (parent_list(other_child, root=other_root), other_child) )
+				changed.append( (parent_list(other_child, root=other_root), my_child, other_child) )
 			elif isinstance(my_child, data_tree):
 				(a, r, c) = my_child.diff(other_child, root=root, other_root=other_root)
 				added.extend(a)
 				removed.extend(r)
 				changed.extend(c)
 			elif my_child != other_child:
-				changed.append( (parent_list(other_child, root=other_root), other_child) )
+				changed.append( (parent_list(other_child, root=other_root), my_child, other_child) )
 		return (added, removed, changed)
 
 	def check_parent_invariant(self):
@@ -260,6 +260,11 @@ def format_parent(node, skip=0):
 class data_int(int):
 	id = 'i'
 	desc = 'Integer'
+	def __new__(cls, i=0):
+		i = int(i)
+		if i < -2**31 or i >= 2**31:
+			raise ValueError('Integer value %i out of range' % i)
+		return int.__new__(cls, i)
 	@classmethod
 	def dec_new(cls, f = 0):
 		return int.__new__(cls, struct.unpack('<i', f.read(4))[0])
@@ -270,6 +275,11 @@ class data_int(int):
 class data_float(float):
 	id = 'f'
 	desc = 'Floating Point Number'
+	def __new__(cls, f = 0.0):
+		# Force rounding to a 4-byte float - important for equality
+		# tests & tree diffs where one tree was decoded from an
+		# environment file and the other was manufactured in Python:
+		return float.__new__(cls, struct.unpack('<f', struct.pack('<f', float(f)))[0])
 	@classmethod
 	def dec_new(cls, f = 0.0):
 		return float.__new__(cls, struct.unpack('<f', f.read(4))[0])
@@ -402,19 +412,30 @@ def apply_diff(root, diff):
 				raise TypeError('%s is not a tree node' % name)
 		return node
 
+	def iter_added_changed(added, changed):
+		for a in added:
+			yield a
+		try:
+			for (plist, removed, added) in changed:
+				yield (plist, added)
+		except ValueError:
+			for (plist, c) in changed:
+				yield (plist, c)
+
 	for plist in diff['removed']:
 		try:
 			parent = find_parent_node(plist)
 			del parent[plist[-1]]
 		except (KeyError, ValueError):
-			raise # XXX: For testing
+			# raise # XXX: For testing
 			continue
-	for (plist, node) in sorted(itertools.chain(diff['added'], diff['changed'])):
+
+	for (plist, node) in sorted(iter_added_changed(diff['added'], diff['changed'])):
 		assert type(node) in data_types.values()
 		try:
 			parent = find_parent_node(plist)
 		except (KeyError, ValueError):
-			raise # XXX: For testing
+			# raise # XXX: For testing
 			continue
 		name = null_str(plist[-1])
 		parent[name] = node
@@ -422,28 +443,55 @@ def apply_diff(root, diff):
 def json_encode_diff(diff, outputfd):
 	tmp = diff.copy()
 	tmp['added']   = [ (plist, dumps_json_node(node)) for (plist, node) in diff['added'] ]
-	tmp['changed'] = [ (plist, dumps_json_node(node)) for (plist, node) in diff['changed'] ]
+	tmp['changed'] = [ (plist, dumps_json_node(node1), dumps_json_node(node2)) \
+			for (plist, node1, node2) in diff['changed'] ]
 
 	json.dump(tmp, outputfd, indent=4)
 
 def json_decode_diff(inputfd):
 	diff = json.load(inputfd)
 	diff['added']   = [ (plist, parse_json_node(j)) for (plist, j) in diff['added'] ]
-	diff['changed'] = [ (plist, parse_json_node(j)) for (plist, j) in diff['changed'] ]
+	try:
+		diff['changed'] = [ (plist, parse_json_node(j1), parse_json_node(j2)) \
+				for (plist, j1, j2) in diff['changed'] ]
+	except ValueError:
+		diff['changed'] = [ (plist, parse_json_node(j), parse_json_node(j)) \
+				for (plist, j) in diff['changed'] ]
 	return diff
 
-def pretty_print_diff(diff):
+def pretty_fmt_diff(diff, file1=None, file2=None):
+	def iter_changed(changed):
+		try:
+			for (p, r, a) in changed:
+				yield ((p, r), '-')
+				yield ((p, a), '+')
+		except ValueError:
+			for (p, c) in changed:
+				yield ((p, c), '>')
+
 	removed = itertools.izip_longest(diff['removed'], [], fillvalue=None)
 	removed = itertools.izip_longest(removed, [], fillvalue='-')
 	added = itertools.izip_longest(diff['added'], [], fillvalue='+')
-	changed = itertools.izip_longest(diff['changed'], [], fillvalue='>')
-	combined = sorted(itertools.chain(added, removed, changed))
+	changed = iter_changed(diff['changed'])
+	combined = sorted(itertools.chain(added, removed, changed), key=lambda ((p, n), pre): (p, 127-ord(pre), n))
+
+	ret = []
+	if file1 is not None:
+		ret.append('--- %s' % file1)
+	if file2 is not None:
+		ret.append('+++ %s' % file2)
+	if file1 is not None or file2 is not None:
+		ret.append('')
 
 	for ((plist, node), prefix) in combined:
 		if node is not None:
-			print '%s %s: %s' % (prefix, '->'.join(plist), dumps_json(node))
+			ret.append('%s %s: %s' % (prefix, '->'.join(plist), dumps_json(node)))
 		else:
-			print '%s %s' % (prefix, '->'.join(plist))
+			ret.append('%s %s' % (prefix, '->'.join(plist)))
+	return '\n'.join(ret)
+
+def pretty_print_diff(diff):
+	print pretty_fmt_diff(diff)
 
 def parse_data(f):
 	try:

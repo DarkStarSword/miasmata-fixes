@@ -382,6 +382,9 @@ class MiasmataDataView(QtGui.QWidget):
 		self.root = root
 		self.name = name
 
+		if self.diff_base is not None:
+			self.ui.show_diff.setEnabled(True)
+
 		self.model = MiasmataDataModel(root)
 		if sort:
 			self.sort_proxy = MiasmataDataSortProxy(self)
@@ -613,6 +616,15 @@ class MiasmataDataView(QtGui.QWidget):
 	@QtCore.Slot()
 	def on_save_clicked(self):
 		self.save()
+
+	@QtCore.Slot()
+	def on_show_diff_clicked(self):
+		dialog = QtGui.QMessageBox()
+		dialog.setWindowTitle('MiasMod')
+		dialog.setText(self.root.name)
+		diff = data.diff_data(self.diff_base, self.root)
+		dialog.setInformativeText(data.pretty_fmt_diff(diff))
+		ret = dialog.exec_()
 
 	@QtCore.Slot()
 	def on_value_line_editingFinished(self):

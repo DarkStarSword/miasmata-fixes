@@ -305,11 +305,13 @@ class MiasMod(QtGui.QMainWindow):
 	def synchronise_alocalmod(self):
 		pass
 
-	def ask_edit(self, mod, msg1, msg2, edit_mod, edit_rs5):
+	def ask_edit(self, mod, msg1, msg2, edit_mod, edit_rs5, detailed=None):
 		dialog = QtGui.QMessageBox()
 		dialog.setWindowTitle('MiasMod')
 		dialog.setText(msg1)
 		dialog.setInformativeText(msg2)
+		if detailed is not None:
+			dialog.setDetailedText(detailed)
 		edit_mod = dialog.addButton(edit_mod, dialog.AcceptRole)
 		edit_rs5 = dialog.addButton(edit_rs5, dialog.DestructiveRole)
 		cancel = dialog.addButton(QtGui.QMessageBox.Cancel)
@@ -361,17 +363,24 @@ class MiasMod(QtGui.QMainWindow):
 		rs5_base, include_mods = self.guess_rs5_source_diffs(row, mod, False)
 		if rs5_base is None:
 			return 'edit_rs5'
-		include_mods = [rs5_base.rs5_name] + [ x.miasmod_name for x in include_mods ] + [mod.rs5_name]
+		sources = [rs5_base.rs5_name] + [ x.miasmod_name for x in include_mods ] + [mod.rs5_name]
 		mod_name = '%s.miasmod' % mod.name
 
 		msg1 = 'Generate %s?' % mod_name
 		msg2 = 'No miasmod file exists for the selected mod. Would you' \
 			' like to create "%s" based on the the differences' \
 			' between these files?:\n\n%s' \
-			% (mod_name, '\n'.join(include_mods))
+			% (mod_name, '\n'.join(sources))
+
+		# env1 = self.generate_env_from_diffs(row, mod, False)
+		# env2 = environment.parse_from_archive(mod.rs5_path)
+		# diff = data.diff_data(env1, env2)
+		# msg3 = data.pretty_fmt_diff(data.diff_data(env1, env2), ' + '.join(sources), mod.rs5_name)
+		msg3 = None
+
 		edit_mod = 'Generate %s' % mod_name
 		edit_rs5 = 'Edit %s' % mod.basename
-		return self.ask_edit(mod, msg1, msg2, edit_mod, edit_rs5)
+		return self.ask_edit(mod, msg1, msg2, edit_mod, edit_rs5, msg3)
 
 	def ask_resolve_mod_sync(self, row, mod):
 		rs5_base, include_mods = self.guess_rs5_source_diffs(row, mod, True)
@@ -387,16 +396,23 @@ class MiasMod(QtGui.QMainWindow):
 			' itself you should choose "Discard %s"\n\n%s' \
 			% (mod.rs5_name, os.path.basename(mod.rs5_path),
 				mod.miasmod_name, '\n'.join(include_mods))
+		msg3 = mod.diff_txt
 		edit_mod = 'Synchronise %s' % mod.rs5_name
 		edit_rs5 = 'Discard %s' % mod.miasmod_name
-		return self.ask_edit(mod, msg1, msg2, edit_mod, edit_rs5)
+		return self.ask_edit(mod, msg1, msg2, edit_mod, edit_rs5, msg3)
 
 	def generate_env_from_diffs(self, row, mod, include_cur_row):
 		rs5_base, include_mods = self.guess_rs5_source_diffs(row, mod, include_cur_row)
 		env = environment.parse_from_archive(rs5_base.rs5_path)
 		for m in include_mods:
-			diff = data.json_decode_diff(open(m.miasmod_path, 'rb'))
-			data.apply_diff(env, diff)
+			try:
+				diff = data.json_decode_diff(open(m.miasmod_path, 'rb'))
+			except ValueError:
+				m.note = ('WARNING: Corrupt miasmod file detected!', None)
+				self.ui.mod_list.resizeColumnsToContents()
+				raise
+			else:
+				data.apply_diff(env, diff)
 		return env
 
 	def generate_env_from_single_diff(self, row, mod):
@@ -422,6 +438,10 @@ class MiasMod(QtGui.QMainWindow):
 		self.progress('Checking if %s is synched...' % mod.rs5_name)
 		env1 = self.generate_env_from_diffs(row, mod, True)
 		env2 = environment.parse_from_archive(mod.rs5_path)
+		if env1 != env2:
+			rs5_base, include_mods = self.guess_rs5_source_diffs(row, mod, True)
+			sources = [rs5_base.rs5_name] + [ x.miasmod_name for x in include_mods ]
+			mod.diff_txt = data.pretty_fmt_diff(data.diff_data(env1, env2), ' + '.join(sources), mod.rs5_name)
 		self.done()
 		return env1 == env2
 

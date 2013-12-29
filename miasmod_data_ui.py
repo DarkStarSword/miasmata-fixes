@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'miasmod_data.ui'
 #
-# Created: Wed Dec 25 03:50:27 2013
+# Created: Mon Dec 30 04:49:55 2013
 #      by: pyside-uic 0.2.15 running on PySide 1.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -21,6 +21,10 @@ class Ui_MiasmataData(object):
         self.save.setEnabled(False)
         self.save.setObjectName("save")
         self.horizontalLayout_2.addWidget(self.save)
+        self.show_diff = QtGui.QPushButton(MiasmataData)
+        self.show_diff.setEnabled(False)
+        self.show_diff.setObjectName("show_diff")
+        self.horizontalLayout_2.addWidget(self.show_diff)
         spacerItem = QtGui.QSpacerItem(20, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem)
         self.verticalLayout_3.addLayout(self.horizontalLayout_2)
@@ -137,6 +141,7 @@ class Ui_MiasmataData(object):
         QtCore.QObject.connect(self.actionUndo_Changes, QtCore.SIGNAL("triggered()"), MiasmataData.undo)
         QtCore.QObject.connect(self.actionDelete, QtCore.SIGNAL("triggered()"), MiasmataData.delete_node)
         QtCore.QMetaObject.connectSlotsByName(MiasmataData)
+        MiasmataData.setTabOrder(self.treeView, self.name)
         MiasmataData.setTabOrder(self.name, self.type)
         MiasmataData.setTabOrder(self.type, self.value_line)
         MiasmataData.setTabOrder(self.value_line, self.value_list)
@@ -145,9 +150,12 @@ class Ui_MiasmataData(object):
         MiasmataData.setTabOrder(self.new_key, self.new_value)
         MiasmataData.setTabOrder(self.new_value, self.undo)
         MiasmataData.setTabOrder(self.undo, self.delete_node)
+        MiasmataData.setTabOrder(self.delete_node, self.save)
+        MiasmataData.setTabOrder(self.save, self.show_diff)
 
     def retranslateUi(self, MiasmataData):
         self.save.setText(QtGui.QApplication.translate("MiasmataData", "&Save...", None, QtGui.QApplication.UnicodeUTF8))
+        self.show_diff.setText(QtGui.QApplication.translate("MiasmataData", "Show &mod changes...", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setText(QtGui.QApplication.translate("MiasmataData", "&Name:", None, QtGui.QApplication.UnicodeUTF8))
         self.label_2.setText(QtGui.QApplication.translate("MiasmataData", "&Type:", None, QtGui.QApplication.UnicodeUTF8))
         self.label_3.setText(QtGui.QApplication.translate("MiasmataData", "&Value:", None, QtGui.QApplication.UnicodeUTF8))
