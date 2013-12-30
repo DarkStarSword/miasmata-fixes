@@ -626,6 +626,10 @@ class MiasMod(QtGui.QMainWindow):
 
 
 def start_gui_process(pipe=None):
+	# HACK TO WORK AROUND CRASH ON CONSOLE OUTPUT WITH BBFREEZE GUI_ONLY
+	from StringIO import StringIO
+	sys.stdout = sys.stderr = StringIO()
+
 	app = QtGui.QApplication(sys.argv)
 
 	window = MiasMod()
