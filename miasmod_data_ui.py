@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'miasmod_data.ui'
 #
-# Created: Mon Dec 30 04:49:55 2013
+# Created: Mon Dec 30 16:40:35 2013
 #      by: pyside-uic 0.2.15 running on PySide 1.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -30,6 +30,8 @@ class Ui_MiasmataData(object):
         self.verticalLayout_3.addLayout(self.horizontalLayout_2)
         self.horizontalLayout = QtGui.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
+        self.verticalLayout = QtGui.QVBoxLayout()
+        self.verticalLayout.setObjectName("verticalLayout")
         self.treeView = QtGui.QTreeView(MiasmataData)
         self.treeView.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
         self.treeView.setAlternatingRowColors(True)
@@ -37,7 +39,20 @@ class Ui_MiasmataData(object):
         self.treeView.setUniformRowHeights(True)
         self.treeView.setAllColumnsShowFocus(True)
         self.treeView.setObjectName("treeView")
-        self.horizontalLayout.addWidget(self.treeView)
+        self.verticalLayout.addWidget(self.treeView)
+        self.horizontalLayout_3 = QtGui.QHBoxLayout()
+        self.horizontalLayout_3.setObjectName("horizontalLayout_3")
+        self.label_4 = QtGui.QLabel(MiasmataData)
+        self.label_4.setObjectName("label_4")
+        self.horizontalLayout_3.addWidget(self.label_4)
+        self.search = QtGui.QLineEdit(MiasmataData)
+        self.search.setObjectName("search")
+        self.horizontalLayout_3.addWidget(self.search)
+        self.clear_search = QtGui.QPushButton(MiasmataData)
+        self.clear_search.setObjectName("clear_search")
+        self.horizontalLayout_3.addWidget(self.clear_search)
+        self.verticalLayout.addLayout(self.horizontalLayout_3)
+        self.horizontalLayout.addLayout(self.verticalLayout)
         self.verticalLayout_2 = QtGui.QVBoxLayout()
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.formLayout = QtGui.QFormLayout()
@@ -127,6 +142,7 @@ class Ui_MiasmataData(object):
         self.actionInsert_Row.setObjectName("actionInsert_Row")
         self.actionRemove_Row = QtGui.QAction(MiasmataData)
         self.actionRemove_Row.setObjectName("actionRemove_Row")
+        self.label_4.setBuddy(self.search)
         self.label.setBuddy(self.name)
         self.label_2.setBuddy(self.type)
         self.label_3.setBuddy(self.value_line)
@@ -140,8 +156,10 @@ class Ui_MiasmataData(object):
         QtCore.QObject.connect(self.undo, QtCore.SIGNAL("clicked()"), MiasmataData.undo)
         QtCore.QObject.connect(self.actionUndo_Changes, QtCore.SIGNAL("triggered()"), MiasmataData.undo)
         QtCore.QObject.connect(self.actionDelete, QtCore.SIGNAL("triggered()"), MiasmataData.delete_node)
+        QtCore.QObject.connect(self.clear_search, QtCore.SIGNAL("clicked()"), self.search.clear)
         QtCore.QMetaObject.connectSlotsByName(MiasmataData)
-        MiasmataData.setTabOrder(self.treeView, self.name)
+        MiasmataData.setTabOrder(self.treeView, self.search)
+        MiasmataData.setTabOrder(self.search, self.name)
         MiasmataData.setTabOrder(self.name, self.type)
         MiasmataData.setTabOrder(self.type, self.value_line)
         MiasmataData.setTabOrder(self.value_line, self.value_list)
@@ -150,12 +168,14 @@ class Ui_MiasmataData(object):
         MiasmataData.setTabOrder(self.new_key, self.new_value)
         MiasmataData.setTabOrder(self.new_value, self.undo)
         MiasmataData.setTabOrder(self.undo, self.delete_node)
-        MiasmataData.setTabOrder(self.delete_node, self.save)
-        MiasmataData.setTabOrder(self.save, self.show_diff)
+        MiasmataData.setTabOrder(self.delete_node, self.show_diff)
+        MiasmataData.setTabOrder(self.show_diff, self.save)
 
     def retranslateUi(self, MiasmataData):
         self.save.setText(QtGui.QApplication.translate("MiasmataData", "&Save...", None, QtGui.QApplication.UnicodeUTF8))
         self.show_diff.setText(QtGui.QApplication.translate("MiasmataData", "Show &mod changes...", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_4.setText(QtGui.QApplication.translate("MiasmataData", "&Search:", None, QtGui.QApplication.UnicodeUTF8))
+        self.clear_search.setText(QtGui.QApplication.translate("MiasmataData", "&Clear", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setText(QtGui.QApplication.translate("MiasmataData", "&Name:", None, QtGui.QApplication.UnicodeUTF8))
         self.label_2.setText(QtGui.QApplication.translate("MiasmataData", "&Type:", None, QtGui.QApplication.UnicodeUTF8))
         self.label_3.setText(QtGui.QApplication.translate("MiasmataData", "&Value:", None, QtGui.QApplication.UnicodeUTF8))

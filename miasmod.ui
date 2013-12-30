@@ -128,46 +128,14 @@
  <resources/>
  <connections>
   <connection>
-   <sender>open_environment</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>open_active_environment()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>90</x>
-     <y>94</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>369</x>
-     <y>641</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>open_saves_dat</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>open_saves_dat()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>128</x>
-     <y>122</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>5</x>
-     <y>348</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>refresh_mod_list</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
    <slot>refresh_mod_list()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>35</x>
-     <y>165</y>
+     <x>49</x>
+     <y>210</y>
     </hint>
     <hint type="destinationlabel">
      <x>6</x>
@@ -176,24 +144,24 @@
    </hints>
   </connection>
   <connection>
-   <sender>synchronise_local_mod</sender>
+   <sender>open_environment</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
-   <slot>synchronise_alocalmod()</slot>
+   <slot>open_alocalmod()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>71</x>
-     <y>201</y>
+     <x>58</x>
+     <y>88</y>
     </hint>
     <hint type="destinationlabel">
-     <x>3</x>
-     <y>438</y>
+     <x>8</x>
+     <y>142</y>
     </hint>
    </hints>
   </connection>
  </connections>
  <slots>
-  <slot>open_active_environment()</slot>
+  <slot>open_alocalmod()</slot>
   <slot>open_saves_dat()</slot>
   <slot>refresh_mod_list()</slot>
   <slot>synchronise_alocalmod()</slot>

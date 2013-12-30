@@ -51,23 +51,51 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout" stretch="3,2">
      <item>
-      <widget class="QTreeView" name="treeView">
-       <property name="contextMenuPolicy">
-        <enum>Qt::ActionsContextMenu</enum>
-       </property>
-       <property name="alternatingRowColors">
-        <bool>true</bool>
-       </property>
-       <property name="rootIsDecorated">
-        <bool>false</bool>
-       </property>
-       <property name="uniformRowHeights">
-        <bool>true</bool>
-       </property>
-       <property name="allColumnsShowFocus">
-        <bool>true</bool>
-       </property>
-      </widget>
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <widget class="QTreeView" name="treeView">
+         <property name="contextMenuPolicy">
+          <enum>Qt::ActionsContextMenu</enum>
+         </property>
+         <property name="alternatingRowColors">
+          <bool>true</bool>
+         </property>
+         <property name="rootIsDecorated">
+          <bool>false</bool>
+         </property>
+         <property name="uniformRowHeights">
+          <bool>true</bool>
+         </property>
+         <property name="allColumnsShowFocus">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QLabel" name="label_4">
+           <property name="text">
+            <string>&amp;Search:</string>
+           </property>
+           <property name="buddy">
+            <cstring>search</cstring>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="search"/>
+         </item>
+         <item>
+          <widget class="QPushButton" name="clear_search">
+           <property name="text">
+            <string>&amp;Clear</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
      </item>
      <item>
       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -269,6 +297,7 @@
  </widget>
  <tabstops>
   <tabstop>treeView</tabstop>
+  <tabstop>search</tabstop>
   <tabstop>name</tabstop>
   <tabstop>type</tabstop>
   <tabstop>value_line</tabstop>
@@ -278,8 +307,8 @@
   <tabstop>new_value</tabstop>
   <tabstop>undo</tabstop>
   <tabstop>delete_node</tabstop>
-  <tabstop>save</tabstop>
   <tabstop>show_diff</tabstop>
+  <tabstop>save</tabstop>
  </tabstops>
  <resources/>
  <connections>
@@ -408,6 +437,22 @@
     <hint type="destinationlabel">
      <x>356</x>
      <y>244</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>clear_search</sender>
+   <signal>clicked()</signal>
+   <receiver>search</receiver>
+   <slot>clear()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>369</x>
+     <y>462</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>259</x>
+     <y>461</y>
     </hint>
    </hints>
   </connection>

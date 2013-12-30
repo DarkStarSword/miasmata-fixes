@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'miasmod.ui'
 #
-# Created: Fri Dec 27 04:14:46 2013
+# Created: Mon Dec 30 06:13:26 2013
 #      by: pyside-uic 0.2.15 running on PySide 1.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -65,10 +65,8 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(0)
-        QtCore.QObject.connect(self.open_environment, QtCore.SIGNAL("clicked()"), MainWindow.open_active_environment)
-        QtCore.QObject.connect(self.open_saves_dat, QtCore.SIGNAL("clicked()"), MainWindow.open_saves_dat)
         QtCore.QObject.connect(self.refresh_mod_list, QtCore.SIGNAL("clicked()"), MainWindow.refresh_mod_list)
-        QtCore.QObject.connect(self.synchronise_local_mod, QtCore.SIGNAL("clicked()"), MainWindow.synchronise_alocalmod)
+        QtCore.QObject.connect(self.open_environment, QtCore.SIGNAL("clicked()"), MainWindow.open_alocalmod)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         MainWindow.setTabOrder(self.tabWidget, self.open_environment)
         MainWindow.setTabOrder(self.open_environment, self.new_mod)

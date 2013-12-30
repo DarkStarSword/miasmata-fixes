@@ -2,17 +2,15 @@
 
 # TODO:
 #
+# - When saving anything other than alocalmod, sync alocalmod
+#   - More generally, sync to all rs5 files down the list
+#
 # - Play nice with rs5 archives that have other files inside them
 # - Detect if saves.dat has been modified externally & ask to reload
-# - Menus to re-open saves.dat & arbitrary environment files
-#   - Prevent opening same file multiple times
 # - Figure out why the dirty bold indicator isn't always being cleared on save.
 #   Just rendering (no dataChanged emitted), or flag actually not cleared?
 #   Could it be related to the undo deep copy?
 #
-# - Ability to diff environments (save as *.miasmod files)
-# - Merge all diffs into alocalmod.rs5
-# - Detect if alocalmod.rs5 is out of sync from diffs
 #
 # Raw data
 #  - save/load file
@@ -218,7 +216,7 @@ class MiasMod(QtGui.QMainWindow):
 
 	@QtCore.Slot()
 	@catch_error
-	def open_saves_dat(self):
+	def on_open_saves_dat_clicked(self):
 		if 'saves.dat' in self.open_tabs:
 			return self.activate_tab('saves.dat')
 
@@ -232,7 +230,7 @@ class MiasMod(QtGui.QMainWindow):
 			return
 
 		saves.name = data.null_str('saves.dat')
-		view = miasmod_data.MiasmataDataView(saves, sort=True, save_path = path)
+		view = miasmod_data.MiasmataDataView(saves, sort=True, save_path = path, name='saves.dat')
 		self.add_tab(view, 'saves.dat', 'saves.dat')
 
 	@QtCore.Slot()
@@ -300,10 +298,11 @@ class MiasMod(QtGui.QMainWindow):
 			return
 		self.remove_tab(index)
 
-	@QtCore.Slot()
+	@QtCore.Slot(int)
 	@catch_error
-	def synchronise_alocalmod(self):
-		pass
+	def on_tabWidget_currentChanged(self, index):
+		if index == 0:
+			return self.refresh_mod_list()
 
 	def ask_edit(self, mod, msg1, msg2, edit_mod, edit_rs5, detailed=None):
 		dialog = QtGui.QMessageBox()
@@ -313,7 +312,8 @@ class MiasMod(QtGui.QMainWindow):
 		if detailed is not None:
 			dialog.setDetailedText(detailed)
 		edit_mod = dialog.addButton(edit_mod, dialog.AcceptRole)
-		edit_rs5 = dialog.addButton(edit_rs5, dialog.DestructiveRole)
+		if edit_rs5 is not None:
+			edit_rs5 = dialog.addButton(edit_rs5, dialog.DestructiveRole)
 		cancel = dialog.addButton(QtGui.QMessageBox.Cancel)
 		dialog.exec_()
 		return {
@@ -359,7 +359,7 @@ class MiasMod(QtGui.QMainWindow):
 		ret = diff_base, self.mod_list[diff_base_row + 1 : row + include_cur_row]
 		return ret
 
-	def ask_generate_mod_diff(self, row, mod):
+	def ask_generate_mod_diff(self, row, mod, open=True):
 		rs5_base, include_mods = self.guess_rs5_source_diffs(row, mod, False)
 		if rs5_base is None:
 			return 'edit_rs5'
@@ -367,10 +367,10 @@ class MiasMod(QtGui.QMainWindow):
 		mod_name = '%s.miasmod' % mod.name
 
 		msg1 = 'Generate %s?' % mod_name
-		msg2 = 'No miasmod file exists for the selected mod. Would you' \
+		msg2 = 'No miasmod file exists for "%s". Would you' \
 			' like to create "%s" based on the the differences' \
 			' between these files?:\n\n%s' \
-			% (mod_name, '\n'.join(sources))
+			% (mod.name, mod_name, '\n'.join(sources))
 
 		# env1 = self.generate_env_from_diffs(row, mod, False)
 		# env2 = environment.parse_from_archive(mod.rs5_path)
@@ -380,6 +380,8 @@ class MiasMod(QtGui.QMainWindow):
 
 		edit_mod = 'Generate %s' % mod_name
 		edit_rs5 = 'Edit %s' % mod.basename
+		if not open:
+			edit_rs5 = None
 		return self.ask_edit(mod, msg1, msg2, edit_mod, edit_rs5, msg3)
 
 	def ask_resolve_mod_sync(self, row, mod):
@@ -441,7 +443,7 @@ class MiasMod(QtGui.QMainWindow):
 		if env1 != env2:
 			rs5_base, include_mods = self.guess_rs5_source_diffs(row, mod, True)
 			sources = [rs5_base.rs5_name] + [ x.miasmod_name for x in include_mods ]
-			mod.diff_txt = data.pretty_fmt_diff(data.diff_data(env1, env2), ' + '.join(sources), mod.rs5_name)
+			mod.diff_txt = data.pretty_fmt_diff(data.diff_data(env2, env1), mod.rs5_name, ' + '.join(sources))
 		self.done()
 		return env1 == env2
 
@@ -494,33 +496,87 @@ class MiasMod(QtGui.QMainWindow):
 		self.add_tab(view, mod.miasmod_name, mod.name)
 		self.done()
 
-
-	@QtCore.Slot()
-	@catch_error
-	def open_active_environment(self):
-		return self.open_alocalmod()
-
-	def open_alocalmod(self):
-		if 'alocalmod' in self.open_tabs:
-			return self.activate_tab('alocalmod')
-
+	def _generate_new_alocalmod(self):
 		row = len(self.mod_list) - 1
-		mod = self.mod_list[row]
-		if mod.name == 'alocalmod':
-			return self.open_mod(row)
-		self.progress('Opening alocalmod...')
+
+		self.progress('Creating alocalmod...')
 
 		path = os.path.join(self.install_path, 'alocalmod.miasmod')
 		mod = ModList.mod('alocalmod', path, os.path.basename(path), 'miasmod')
 		path = os.path.join(self.install_path, 'alocalmod.rs5')
 		mod.add(path, os.path.basename(path), 'rs5')
 
-		env1 = self.generate_env_from_diffs(row, mod, True)
+		env = self.generate_env_from_diffs(row, mod, True)
+		# self.done() - Caller must clear status!
+
+		return (row, mod, env)
+
+	def generate_new_alocalmod(self):
+		row = len(self.mod_list) - 1
+		mod = self.mod_list[row]
+		if mod.name == 'alocalmod':
+			return (row, mod, None)
+
+		return self._generate_new_alocalmod()
+
+	@QtCore.Slot()
+	@catch_error
+	def open_alocalmod(self):
+		if 'alocalmod' in self.open_tabs:
+			return self.activate_tab('alocalmod')
+
+		(row, mod, env1) = self.generate_new_alocalmod()
+		if env1 is None: # Exists
+			return self.open_mod(row)
+
 		env2 = env1.copy()
 		env2.name = 'alocalmod'
 
 		view = miasmod_data.MiasmataDataView(env2, name = mod.name, diff_base = env1, miasmod_path = mod.miasmod_path, rs5_path = mod.rs5_path)
 		self.add_tab(view, mod.name, mod.name)
+		self.done()
+
+	@QtCore.Slot()
+	@catch_error
+	def on_synchronise_local_mod_clicked(self):
+		(row, mod, env) = self.generate_new_alocalmod()
+		if mod.rs5_path is None: # miasmod exists, but rs5 does not
+			(row, mod, env) = self._generate_new_alocalmod()
+		elif env is None: # Exists
+			return self.open_mod(row, open=False)
+		else:
+			diff = data.diff_data(env, env)
+			data.json_encode_diff(diff, open(mod.miasmod_path, 'wb'))
+		environment.encode_to_archive(env, mod.rs5_path)
+		self.refresh_mod_list()
+		self.done()
+
+	@QtCore.Slot()
+	@catch_error
+	def on_new_mod_clicked(self):
+		(path, filter) = QtGui.QFileDialog.getSaveFileName(self,
+			caption="New Miasmata mod...",
+			dir=self.install_path,
+			filter="MiasMod files (*.miasmod)")
+		if not path:
+			return
+		basename = os.path.basename(path)
+		(name, ext) = os.path.splitext(basename)
+
+		row = len(self.mod_list)
+		mod = self.mod_list[row - 1]
+		if mod.name == 'alocalmod':
+			row -= 1
+		(diff_base_row, diff_base) = self.find_diff_base(row)
+
+		env1 = environment.parse_from_archive(diff_base.rs5_path)
+		env2 = env1.copy()
+		env2.name = basename
+
+		# TODO: on tab changed / window got focus - refresh_mod_list()
+
+		view = miasmod_data.MiasmataDataView(env2, name = name, diff_base = env1, miasmod_path = path)
+		self.add_tab(view, name, name)
 		self.done()
 
 	@QtCore.Slot(QtCore.QModelIndex)
@@ -529,10 +585,10 @@ class MiasMod(QtGui.QMainWindow):
 		row = index.row()
 		return self.open_mod(row)
 
-	def open_mod(self, row):
+	def open_mod(self, row, open=True):
 		mod = self.mod_list[row]
 
-		if mod.name in self.open_tabs:
+		if open and mod.name in self.open_tabs:
 			return self.activate_tab(mod.name)
 
 		if mod.name in ('environment', 'communitypatch'):
@@ -543,13 +599,13 @@ class MiasMod(QtGui.QMainWindow):
 				return self.open_alocalmod()
 
 		if 'miasmod' not in mod.types: # rs5 only
-			answer = self.ask_generate_mod_diff(row, mod)
+			answer = self.ask_generate_mod_diff(row, mod, open)
 			if answer == 'cancel':
 				return
 			if answer == 'edit_mod':
 				self.generate_mod_diff(row, mod)
-				return self.open_mod_both(row, mod)
-			return self.open_mod_rs5_only(row, mod)
+				return open and self.open_mod_both(row, mod)
+			return open and self.open_mod_rs5_only(row, mod)
 
 		if 'rs5' in mod.types: # Both rs5 + miasmod
 			if not self.rs5_synched(row, mod):
@@ -558,12 +614,13 @@ class MiasMod(QtGui.QMainWindow):
 					return
 				if answer == 'edit_rs5':
 					self.generate_mod_diff(row, mod)
-					return self.open_mod_both(row, mod)
+					return open and self.open_mod_both(row, mod)
 				self.sync_rs5(row, mod)
-			return self.open_mod_both(row, mod)
+			return open and self.open_mod_both(row, mod)
 
 		# miasmod only
-		return self.open_mod_miasmod_only(row, mod)
+		return open and self.open_mod_miasmod_only(row, mod)
+
 
 def start_gui_process(pipe=None):
 	app = QtGui.QApplication(sys.argv)

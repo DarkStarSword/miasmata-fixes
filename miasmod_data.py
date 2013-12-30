@@ -163,21 +163,6 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 			self.mark_dirty(node, index)
 			return self.insert_row(node, parent_idx)
 		return None
-		#	insert_pos = len(parent_node)
-		#	self.mark_dirty(node, index)
-		#	move=True
-		#	if insert_pos-1 == index.row():
-		#		move=False
-		#	if move:
-		#		assert(self.beginMoveRows(parent_idx, index.row(), index.row(), parent_idx, insert_pos))
-		#	del parent_node[node.name]
-		#	parent_node[data.null_str(value)] = node
-		#	if move:
-		#		self.endMoveRows()
-		#	new_index = self.index(insert_pos, 0, parent_idx)
-		#	self.row_updated(new_index)
-		#	return True
-		# return False
 
 	def setData(self, index, value, role = Qt.EditRole):
 		if role == Qt.EditRole:
@@ -262,6 +247,21 @@ class MiasmataDataSortProxy(QtGui.QSortFilterProxyModel):
 
 	def clear_dirty(self):
 		return self.sourceModel().clear_dirty()
+
+	def filterAcceptsRow(self, sourceRow, sourceParent):
+		if not sourceParent.isValid():
+			# Don't ever filter out the root node
+			return True
+		s = self.filterRegExp().pattern().lower()
+		if not s:
+			return True
+		index = self.sourceModel().index(sourceRow, 0, sourceParent)
+		node = self.sourceModel().index_to_node(index)
+		if node.name.lower().find(s) != -1:
+			return True
+		if hasattr(node, 'search'):
+			return node.search(s)
+		return False
 
 class MiasmataDataListModel(QtCore.QAbstractListModel):
 	def __init__(self, node, parent_model, parent_selection):
@@ -385,20 +385,21 @@ class MiasmataDataView(QtGui.QWidget):
 		if self.diff_base is not None:
 			self.ui.show_diff.setEnabled(True)
 
-		self.model = MiasmataDataModel(root)
+		self.model = self.underlying_model = MiasmataDataModel(root)
 		if sort:
 			self.sort_proxy = MiasmataDataSortProxy(self)
 			self.sort_proxy.setSourceModel(self.model)
 			self.sort_proxy.sort(0, Qt.AscendingOrder)
 			self.sort_proxy.setDynamicSortFilter(True)
+			# self.ui.search.textChanged.connect(self.sort_proxy.setFilterFixedString)
 			self.model = self.sort_proxy
 			self.ui.treeView.setModel(self.sort_proxy)
 		else:
 			self.ui.treeView.setModel(self.model)
 		self.model.dataChanged.connect(self.dataChanged)
-		# self.model.rowsMoved.connect(self.rowsMoved)
-		self.model.rowsInserted.connect(self.enable_save)
-		self.model.rowsRemoved.connect(self.enable_save)
+		self.underlying_model.dataChanged.connect(self.enable_save)
+		self.underlying_model.rowsInserted.connect(self.enable_save)
+		self.underlying_model.rowsRemoved.connect(self.enable_save)
 		self.ui.treeView.expandToDepth(0)
 		self.ui.treeView.setColumnWidth(0, 256)
 
@@ -517,14 +518,7 @@ class MiasmataDataView(QtGui.QWidget):
 
 	@QtCore.Slot()
 	def dataChanged(self, topLeft, bottomRight):
-		self.ui.save.setEnabled(True)
 		return self.update_view(topLeft, self.cur_node)
-
-	# @QtCore.Slot()
-	# def rowsMoved(self, sourceParent, sourceStart, sourceEnd, destinationParent, destinationRow):
-	#	print 'rowsMoved', destinationParent, sourceStart, destinationRow
-	#	self.ui.save.setEnabeld(True)
-	#	return self.update_view(self.model.index(destinationRow, 0, destinationParent), self.cur_node)
 
 	@QtCore.Slot()
 	def enable_save(self, parent, start, end):
@@ -625,6 +619,19 @@ class MiasmataDataView(QtGui.QWidget):
 		diff = data.diff_data(self.diff_base, self.root)
 		dialog.setInformativeText(data.pretty_fmt_diff(diff))
 		ret = dialog.exec_()
+
+	@QtCore.Slot()
+	def on_search_editingFinished(self):
+		t = self.ui.search.text()
+		if not t:
+			return self.sort_proxy.setFilterFixedString(None)
+		self.sort_proxy.setFilterFixedString(t)
+
+	@QtCore.Slot()
+	def on_clear_search_clicked(self):
+		self.sort_proxy.reset()
+		self.ui.treeView.expandToDepth(0)
+		self.sort_proxy.setFilterFixedString(None)
 
 	@QtCore.Slot()
 	def on_value_line_editingFinished(self):

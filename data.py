@@ -96,6 +96,9 @@ class null_str(str):
 	def enc(self):
 		return self + '\0'
 
+	def search(self, s):
+		return self.find(s) != -1
+
 @data_type
 class data_tree(object):
 	id = 'T'
@@ -107,6 +110,8 @@ class data_tree(object):
 			child.name = name
 		self.parent = None
 		self.name = None
+		self.last_search = ('None', True)
+
 	def dec(self, f):
 		while True:
 			name = null_str.dec_new(f)
@@ -198,6 +203,21 @@ class data_tree(object):
 			elif my_child != other_child:
 				changed.append( (parent_list(other_child, root=other_root), my_child, other_child) )
 		return (added, removed, changed)
+
+	def _search(self, s):
+		for (name, child) in self.iteritems():
+			if name.lower().find(s) != -1:
+				return True
+			if hasattr(child, 'search'):
+				ret = child.search(s)
+				if ret:
+					return True
+		return False
+
+	def search(self, s):
+		if s != self.last_search[0]:
+			self.last_search = (s, self._search(s))
+		return self.last_search[1]
 
 	def check_parent_invariant(self):
 		for (name, child) in self.iteritems():
@@ -348,6 +368,9 @@ class data_str_list(data_list):
 	type = null_str
 	parse = null_str.dec_new
 
+	def search(self, s):
+		return any(itertools.imap(lambda x: x.find(s) != -1, self))
+
 @data_type
 class data_float_list(data_list):
 	id = 'F'
@@ -368,6 +391,14 @@ class data_mixed_list(data_list):
 		for i in self.list:
 			r += i.id + i.enc()
 		return r
+
+	def search(self, s):
+		for v in self:
+			if hasattr(v, 'search'):
+				ret = v.search(s)
+				if ret:
+					return True
+		return False
 
 @data_type
 class data_raw(object):
