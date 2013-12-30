@@ -1,0 +1,37 @@
+{
+    "removed": [
+        [
+            "player", 
+            "pick_objects", 
+            "modelsets\\XC_BedWMattress1"
+        ], 
+        [
+            "player", 
+            "pick_objects", 
+            "modelsets\\XC_Bed1"
+        ], 
+        [
+            "player", 
+            "pick_objects", 
+            "modelsets\\XC_BedWMattress2"
+        ], 
+        [
+            "game_objects", 
+            "special_bed"
+        ]
+    ], 
+    "added": [], 
+    "changed": [
+        [
+            [
+                "player", 
+                "condition", 
+                "sickness", 
+                "tiredness", 
+                "rate"
+            ], 
+            "[\"f\",2.5]", 
+            "[\"f\",0.0]"
+        ]
+    ]
+}

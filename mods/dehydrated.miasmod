@@ -1,0 +1,25 @@
+{
+    "removed": [
+        [
+            "player", 
+            "pick_objects", 
+            "modelsets\\LabPitcher"
+        ], 
+        [
+            "game_objects", 
+            "special_drink_pitcher"
+        ]
+    ], 
+    "added": [], 
+    "changed": [
+        [
+            [
+                "player", 
+                "journal", 
+                "canteen_capacity"
+            ], 
+            "[\"i\",5]", 
+            "[\"i\",1]"
+        ]
+    ]
+}
