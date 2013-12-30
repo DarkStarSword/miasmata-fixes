@@ -97,7 +97,7 @@ class null_str(str):
 		return self + '\0'
 
 	def search(self, s):
-		return self.find(s) != -1
+		return self.lower().find(s) != -1
 
 @data_type
 class data_tree(object):

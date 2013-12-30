@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Miasmata Advanced Configuration</string>
+   <string>Miasmod - Miasmata Advanced Configuration and Modding Tool</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -159,10 +159,25 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>synchronise_local_mod</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>synchronise_alocalmod()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>144</x>
+     <y>226</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>4</x>
+     <y>270</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>open_alocalmod()</slot>
-  <slot>open_saves_dat()</slot>
   <slot>refresh_mod_list()</slot>
   <slot>synchronise_alocalmod()</slot>
  </slots>

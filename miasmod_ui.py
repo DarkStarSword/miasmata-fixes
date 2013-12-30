@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'miasmod.ui'
 #
-# Created: Mon Dec 30 06:13:26 2013
+# Created: Mon Dec 30 20:08:06 2013
 #      by: pyside-uic 0.2.15 running on PySide 1.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -67,6 +67,7 @@ class Ui_MainWindow(object):
         self.tabWidget.setCurrentIndex(0)
         QtCore.QObject.connect(self.refresh_mod_list, QtCore.SIGNAL("clicked()"), MainWindow.refresh_mod_list)
         QtCore.QObject.connect(self.open_environment, QtCore.SIGNAL("clicked()"), MainWindow.open_alocalmod)
+        QtCore.QObject.connect(self.synchronise_local_mod, QtCore.SIGNAL("clicked()"), MainWindow.synchronise_alocalmod)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         MainWindow.setTabOrder(self.tabWidget, self.open_environment)
         MainWindow.setTabOrder(self.open_environment, self.new_mod)
@@ -75,7 +76,7 @@ class Ui_MainWindow(object):
         MainWindow.setTabOrder(self.synchronise_local_mod, self.mod_list)
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "Miasmata Advanced Configuration", None, QtGui.QApplication.UnicodeUTF8))
+        MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "Miasmod - Miasmata Advanced Configuration and Modding Tool", None, QtGui.QApplication.UnicodeUTF8))
         self.open_environment.setText(QtGui.QApplication.translate("MainWindow", "Open local &environment...", None, QtGui.QApplication.UnicodeUTF8))
         self.new_mod.setText(QtGui.QApplication.translate("MainWindow", "&New Mod...", None, QtGui.QApplication.UnicodeUTF8))
         self.open_saves_dat.setText(QtGui.QApplication.translate("MainWindow", "Open &saves.dat...", None, QtGui.QApplication.UnicodeUTF8))

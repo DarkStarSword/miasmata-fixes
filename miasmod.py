@@ -453,6 +453,8 @@ class MiasMod(QtGui.QMainWindow):
 		self.refresh_mod_list()
 
 	def add_tab(self, view, name, mod_name):
+		if mod_name not in ('saves.dat', 'alocalmod'):
+			view.saved.connect(self.synchronise_alocalmod)
 		self.ui.tabWidget.addTab(view, unicode(name))
 		self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.count() - 1)
 		self.open_tabs[mod_name] = view
@@ -538,7 +540,8 @@ class MiasMod(QtGui.QMainWindow):
 
 	@QtCore.Slot()
 	@catch_error
-	def on_synchronise_local_mod_clicked(self):
+	def synchronise_alocalmod(self):
+		self.refresh_mod_list()
 		(row, mod, env) = self.generate_new_alocalmod()
 		if mod.rs5_path is None: # miasmod exists, but rs5 does not
 			(row, mod, env) = self._generate_new_alocalmod()
@@ -630,7 +633,8 @@ def start_gui_process(pipe=None):
 	window.show()
 	# window.open_saves_dat()
 	# window.open_active_environment()
-	window.refresh_mod_list()
+	# window.refresh_mod_list()
+	window.synchronise_alocalmod()
 
 	# import trace
 	# t = trace.Trace()

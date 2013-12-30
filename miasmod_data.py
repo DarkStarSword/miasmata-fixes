@@ -152,8 +152,13 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 	def setDataName(self, index, value, role = Qt.EditRole):
 		if role == Qt.EditRole:
 			node = self.index_to_node(index)
-			if value in node.parent:
-				return None
+			try:
+				if value in node.parent:
+					return None
+			except:
+				self.root.check_parent_invariant()
+				sys.stderr.flush()
+				raise
 			parent_node = node.parent
 			parent_idx = self.parent(index)
 			add_undo_data(node)
@@ -199,7 +204,7 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 			# sys.stderr.flush()
 			del object.dirty
 		self.dirty_objects.clear()
-		# self.root.check_dirty_flag()
+		self.root.check_dirty_flag()
 		sys.stderr.flush()
 		for index in self.dirty_indices:
 			try:
@@ -222,6 +227,10 @@ class MiasmataDataSortProxy(QtGui.QSortFilterProxyModel):
 		index = self.mapToSource(index)
 		new_index = self.sourceModel().setDataName(index, value, role)
 		if new_index is not None:
+			ret = self.mapFromSource(new_index)
+			if ret.isValid():
+				return ret
+			self.setFilterFixedString(None)
 			return self.mapFromSource(new_index)
 
 	def row_updated(self, index):
@@ -369,6 +378,9 @@ class MiasmataDataMixedListModel(MiasmataDataListModel):
 
 class MiasmataDataView(QtGui.QWidget):
 	from miasmod_data_ui import Ui_MiasmataData
+
+	saved = QtCore.Signal()
+
 	def __init__(self, root, sort=True, save_path=None, diff_base=None, miasmod_path=None, rs5_path=None, parent=None, name=None):
 		super(MiasmataDataView, self).__init__(parent)
 		self.ui = self.Ui_MiasmataData()
@@ -397,7 +409,7 @@ class MiasmataDataView(QtGui.QWidget):
 		else:
 			self.ui.treeView.setModel(self.model)
 		self.model.dataChanged.connect(self.dataChanged)
-		self.underlying_model.dataChanged.connect(self.enable_save)
+		self.underlying_model.dataChanged.connect(self.underlyingDataChanged)
 		self.underlying_model.rowsInserted.connect(self.enable_save)
 		self.underlying_model.rowsRemoved.connect(self.enable_save)
 		self.ui.treeView.expandToDepth(0)
@@ -521,6 +533,10 @@ class MiasmataDataView(QtGui.QWidget):
 		return self.update_view(topLeft, self.cur_node)
 
 	@QtCore.Slot()
+	def underlyingDataChanged(self, topLeft, bottomRight):
+		self.ui.save.setEnabled(True)
+
+	@QtCore.Slot()
 	def enable_save(self, parent, start, end):
 		self.ui.save.setEnabled(True)
 
@@ -606,6 +622,7 @@ class MiasmataDataView(QtGui.QWidget):
 
 		self.model.clear_dirty()
 		self.ui.save.setEnabled(False)
+		self.saved.emit()
 
 	@QtCore.Slot()
 	def on_save_clicked(self):
@@ -613,12 +630,27 @@ class MiasmataDataView(QtGui.QWidget):
 
 	@QtCore.Slot()
 	def on_show_diff_clicked(self):
-		dialog = QtGui.QMessageBox()
-		dialog.setWindowTitle('MiasMod')
-		dialog.setText(self.root.name)
+		# dialog = QtGui.QMessageBox()
+		# dialog.setWindowTitle('MiasMod')
+		# dialog.setText(self.root.name)
+		# diff = data.diff_data(self.diff_base, self.root)
+		# dialog.setInformativeText(data.pretty_fmt_diff(diff))
+		# ret = dialog.exec_()
+
 		diff = data.diff_data(self.diff_base, self.root)
-		dialog.setInformativeText(data.pretty_fmt_diff(diff))
-		ret = dialog.exec_()
+		txt = data.pretty_fmt_diff(diff)
+
+		dialog = QtGui.QDialog()
+		dialog.resize(600,800)
+		dialog.setWindowTitle('MiasMod')
+		layout = QtGui.QVBoxLayout(dialog)
+		# dialog.setText(self.root.name)
+		txtbox = QtGui.QPlainTextEdit(dialog)
+		txtbox.setReadOnly(True)
+		txtbox.setPlainText(txt)
+		layout.addWidget(txtbox)
+		# dialog.setInformativeText(data.pretty_fmt_diff(diff))
+		dialog.exec_()
 
 	@QtCore.Slot()
 	def on_search_editingFinished(self):
@@ -629,9 +661,15 @@ class MiasmataDataView(QtGui.QWidget):
 
 	@QtCore.Slot()
 	def on_clear_search_clicked(self):
+		selection = self.selection_model.currentIndex()
+		selection = self.sort_proxy.mapToSource(selection)
 		self.sort_proxy.reset()
 		self.ui.treeView.expandToDepth(0)
 		self.sort_proxy.setFilterFixedString(None)
+		selection = self.sort_proxy.mapFromSource(selection)
+		self.selection_model.setCurrentIndex(selection, \
+					QtGui.QItemSelectionModel.ClearAndSelect \
+					| QtGui.QItemSelectionModel.Rows)
 
 	@QtCore.Slot()
 	def on_value_line_editingFinished(self):
