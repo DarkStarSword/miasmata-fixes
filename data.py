@@ -310,12 +310,12 @@ class data_list(object):
 	def __init__(self):
 		self.list = []
 	def dec(self, f):
-		self.len = data_int.dec_new(f)
-		for i in range(self.len):
+		l = data_int.dec_new(f)
+		for i in range(l):
 			e = self.parse(f)
 			self.list.append(e)
 	def enc(self):
-		r = self.len.enc()
+		r = len(self).enc()
 		for i in self.list:
 			r += i.enc()
 		return r
@@ -327,7 +327,6 @@ class data_list(object):
 			if isinstance(i, unicode):
 				i = null_str(i)
 			self.list.append(i)
-		self.len = data_int(len(l))
 
 	def __iter__(self): return iter(self.list)
 	def __getitem__(self, item): return self.list[item]
@@ -337,8 +336,8 @@ class data_list(object):
 		return self.list.insert(index, object)
 	def remove(self, item):
 		self.list.remove(item)
-		self.len = data_int(len(self.list))
-	def __len__(self): return len(self.list)
+	def __len__(self):
+		return data_int(len(self.list))
 
 	def summary(self):
 		if len(self.list) > 5:
@@ -387,7 +386,7 @@ class data_mixed_list(data_list):
 		t = f.read(1)
 		return parse_type(t, f)
 	def enc(self):
-		r = self.len.enc()
+		r = len(self).enc()
 		for i in self.list:
 			r += i.id + i.enc()
 		return r
