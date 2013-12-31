@@ -23,6 +23,7 @@ from PySide import QtCore, QtGui
 from PySide.QtCore import Qt
 
 import collections
+import json
 
 import miasutil
 import rs5archive
@@ -36,22 +37,25 @@ from ui_utils import catch_error
 
 class ModList(object):
 	class mod(object):
-		def __init__(self, name, path, basename, type, note=None):
+		def __init__(self, name, path, basename, type, note=None, include=True):
 			self.rs5_name = None
 			self.rs5_path = None
 			self.miasmod_name = None
 			self.miasmod_path = None
 			self.name = name
 			self.note = (None, None)
+			self.include = include
 
-			self.add(path, basename, type, note)
+			self.add(path, basename, type, note, include)
 
-		def add(self, path, basename, type, note=None):
+		def add(self, path, basename, type, note=None, include=True):
 			if type == 'rs5':
 				basename = '%s/environment' % basename
 			setattr(self, '%s_path' % type, path)
 			setattr(self, '%s_name' % type, basename)
 			self.note = note or self.note
+			if include is not None:
+				self.include = include
 		@property
 		def basename(self):
 			return self.miasmod_name or self.rs5_name
@@ -72,7 +76,7 @@ class ModList(object):
 		self.mods_last = collections.OrderedDict()
 		self.active = 'environment'
 
-	def add(self, path):
+	def add(self, path, includes=None):
 		basename = os.path.basename(path)
 		(name, ext) = [ x.lower() for x in os.path.splitext(basename) ]
 		ext = ext[1:]
@@ -91,17 +95,21 @@ class ModList(object):
 					'To avoid crashes, environment.rs5' \
 					' should come last alphabetically')
 
+		include=True
+		if includes is not None and name in includes:
+			include = includes[name]
+
 		l = self.mods
 		if name == 'alocalmod':
 			l = self.mods_last
 		if name in l:
-			l[name].add(path, basename, ext, note)
+			l[name].add(path, basename, ext, note, include)
 		else:
-			l[name] = ModList.mod(name, path, basename, ext, note)
+			l[name] = ModList.mod(name, path, basename, ext, note, include)
 
-	def extend(self, iterable):
+	def extend(self, iterable, includes=None):
 		for item in iterable:
-			self.add(item)
+			self.add(item, includes=includes)
 	def __len__(self):
 		return len(self.mods) + len(self.mods_last)
 	def __getitem__(self, idx):
@@ -142,6 +150,11 @@ class ModListModel(QtCore.QAbstractTableModel):
 		if role == Qt.FontRole:
 			if index.column() == 2:
 				return QtGui.QFont(None, italic=True)
+		if role == Qt.CheckStateRole:
+			if index.column() == 0 and \
+					mod.miasmod_name is not None and \
+					mod.rs5_name is None:
+				return mod.include and Qt.CheckState.Checked or Qt.CheckState.Unchecked
 
 	def headerData(self, section, orientation, role):
 		if role == Qt.DisplayRole and orientation == Qt.Horizontal:
@@ -152,11 +165,28 @@ class ModListModel(QtCore.QAbstractTableModel):
 			if section == 2:
 				return 'Notes'
 
+	def setData(self, index, value, role = Qt.EditRole):
+		if role == Qt.CheckStateRole:
+			mod = self.mod_list[index.row()]
+			mod.include = value == Qt.CheckState.Checked and True or False
+			self.dataChanged.emit(index, index)
+			return True
+		return False
+
 	def __getitem__(self, item):
 		return self.mod_list[item]
 
 	def __len__(self):
 		return len(self.mod_list)
+
+	def flags(self, index):
+		if not index.isValid():
+			return
+		flags = Qt.ItemIsEnabled | Qt.ItemIsSelectable
+		if index.column() == 0:
+			return flags | Qt.ItemIsUserCheckable
+		return flags
+
 
 class MiasMod(QtGui.QMainWindow):
 	from miasmod_ui import Ui_MainWindow
@@ -170,6 +200,7 @@ class MiasMod(QtGui.QMainWindow):
 		self.open_tabs = {}
 
 		self.find_install_path()
+		self.conf_path = os.path.join(self.install_path, 'miasmod.conf')
 
 		self.busy = False
 
@@ -219,6 +250,12 @@ class MiasMod(QtGui.QMainWindow):
 	def refresh_mod_list(self):
 		mod_list = ModList()
 
+		mod_states = None
+		try:
+			mod_states = json.load(open(self.conf_path, 'rb'))
+		except:
+			pass
+
 		for path in sorted(glob(os.path.join(self.install_path, '*.rs5')), reverse=True):
 			basename = os.path.basename(path)
 			if basename.lower() == 'main.rs5':
@@ -232,11 +269,20 @@ class MiasMod(QtGui.QMainWindow):
 				continue
 			mod_list.add(path)
 
-		mod_list.extend(sorted(glob(os.path.join(self.install_path, '*.miasmod'))))
+		mod_list.extend(sorted(glob(os.path.join(self.install_path, '*.miasmod'))), mod_states)
 
 		self.mod_list = ModListModel(mod_list)
+		self.mod_list.dataChanged.connect(self.dataChanged)
 		self.ui.mod_list.setModel(self.mod_list)
 		self.ui.mod_list.resizeColumnsToContents()
+
+	@QtCore.Slot()
+	@catch_error
+	def dataChanged(self, topLeft, bottomRight):
+		mod_states = { mod.name: mod.include for mod in self.mod_list }
+		json.dump(mod_states, open(self.conf_path, 'wb'), ensure_ascii=True)
+		# TODO: Delay this somehow, synchronise all following rs5s...
+		self.synchronise_alocalmod()
 
 	def __del__(self):
 		self.ui.tabWidget.clear()
@@ -337,7 +383,7 @@ class MiasMod(QtGui.QMainWindow):
 		(diff_base_row, diff_base) = self.find_diff_base(row)
 		if diff_base is None:
 			return None, []
-		ret = diff_base, self.mod_list[diff_base_row + 1 : row + include_cur_row]
+		ret = diff_base, filter(lambda x: x.include, self.mod_list[diff_base_row + 1 : row + include_cur_row])
 		return ret
 
 	def ask_generate_mod_diff(self, row, mod, open=True):
