@@ -610,6 +610,10 @@ def start_gui_process(pipe=None):
 	# HACK TO WORK AROUND CRASH ON CONSOLE OUTPUT WITH BBFREEZE GUI_ONLY
 	sys.stdout = sys.stderr = open('miasmod.log', 'w')
 
+	# Try to get some more useful info on crashes:
+	import faulthandler
+	faulthandler.enable()
+
 	app = QtGui.QApplication(sys.argv)
 
 	window = MiasMod()
