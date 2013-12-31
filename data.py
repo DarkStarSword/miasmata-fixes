@@ -186,7 +186,7 @@ class data_tree(object):
 
 		added = [ (parent_list(other[child], root=other_root), other[child]) \
 				for child in other_children.difference(my_children) ]
-		removed = [ parent_list(self[child], root=root) \
+		removed = [ (parent_list(self[child], root=root), self[child]) \
 				for child in my_children.difference(other_children) ]
 
 		changed = []
@@ -437,6 +437,9 @@ def diff_data(tree1, tree2):
 	(added, removed, changed) = tree1.diff(tree2, root=tree1, other_root=tree2)
 	return {'added': added, 'removed': removed, 'changed': changed}
 
+def is_new_style_diff_removed(removed):
+	return len(removed) and len(removed[0]) == 2 and isinstance(removed[0][0], list)
+
 def apply_diff(root, diff):
 	def find_parent_node(plist):
 		node = root
@@ -456,7 +459,7 @@ def apply_diff(root, diff):
 			for (plist, c) in changed:
 				yield (plist, c)
 
-	for plist in diff['removed']:
+	for (plist, removed) in diff['removed']:
 		try:
 			parent = find_parent_node(plist)
 			del parent[plist[-1]]
@@ -477,6 +480,7 @@ def apply_diff(root, diff):
 def json_encode_diff(diff, outputfd):
 	tmp = diff.copy()
 	tmp['added']   = [ (plist, dumps_json_node(node)) for (plist, node) in diff['added'] ]
+	tmp['removed'] = [ (plist, dumps_json_node(node)) for (plist, node) in diff['removed'] ]
 	tmp['changed'] = [ (plist, dumps_json_node(node1), dumps_json_node(node2)) \
 			for (plist, node1, node2) in diff['changed'] ]
 
@@ -485,6 +489,12 @@ def json_encode_diff(diff, outputfd):
 def json_decode_diff(inputfd):
 	diff = json.load(inputfd)
 	diff['added']   = [ (plist, parse_json_node(j)) for (plist, j) in diff['added'] ]
+
+	if is_new_style_diff_removed(diff['removed']):
+		diff['removed'] = [ (plist, parse_json_node(j)) for (plist, j) in diff['removed'] ]
+	else:
+		diff['removed'] = itertools.izip_longest(diff['removed'], [], fillvalue=None)
+
 	try:
 		diff['changed'] = [ (plist, parse_json_node(j1), parse_json_node(j2)) \
 				for (plist, j1, j2) in diff['changed'] ]
@@ -503,8 +513,7 @@ def pretty_fmt_diff(diff, file1=None, file2=None):
 			for (p, c) in changed:
 				yield ((p, c), '>')
 
-	removed = itertools.izip_longest(diff['removed'], [], fillvalue=None)
-	removed = itertools.izip_longest(removed, [], fillvalue='-')
+	removed = itertools.izip_longest(diff['removed'], [], fillvalue='-')
 	added = itertools.izip_longest(diff['added'], [], fillvalue='+')
 	changed = iter_changed(diff['changed'])
 	combined = sorted(itertools.chain(added, removed, changed), key=lambda ((p, n), pre): (p, 127-ord(pre), n))
