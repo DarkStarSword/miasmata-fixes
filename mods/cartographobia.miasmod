@@ -1,6 +1,14 @@
 {
     "removed": [
         [
+            "player", 
+            "condition", 
+            "drugs", 
+            "ClarityTonic", 
+            "effects", 
+            "clarity"
+        ], 
+        [
             "game_objects", 
             "Note8", 
             "map_id"
