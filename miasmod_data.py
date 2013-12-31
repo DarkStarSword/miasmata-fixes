@@ -7,6 +7,8 @@ import rs5archive
 import environment
 import data
 
+from ui_utils import catch_error
+
 def add_undo_data(object):
 	import copy
 	if hasattr(object, 'undo'):
@@ -525,18 +527,22 @@ class MiasmataDataView(QtGui.QWidget):
 
 
 	@QtCore.Slot()
+	@catch_error
 	def currentChanged(self, current, previous):
 		return self.update_view(current, self.model.index_to_node(previous))
 
 	@QtCore.Slot()
+	@catch_error
 	def dataChanged(self, topLeft, bottomRight):
 		return self.update_view(topLeft, self.cur_node)
 
 	@QtCore.Slot()
+	@catch_error
 	def underlyingDataChanged(self, topLeft, bottomRight):
 		self.ui.save.setEnabled(True)
 
 	@QtCore.Slot()
+	@catch_error
 	def enable_save(self, parent, start, end):
 		self.ui.save.setEnabled(True)
 
@@ -625,10 +631,12 @@ class MiasmataDataView(QtGui.QWidget):
 		self.saved.emit()
 
 	@QtCore.Slot()
+	@catch_error
 	def on_save_clicked(self):
 		self.save()
 
 	@QtCore.Slot()
+	@catch_error
 	def on_show_diff_clicked(self):
 		# dialog = QtGui.QMessageBox()
 		# dialog.setWindowTitle('MiasMod')
@@ -653,6 +661,7 @@ class MiasmataDataView(QtGui.QWidget):
 		dialog.exec_()
 
 	@QtCore.Slot()
+	@catch_error
 	def on_search_editingFinished(self):
 		t = self.ui.search.text()
 		if not t:
@@ -660,6 +669,7 @@ class MiasmataDataView(QtGui.QWidget):
 		self.sort_proxy.setFilterFixedString(t)
 
 	@QtCore.Slot()
+	@catch_error
 	def on_clear_search_clicked(self):
 		selection = self.selection_model.currentIndex()
 		selection = self.sort_proxy.mapToSource(selection)
@@ -672,6 +682,7 @@ class MiasmataDataView(QtGui.QWidget):
 					| QtGui.QItemSelectionModel.Rows)
 
 	@QtCore.Slot()
+	@catch_error
 	def on_value_line_editingFinished(self):
 		text = self.ui.value_line.text()
 		if str(self.cur_node) != text:
@@ -679,6 +690,7 @@ class MiasmataDataView(QtGui.QWidget):
 			self.model.setDataValue(selection, text)
 
 	@QtCore.Slot()
+	@catch_error
 	def on_name_editingFinished(self):
 		name = self.ui.name.text()
 		if self.cur_node.name != name:
@@ -689,6 +701,7 @@ class MiasmataDataView(QtGui.QWidget):
 					| QtGui.QItemSelectionModel.Rows)
 
 	@QtCore.Slot()
+	@catch_error
 	def on_type_activated(self):
 		new_type = data.data_types.values()[self.ui.type.currentIndex()]
 		if self.cur_node.__class__ == new_type:
@@ -722,16 +735,19 @@ class MiasmataDataView(QtGui.QWidget):
 		self.ui.name.selectAll()
 
 	@QtCore.Slot()
+	@catch_error
 	def insert_value(self):
 		node = data.data_null()
 		return self.insert_node(node, 'Item')
 
 	@QtCore.Slot()
+	@catch_error
 	def insert_key(self):
 		node = data.data_tree()
 		return self.insert_node(node, 'Key')
 
 	@QtCore.Slot()
+	@catch_error
 	def undo(self):
 		selection = self.selection_model.currentIndex()
 		new_index = self.model.undo(selection)
@@ -740,6 +756,7 @@ class MiasmataDataView(QtGui.QWidget):
 					QtGui.QItemSelectionModel.ClearAndSelect \
 					| QtGui.QItemSelectionModel.Rows)
 	@QtCore.Slot()
+	@catch_error
 	def delete_node(self):
 		selection = self.selection_model.currentIndex()
 		dialog = QtGui.QMessageBox()
@@ -753,12 +770,14 @@ class MiasmataDataView(QtGui.QWidget):
 			self.model.removeRows(selection.row(), 1, selection.parent())
 
 	@QtCore.Slot()
+	@catch_error
 	def on_actionInsert_Row_triggered(self):
 		index = self.ui.value_list.selectionModel().currentIndex()
 		self.ui.value_list.model().insertRows(index.row(), 1)
 		self.ui.value_list.edit(index, QtGui.QAbstractItemView.AllEditTriggers, None)
 
 	@QtCore.Slot()
+	@catch_error
 	def on_actionRemove_Row_triggered(self):
 		index = self.ui.value_list.selectionModel().currentIndex()
 		self.ui.value_list.model().removeRows(index.row(), 1)
