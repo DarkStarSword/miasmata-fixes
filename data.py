@@ -315,7 +315,7 @@ class data_list(object):
 			e = self.parse(f)
 			self.list.append(e)
 	def enc(self):
-		r = len(self).enc()
+		r = self.len.enc()
 		for i in self.list:
 			r += i.enc()
 		return r
@@ -336,8 +336,12 @@ class data_list(object):
 		return self.list.insert(index, object)
 	def remove(self, item):
 		self.list.remove(item)
-	def __len__(self):
+
+	@property
+	def len(self):
+		# Because __len__ casts to a regular int
 		return data_int(len(self.list))
+	def __len__(self): return len(self.list)
 
 	def summary(self):
 		if len(self.list) > 5:
@@ -386,7 +390,7 @@ class data_mixed_list(data_list):
 		t = f.read(1)
 		return parse_type(t, f)
 	def enc(self):
-		r = len(self).enc()
+		r = self.len.enc()
 		for i in self.list:
 			r += i.id + i.enc()
 		return r
