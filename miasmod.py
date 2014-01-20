@@ -509,9 +509,7 @@ class MiasMod(QtGui.QMainWindow):
 		self.add_tab(view, mod.miasmod_name, mod.name)
 		self.done()
 
-	def _generate_new_alocalmod(self):
-		row = len(self.mod_list) - 1
-
+	def _generate_new_alocalmod(self, row):
 		self.progress('Creating alocalmod...')
 
 		path = os.path.join(self.install_path, 'alocalmod.miasmod')
@@ -530,7 +528,8 @@ class MiasMod(QtGui.QMainWindow):
 		if mod.name == 'alocalmod':
 			return (row, mod, None)
 
-		return self._generate_new_alocalmod()
+		# Does not exist at all, create it:
+		return self._generate_new_alocalmod(row + 1)
 
 	@QtCore.Slot()
 	@catch_error
@@ -558,7 +557,7 @@ class MiasMod(QtGui.QMainWindow):
 
 		(row, mod, env) = self.generate_new_alocalmod()
 		if mod.rs5_path is None: # miasmod exists, but rs5 does not
-			(row, mod, env) = self._generate_new_alocalmod()
+			(row, mod, env) = self._generate_new_alocalmod(row)
 		elif env is None: # Exists
 			return self.open_mod(row, open=False)
 		else:
