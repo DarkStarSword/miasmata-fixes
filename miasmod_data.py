@@ -31,9 +31,6 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 		self.root = data.data_tree((root.name, root))
 		self.keepalive = set()
 
-		self.dirty_objects = set()
-		self.dirty_indices = set()
-
 	def index_to_node(self, index):
 		if not index.isValid():
 			return self.root
@@ -100,7 +97,7 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 
 	def removeRows(self, row, count, parent):
 		parent_node = self.index_to_node(parent)
-		self.mark_dirty(parent_node, parent)
+		self.mark_dirty(parent_node)
 		self.beginRemoveRows(parent, row, row + count - 1)
 		while count:
 			del parent_node[parent_node.keys()[row]]
@@ -113,10 +110,9 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 		insert_pos = len(parent_node)
 		self.beginInsertRows(parent, insert_pos, insert_pos)
 		parent_node[node.name] = node
-		self.mark_dirty(node, None)
+		self.mark_dirty(node)
 		self.endInsertRows()
 		index = self.index(insert_pos, 0, parent)
-		self.mark_dirty(None, index)
 		return index
 
 	def setDataValue(self, index, value, role = Qt.EditRole):
@@ -130,7 +126,7 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 			if hasattr(old_node, 'undo'):
 				value.undo = old_node.undo
 			parent_node[old_node.name] = value
-			self.mark_dirty(value, index)
+			self.mark_dirty(value)
 			self.row_updated(index)
 			return True
 		return False
@@ -167,7 +163,7 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 
 			self.removeRows(index.row(), 1, parent_idx)
 			node.name = data.null_str(value)
-			self.mark_dirty(node, index)
+			self.mark_dirty(node)
 			return self.insert_row(node, parent_idx)
 		return None
 
@@ -191,30 +187,16 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 				flags |= Qt.ItemIsEditable
 		return flags
 
-	def mark_dirty(self, object, index):
+	def mark_dirty(self, object):
 		if object is not None:
-			# print>>sys.stderr, 'Marking %s dirty (%s)...' % (data.format_parent(object), object)
-			# sys.stderr.flush()
 			object.dirty = True
-			self.dirty_objects.add(object)
-		if index is not None:
-			self.dirty_indices.add(index)
 
 	def clear_dirty(self):
-		for object in self.dirty_objects:
-			# print>>sys.stderr, 'Clearing dirty flag on %s (%s)...' % (data.format_parent(object), object)
-			# sys.stderr.flush()
-			del object.dirty
-		self.dirty_objects.clear()
-		self.root.check_dirty_flag()
-		sys.stderr.flush()
-		for index in self.dirty_indices:
-			try:
-				if index.isValid():
-					self.row_updated(self.index(index.row(), index.column(), index.parent()))
-			except:
-				pass
-		self.dirty_indices.clear()
+		for dirty in self.root.clear_dirty_flags():
+			index = QtCore.QModelIndex()
+			for row in dirty:
+				index = self.index(row, 0, index)
+			self.row_updated(index)
 
 
 class MiasmataDataSortProxy(QtGui.QSortFilterProxyModel):
@@ -251,10 +233,8 @@ class MiasmataDataSortProxy(QtGui.QSortFilterProxyModel):
 	def hasChildren(self, parent):
 		return self.sourceModel().hasChildren(self.mapToSource(parent))
 
-	def mark_dirty(self, object, index):
-		if index is not None:
-			index = self.mapToSource(index)
-		return self.sourceModel().mark_dirty(object, index)
+	def mark_dirty(self, object):
+		return self.sourceModel().mark_dirty(object)
 
 	def clear_dirty(self):
 		return self.sourceModel().clear_dirty()
@@ -301,7 +281,7 @@ class MiasmataDataListModel(QtCore.QAbstractListModel):
 		return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
 
 	def notify_parent_model(self):
-		self.parent_model.mark_dirty(self.node, self.parent_selection)
+		self.parent_model.mark_dirty(self.node)
 		self.parent_model.row_updated(self.parent_selection)
 
 	def _setData(self, index, new_item):

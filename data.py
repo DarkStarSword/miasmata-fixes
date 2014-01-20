@@ -228,16 +228,18 @@ class data_tree(object):
 			if isinstance(child, data_tree):
 				child.check_parent_invariant()
 
-	def check_dirty_flag(self):
+	def clear_dirty_flags(self):
+		ret = []
 		if hasattr(self, 'dirty') and self.dirty:
-			print>>sys.stderr, 'WARNING: Dirty flag not cleared on: %s (%s)' % (format_parent(self), self)
+			ret.append(parent_index_list(self))
 			del self.dirty
 		for (name, child) in self.iteritems():
 			if hasattr(child, 'dirty') and child.dirty:
-				print>>sys.stderr, 'WARNING: Dirty flag not cleared on: %s[%s] (%s)' % (format_parent(self), name, child)
+				ret.append(parent_index_list(child))
 				del child.dirty
 			if isinstance(child, data_tree):
-				child.check_dirty_flag()
+				ret.extend(child.clear_dirty_flags())
+		return ret
 
 	def __getitem__(self, item):
 		return self.children[item]
@@ -275,6 +277,15 @@ def parent_list(node, skip=0, root=None):
 
 def format_parent(node, skip=0):
 	return '.'.join(parent_list(node, skip))
+
+def parent_index_list(node):
+	ret = []
+
+	while node.parent:
+		(child, node) = (node, node.parent)
+		ret.append(node.keys().index(child.name))
+
+	return reversed(ret)
 
 @data_type
 class data_int(int):
