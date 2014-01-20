@@ -366,7 +366,7 @@ class MiasMod(QtGui.QMainWindow):
 		edit_rs5 = 'Edit %s (not recommended)' % mod.basename
 		if mod.name == 'environment':
 			msg2 = 'It is not recommended to directly edit' \
-			' envioronment.rs5, rather it is suggested to work with' \
+			' environment.rs5, rather it is suggested to work with' \
 			' "miasmod" files that automatically get combined into' \
 			' alocalmod.rs5/environment which is picked up by the' \
 			" game. If you aren't sure you should probably edit" \
@@ -429,7 +429,7 @@ class MiasMod(QtGui.QMainWindow):
 		include_mods = [rs5_base.rs5_name] + [ x.miasmod_name for x in include_mods ]
 
 		msg1 = '%s appears to be out of sync!' % mod.rs5_name
-		msg2 = 'Would to like to syncronise it from the following' \
+		msg2 = 'Would to like to synchronise it from the following' \
 			' files?\nIf you recently installed or updated any mods' \
 			' listed below, or removed a different mod, you should' \
 			' choose "synchronise %s". However, if you updated %s' \
