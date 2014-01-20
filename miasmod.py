@@ -233,6 +233,14 @@ class MiasMod(QtGui.QMainWindow):
 		view = miasmod_data.MiasmataDataView(saves, sort=True, save_path = path, name='saves.dat')
 		self.add_tab(view, 'saves.dat', 'saves.dat')
 
+	def warn_bad_miasmata_path(self, path):
+		dialog = QtGui.QMessageBox()
+		dialog.setWindowTitle('MiasMod')
+		dialog.setText("Unable to locate base rs5 file")
+		dialog.setInformativeText("Please check that '%s' is the"
+				" correct location of Miasmata" % path)
+		return dialog.exec_()
+
 	@QtCore.Slot()
 	@catch_error
 	def refresh_mod_list(self):
@@ -250,6 +258,9 @@ class MiasMod(QtGui.QMainWindow):
 			if 'environment' not in archive:
 				continue
 			mod_list.add(path)
+
+		if not len(mod_list):
+			self.warn_bad_miasmata_path(self.install_path)
 
 		mod_list.extend(sorted(glob(os.path.join(self.install_path, '*.miasmod'))))
 
@@ -542,6 +553,9 @@ class MiasMod(QtGui.QMainWindow):
 	@catch_error
 	def synchronise_alocalmod(self):
 		self.refresh_mod_list()
+		if not len(self.mod_list):
+			return
+
 		(row, mod, env) = self.generate_new_alocalmod()
 		if mod.rs5_path is None: # miasmod exists, but rs5 does not
 			(row, mod, env) = self._generate_new_alocalmod()
