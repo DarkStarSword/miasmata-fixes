@@ -5,12 +5,10 @@ import os
 import Image
 import ImageDraw
 
-def gen_map(exposure, filledin, overlayinfo):
-	global stream
+size = 1024
 
-	size = 1024
-	image = Image.new('RGB', (size, size))
-	draw = ImageDraw.Draw(image)
+def parse_exposure_map(exposure):
+	global stream
 
 	outline_mask = Image.new('1', (size, size))
 	outline_mask_draw = ImageDraw.Draw(outline_mask)
@@ -18,6 +16,9 @@ def gen_map(exposure, filledin, overlayinfo):
 	filledin_mask_draw = ImageDraw.Draw(filledin_mask)
 	overlayinfo_mask = Image.new('1', (size, size))
 	overlayinfo_mask_draw = ImageDraw.Draw(overlayinfo_mask)
+
+	extra = Image.new('L', (size, size))
+	extra_draw = ImageDraw.Draw(extra)
 
 	stream = 0
 	for i in range(len(exposure)):
@@ -39,29 +40,96 @@ def gen_map(exposure, filledin, overlayinfo):
 			y += size
 		val = stream & 0xff
 		stream >>= 8
-		r = g = b = 0
+
 		if val & 0x1:
-			r = 255 # 64
-			outline_mask_draw.rectangle((x, y, x+size-1, y+size-1),  fill=1)
+			outline_mask_draw.rectangle((x, y, x+size-1, y+size-1), fill=1)
 		if val & 0x2:
-			g = 32
-			filledin_mask_draw.rectangle((x, y, x+size-1, y+size-1),  fill=1)
+			filledin_mask_draw.rectangle((x, y, x+size-1, y+size-1), fill=1)
 		if val & 0x4:
-			b = 32
 			overlayinfo_mask_draw.rectangle((x, y, x+size-1, y+size-1), fill=1)
 
-		# These bits never seem to change, not sure what 0x40 is:
-		# assert(val & 0xb8 != 0xb8)
-		col = (r, g, b)
-		draw.rectangle((x, y, x+size-1, y+size-1), outline=col, fill=col)
+		# No idea what the top bits are for - on two of my saves they
+		# are always 0x70, but on a my save0 they are 0x38. They might
+		# just be stack garbage, but save them away just in case:
+		extra_draw.rectangle((x, y, x+size-1, y+size-1), fill=val)
 
 	recurse_fill(0, 0, size, 0)
 	assert(stream == 0)
 
+	return (outline_mask, filledin_mask, overlayinfo_mask, extra)
+
+def make_exposure_map(outline_mask, filledin_mask, overlayinfo_mask, extra):
+	global stream, index
+
+	outline_pix = outline_mask.load()
+	filledin_pix = filledin_mask.load()
+	overlay_pix = overlayinfo_mask.load()
+	extra_pix = extra.load()
+
+	stream = []
+	index = 0
+
+	def write_bit(v):
+		global stream, index
+
+		byte = index / 8
+		bit = index % 8
+		if bit == 0:
+			stream.append(v << bit)
+		else:
+			stream[byte] |= v << bit
+		index += 1
+
+	def write_byte(v):
+		for i in xrange(8):
+			write_bit((v >> i) & 1)
+
+	def calc_val(x, y):
+		return (extra_pix[x, y] & 0xf8) | \
+		      outline_pix[x, y]         | \
+		     filledin_pix[x, y] << 1    | \
+		      overlay_pix[x, y] << 2
+
+	def need_recurse(x, y, size):
+		val = calc_val(x, y)
+		for y1 in xrange(y, y+size):
+			for x1 in xrange(x, x+size):
+				v1 = calc_val(x1, y1)
+				if v1 != val:
+					return True
+		return False
+
+	def recurse_compress(x, y, size, depth):
+		while size > 1:
+			if not need_recurse(x, y, size):
+				write_bit(0)
+				break
+			write_bit(1)
+			recurse_compress(x         , y         , size / 2, depth+1)
+			recurse_compress(x + size/2, y         , size / 2, depth+1)
+			recurse_compress(x         , y + size/2, size / 2, depth+1)
+			size /= 2
+			x += size
+			y += size
+		val = calc_val(x, y)
+		write_byte(val)
+
+	recurse_compress(0, 0, size, 0)
+
+	return ''.join(map(chr, stream))
+
+def gen_map(exposure, filledin, overlayinfo):
+	image = Image.new('RGB', (size, size))
+	red = Image.new('RGB', (size, size), (255, 0, 0))
+	draw = ImageDraw.Draw(image)
+
+	(outline_mask, filledin_mask, overlayinfo_mask, extra) = parse_exposure_map(exposure)
+
+	image = Image.composite(red, image, outline_mask)
 	image = Image.composite(filledin, image, filledin_mask)
 	image = Image.composite(overlayinfo, image, overlayinfo_mask)
 
-	return (image, outline_mask, filledin_mask)
+	return (image, outline_mask, filledin_mask, overlayinfo_mask, extra)
 
 def overlay_smap(image, shoreline, outline_mask, filledin_mask):
 	import smap
@@ -88,7 +156,7 @@ def main():
 	saves = open('saves.dat', 'rb')
 	print 'Procesing saves.dat...'
 	saves = data.parse_data(saves)
-	exposure_map = str(saves[sys.argv[1]]['player']['MAP']['exposure_map'])
+	exposure_map = saves[sys.argv[1]]['player']['MAP']['exposure_map'].raw
 	print 'Opening main.rs5...'
 	archive = rs5archive.Rs5ArchiveDecoder(open('main.rs5', 'rb'))
 
@@ -106,7 +174,7 @@ def main():
 	shoreline = rs5file.Rs5ChunkedFileDecoder(archive['player_map_achievements'].decompress())
 
 	print 'Generating map...'
-	(image, outline_mask, filledin_mask) = gen_map(exposure_map, filledin, overlayinfo)
+	(image, outline_mask, filledin_mask, overlayinfo_mask, extra) = gen_map(exposure_map, filledin, overlayinfo)
 
 	print 'Darkening...'
 	image = Image.eval(image, lambda x: x/4)
@@ -117,6 +185,13 @@ def main():
 	print 'Saving exposure_map.png...'
 	image.save('exposure_map.png')
 
+	print 'Compressing exposure_map...'
+	new_exposure_map = make_exposure_map(outline_mask, filledin_mask, overlayinfo_mask, extra)
+
+	print 'Comparing...'
+	assert(exposure_map == new_exposure_map)
+
+	print 'Success'
 
 if __name__ == '__main__':
 	main()
