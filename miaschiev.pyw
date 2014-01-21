@@ -2,6 +2,7 @@
 
 import sys, os
 import threading
+import traceback
 
 # # --- PyQt4 ---
 # from PyQt4 import QtCore, QtGui, uic
@@ -63,6 +64,7 @@ class Miaschiev(QtGui.QWidget):
 			self.rs5main = rs5archive.Rs5ArchiveDecoder(open(main_path, 'rb'))
 			self.progress('main.rs5 Loaded')
 		except Exception as e:
+			traceback.print_exc()
 			self.done('%s loading main.rs5: %s' % (e.__class__.__name__, str(e)))
 			return
 
@@ -96,6 +98,7 @@ class Miaschiev(QtGui.QWidget):
 			self.saves = data.parse_data(open(path, 'rb'))
 			self.done('Saves Loaded')
 		except Exception as e:
+			traceback.print_exc()
 			self.done('%s loading main.rs5: %s' % (e.__class__.__name__, str(e)))
 			return
 		enable_slots = filter(lambda x: self.saves[x]['text_description'] != None,
@@ -235,6 +238,7 @@ class Miaschiev(QtGui.QWidget):
 			backup = '%s~%s' % (save_path, timestamp_str)
 			os.rename(save_path, backup)
 		except Exception as e:
+			traceback.print_exc()
 			self.done('%s backing up saves.dat: %s' % (e.__class__.__name__, str(e)))
 			return
 
@@ -277,6 +281,7 @@ class Miaschiev(QtGui.QWidget):
 			self.gen_map(self.save)
 			self.coast_progress(self.save)
 		except Exception as e:
+			traceback.print_exc()
 			self.done('%s processing %s: %s' % (e.__class__.__name__, save, str(e)))
 
 	@QtCore.Slot()
