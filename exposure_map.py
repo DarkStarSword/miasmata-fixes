@@ -118,16 +118,23 @@ def make_exposure_map(outline_mask, filledin_mask, overlayinfo_mask, extra):
 
 	return ''.join(map(chr, stream))
 
-def gen_map(exposure, filledin, overlayinfo):
+def compose_map(outline, outline_mask, filledin, filledin_mask, overlayinfo, overlayinfo_mask):
 	image = Image.new('RGB', (size, size))
-	red = Image.new('RGB', (size, size), (255, 0, 0))
 	draw = ImageDraw.Draw(image)
 
-	(outline_mask, filledin_mask, overlayinfo_mask, extra) = parse_exposure_map(exposure)
+	if outline is None:
+		outline = Image.new('RGB', (size, size), (255, 0, 0))
 
-	image = Image.composite(red, image, outline_mask)
+	image = Image.composite(outline, image, outline_mask)
 	image = Image.composite(filledin, image, filledin_mask)
 	image = Image.composite(overlayinfo, image, overlayinfo_mask)
+
+	return image
+
+def gen_map(exposure, filledin, overlayinfo):
+	(outline_mask, filledin_mask, overlayinfo_mask, extra) = parse_exposure_map(exposure)
+
+	image = compose_map(None, outline_mask, filledin, filledin_mask, overlayinfo, overlayinfo_mask)
 
 	return (image, outline_mask, filledin_mask, overlayinfo_mask, extra)
 

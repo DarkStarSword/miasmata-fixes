@@ -19,6 +19,7 @@ from miaschiev_ui import Ui_Miaschiev
 import miasutil
 import data
 import markers
+import exposure_map
 
 class Miaschiev(QtGui.QWidget):
 	def __init__(self, parent=None):
@@ -113,7 +114,7 @@ class Miaschiev(QtGui.QWidget):
 			self.done('Saves Loaded')
 		except Exception as e:
 			traceback.print_exc()
-			self.done('%s loading main.rs5: %s' % (e.__class__.__name__, str(e)))
+			self.done('%s loading saves.dat: %s' % (e.__class__.__name__, str(e)))
 			return
 		enable_slots = filter(lambda x: self.saves[x]['text_description'] != None,
 				['save0', 'save1', 'save2'])
@@ -143,7 +144,6 @@ class Miaschiev(QtGui.QWidget):
 		return map(int, (y / 8, (8192 - x) / 8))
 
 	def gen_map(self, save):
-		import exposure_map
 		if not self.main_rs5_loaded():
 			self.process_install_path(self.ui.install_path.text())
 		if not self.main_rs5_loaded():
@@ -163,8 +163,6 @@ class Miaschiev(QtGui.QWidget):
 		return Image.eval(self.map, lambda x: x / amount)
 
 	def show_coast(self):
-		import exposure_map
-
 		image = self.darken_map(4)
 		exposure_map.overlay_smap(image, self.shoreline, self.outline_mask, self.filledin_mask)
 		self.show_image(image)
@@ -172,7 +170,7 @@ class Miaschiev(QtGui.QWidget):
 	def on_show_coast_clicked(self):
 		self.show_coast()
 
-	def coast_progress(self, save):
+	def coast_progress(self):
 		import rs5file, smap
 
 		self.progress('Extracting player_map_achievements...') # XXX: Also in environment.rs5
@@ -221,7 +219,7 @@ class Miaschiev(QtGui.QWidget):
 			if name in head_types:
 				yield self.coord((x, y))
 
-	def count_discovered_heads(self, save):
+	def count_discovered_heads(self):
 		if not hasattr(self, 'environment'):
 			self.ui.heads.setText('Environment not loaded')
 			return
@@ -237,9 +235,8 @@ class Miaschiev(QtGui.QWidget):
 			total += 1
 		self.ui.heads.setText('%i / %i' % (found, total))
 
-		# TODO:
-		# if all heads unlocked:
-		# 	self.ui.reset_head.setEnabled(True)
+		if total == found:
+			self.ui.reset_head.setEnabled(True)
 		self.ui.lbl_heads.setEnabled(True)
 		self.ui.show_heads.setEnabled(True)
 
@@ -300,12 +297,8 @@ class Miaschiev(QtGui.QWidget):
 		self.ui.plants.setText(str(len(plants)))
 		self.ui.lbl_plants.setEnabled(True)
 
-	@QtCore.Slot()
-	def on_reset_notezz_clicked(self):
+	def backup_saves_dat(self, save_path):
 		import time
-		save_path = self.ui.save_path.text()
-		self.progress('Writing %s...' % save_path)
-
 		try:
 			timestamp_str = time.strftime('%Y%m%d%H%M%S')
 			backup = '%s~%s' % (save_path, timestamp_str)
@@ -313,6 +306,17 @@ class Miaschiev(QtGui.QWidget):
 		except Exception as e:
 			traceback.print_exc()
 			self.done('%s backing up saves.dat: %s' % (e.__class__.__name__, str(e)))
+			raise
+		return backup
+
+	@QtCore.Slot()
+	def on_reset_notezz_clicked(self):
+		save_path = self.ui.save_path.text()
+		self.progress('Writing %s...' % save_path)
+
+		try:
+			backup = self.backup_saves_dat(save_path)
+		except:
 			return
 
 		self.save['inst_tree']['removed_types'].remove('modelsets\\NoteZZ')
@@ -321,6 +325,42 @@ class Miaschiev(QtGui.QWidget):
 
 		self.ui.reset_notezz.setEnabled(False)
 		self.process_save_path(save_path)
+		self.process_save(self.save.name)
+		self.done('Backup written to %s' % backup)
+
+	@QtCore.Slot()
+	def on_reset_head_clicked(self):
+		# TODO:
+		# I may still need to match the head statues up with the
+		# landmarks listed in saves.dat to reset one. Needs testing.
+
+		# TODO: Reset ONE statue, not all of them.
+		self.progress('Resetting head statues...')
+		pix = self.filledin_mask.load()
+		for (x, y) in self.enumerate_head_statues():
+			pix[x, y] = 0
+
+		self.progress('Encoding exposure_map...')
+		new_exposure_map = data.data_raw(exposure_map.make_exposure_map(
+				self.outline_mask, self.filledin_mask,
+				self.overlayinfo_mask, self.exposure_extra))
+
+		save_path = self.ui.save_path.text()
+		self.progress('Writing %s...' % save_path)
+
+		try:
+			backup = self.backup_saves_dat(save_path)
+		except:
+			return
+
+		self.save['player']['MAP']['exposure_map'] = new_exposure_map
+
+		open(save_path, 'wb').write(data.encode(self.saves))
+
+		self.ui.reset_head.setEnabled(False)
+		self.process_save_path(save_path)
+		self.process_save(self.save.name)
+		self.show_head_progress()
 		self.done('Backup written to %s' % backup)
 
 	def clear_progress(self):
@@ -351,9 +391,10 @@ class Miaschiev(QtGui.QWidget):
 			self.count_touched_urns(self.save)
 			self.count_notes(self.save)
 			self.count_plants(self.save)
+
 			self.gen_map(self.save)
-			self.count_discovered_heads(self.save)
-			self.coast_progress(self.save)
+			self.count_discovered_heads()
+			self.coast_progress()
 		except Exception as e:
 			traceback.print_exc()
 			self.done('%s processing %s: %s' % (e.__class__.__name__, save, str(e)))

@@ -418,8 +418,8 @@ class data_mixed_list(data_list):
 class data_raw(object):
 	id = 'R'
 	desc = 'Raw Binary Data'
-	def __init__(self):
-		self.raw = ''
+	def __init__(self, raw = ''):
+		self.raw = raw
 	def dec(self, f):
 		l = data_int.dec_new(f)
 		self.raw = f.read(l)
