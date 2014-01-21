@@ -334,8 +334,7 @@ if __name__ == '__main__':
 		if os.path.isfile(interpreter):
 
 			# HACK TO WORK AROUND CRASH ON CONSOLE OUTPUT WITH BBFREEZE GUI_ONLY
-			from StringIO import StringIO
-			sys.stdout = sys.stderr = StringIO()
+			sys.stdout = sys.stderr = open('miaschiev.log', 'w')
 
 			print 'Setting multiprocessing exe to %s' % interpreter
 			multiprocessing.set_executable(interpreter)
