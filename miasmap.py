@@ -12,8 +12,12 @@ width = 4096
 height = 4096
 scale = 2
 
-# image = Image.new('RGB', (width, height), (0,0,0))
-image = Image.open('Map_FilledIn.jpg').transpose(Image.ROTATE_270).resize((width, height))
+try:
+	image = Image.open('Map_FilledIn.jpg').transpose(Image.ROTATE_270).resize((width, height))
+except:
+	import traceback
+	traceback.print_exc()
+	image = Image.new('RGB', (width, height), (0,0,0))
 image = Image.eval(image, lambda x: x/3)
 pix = image.load()
 
