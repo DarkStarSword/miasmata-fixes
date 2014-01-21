@@ -137,7 +137,7 @@ class Miaschiev(QtGui.QWidget):
 			return
 
 		self.progress('Extracting exposure_map...')
-		exp = str(save['player']['MAP']['exposure_map'])
+		exp = save['player']['MAP']['exposure_map'].raw
 		self.progress('Generating map...')
 		(self.map, self.outline_mask, self.filledin_mask) = \
 				exposure_map.gen_map(exp, self.filledin, self.overlayinfo)
