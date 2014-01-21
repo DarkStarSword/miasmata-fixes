@@ -336,9 +336,9 @@ class Miaschiev(QtGui.QWidget):
 
 		# TODO: Reset ONE statue, not all of them.
 		self.progress('Resetting head statues...')
-		pix = self.filledin_mask.load()
+		draw = ImageDraw.Draw(self.filledin_mask)
 		for (x, y) in self.enumerate_head_statues():
-			pix[x, y] = 0
+			draw.rectangle((x-5, y-5, x+5, y+5), fill=0)
 
 		self.progress('Encoding exposure_map...')
 		new_exposure_map = data.data_raw(exposure_map.make_exposure_map(
