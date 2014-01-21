@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'miaschiev.ui'
 #
-# Created: Mon Dec 09 13:44:04 2013
+# Created: Tue Jan 21 15:56:49 2014
 #      by: pyside-uic 0.2.15 running on PySide 1.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -112,7 +112,6 @@ class Ui_Miaschiev(object):
         self.lbl_heads.setObjectName("lbl_heads")
         self.formLayout.setWidget(7, QtGui.QFormLayout.LabelRole, self.lbl_heads)
         self.heads = QtGui.QLabel(Miaschiev)
-        self.heads.setEnabled(False)
         self.heads.setObjectName("heads")
         self.formLayout.setWidget(7, QtGui.QFormLayout.FieldRole, self.heads)
         self.show_heads = QtGui.QPushButton(Miaschiev)
@@ -202,7 +201,6 @@ class Ui_Miaschiev(object):
         self.lbl_urns.setText(QtGui.QApplication.translate("Miaschiev", "Urns Lit:", None, QtGui.QApplication.UnicodeUTF8))
         self.show_urns.setText(QtGui.QApplication.translate("Miaschiev", "Show Lit Urns", None, QtGui.QApplication.UnicodeUTF8))
         self.lbl_heads.setText(QtGui.QApplication.translate("Miaschiev", "Head Statues Located:", None, QtGui.QApplication.UnicodeUTF8))
-        self.heads.setText(QtGui.QApplication.translate("Miaschiev", "Coming Soon!", None, QtGui.QApplication.UnicodeUTF8))
         self.show_heads.setText(QtGui.QApplication.translate("Miaschiev", "Show", None, QtGui.QApplication.UnicodeUTF8))
         self.reset_head.setText(QtGui.QApplication.translate("Miaschiev", "Reset one statue...", None, QtGui.QApplication.UnicodeUTF8))
         self.lbl_notes.setText(QtGui.QApplication.translate("Miaschiev", "Notes Found:", None, QtGui.QApplication.UnicodeUTF8))

@@ -17,6 +17,8 @@ import Image, ImageDraw, ImageQt
 from miaschiev_ui import Ui_Miaschiev
 
 import miasutil
+import data
+import markers
 
 class Miaschiev(QtGui.QWidget):
 	def __init__(self, parent=None):
@@ -56,7 +58,7 @@ class Miaschiev(QtGui.QWidget):
 		self.ui.progress.setText(msg)
 
 	def process_install_path(self, path):
-		import rs5archive, rs5file, imag
+		import rs5archive, rs5file, imag, environment
 		# def _async():
 		main_path = os.path.join(path, 'main.rs5')
 		self.progress('Loading main.rs5...')
@@ -78,6 +80,19 @@ class Miaschiev(QtGui.QWidget):
 		self.progress('Decoding Map_OverlayInfo...')
 		self.overlayinfo = imag.open_rs5file_imag(overlayinfo, (1024, 1024), 'RGB')
 
+		self.progress('Extracting markers...')
+		self.markers = rs5file.Rs5ChunkedFileDecoder(self.rs5main['markers'].decompress())
+
+		# TODO: Try all rs5 files alphabetically to find the first one
+		# that contains a valid environment file
+		self.progress('Loading environment.rs5...')
+		try:
+			self.environment = environment.parse_from_archive(os.path.join(path, 'environment.rs5'))
+		except Exception as e:
+			traceback.print_exc()
+			self.done('%s loading environment.rs5: %s' % (e.__class__.__name__, str(e)))
+			return
+
 		self.done()
 
 		# Python's GIL still causes UI thread to starve. Can I use
@@ -92,7 +107,6 @@ class Miaschiev(QtGui.QWidget):
 		self.ui.save2.setEnabled('save2' in slots)
 
 	def process_save_path(self, path):
-		import data
 		self.progress('Loading saves...')
 		try:
 			self.saves = data.parse_data(open(path, 'rb'))
@@ -144,11 +158,14 @@ class Miaschiev(QtGui.QWidget):
 
 		self.show_image(self.map)
 
+	def darken_map(self, amount):
+		self.progress('Darkening...')
+		return Image.eval(self.map, lambda x: x / amount)
+
 	def show_coast(self):
 		import exposure_map
 
-		self.progress('Darkening...')
-		image = Image.eval(self.map, lambda x: x/4)
+		image = self.darken_map(4)
 		exposure_map.overlay_smap(image, self.shoreline, self.outline_mask, self.filledin_mask)
 		self.show_image(image)
 	@QtCore.Slot()
@@ -188,12 +205,68 @@ class Miaschiev(QtGui.QWidget):
 		self.ui.lbl_urns.setEnabled(True)
 		self.ui.show_urns.setEnabled(True)
 
+	def enumerate_head_statues(self):
+		head_types = []
+		marker_types = self.environment['marker_types']
+		for marker_type in marker_types.itervalues():
+			if not isinstance(marker_type, data.data_tree):
+				continue
+			if 'is_head' in marker_type and marker_type['is_head'] == 1:
+				name = marker_type.name
+				if name.startswith('modelsets\\'):
+					name = name[10:]
+				head_types.append(name)
+
+		for (idx, name, u1, x, y, z, u2) in markers.parse_markers(self.markers):
+			if name in head_types:
+				yield self.coord((x, y))
+
+	def count_discovered_heads(self, save):
+		if not hasattr(self, 'environment'):
+			self.ui.heads.setText('Environment not loaded')
+			return
+		if not hasattr(self, 'markers'):
+			self.ui.heads.setText('Markers not loaded')
+			return
+
+		pix = self.filledin_mask.load()
+		found = total = 0
+		for (x, y) in self.enumerate_head_statues():
+			if pix[x, y]:
+				found += 1
+			total += 1
+		self.ui.heads.setText('%i / %i' % (found, total))
+
+		# TODO:
+		# if all heads unlocked:
+		# 	self.ui.reset_head.setEnabled(True)
+		self.ui.lbl_heads.setEnabled(True)
+		self.ui.show_heads.setEnabled(True)
+
+	def show_head_progress(self):
+		if not hasattr(self, 'map'):
+			self.gen_map(self.save)
+
+		image = self.darken_map(2)
+		draw = ImageDraw.Draw(image)
+
+		self.progress('Plotting Head Statues...')
+		pix = self.filledin_mask.load()
+		for (x, y) in self.enumerate_head_statues():
+			c = (255, 0, 0)
+			if pix[x, y]:
+				c = (0, 255, 0)
+			draw.rectangle((x-5, y-5, x+5, y+5), outline=c)
+		self.show_image(image)
+	@QtCore.Slot()
+	def on_show_heads_clicked(self):
+		self.show_head_progress()
+
 	def show_urn_progress(self):
 		if not hasattr(self, 'map'):
 			self.gen_map(self.save)
 
-		self.progress('Darkening...')
-		image = Image.eval(self.map, lambda x: x/2)
+		image = self.darken_map(2)
 		draw = ImageDraw.Draw(image)
 
 		self.progress('Plotting Urns...')
@@ -229,7 +302,7 @@ class Miaschiev(QtGui.QWidget):
 
 	@QtCore.Slot()
 	def on_reset_notezz_clicked(self):
-		import data, time
+		import time
 		save_path = self.ui.save_path.text()
 		self.progress('Writing %s...' % save_path)
 
@@ -260,7 +333,7 @@ class Miaschiev(QtGui.QWidget):
 		self.ui.lbl_heads.setEnabled(False)
 		self.ui.show_heads.setEnabled(False)
 		self.ui.reset_head.setEnabled(False)
-		#self.ui.heads.setText('')
+		self.ui.heads.setText('')
 		self.ui.lbl_notes.setEnabled(False)
 		self.ui.reset_notezz.setEnabled(False)
 		self.ui.notes.setText('')
@@ -279,6 +352,7 @@ class Miaschiev(QtGui.QWidget):
 			self.count_notes(self.save)
 			self.count_plants(self.save)
 			self.gen_map(self.save)
+			self.count_discovered_heads(self.save)
 			self.coast_progress(self.save)
 		except Exception as e:
 			traceback.print_exc()
