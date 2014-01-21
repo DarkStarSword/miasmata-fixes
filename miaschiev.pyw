@@ -295,9 +295,9 @@ class Miaschiev(QtGui.QWidget):
 		dialog.setFileMode(QtGui.QFileDialog.Directory)
 		if not dialog.exec_():
 			return
-		install_path = dialog.selectedFiles()
+		install_path = dialog.selectedFiles()[0]
 		self.process_install_path(install_path)
-		self.ui.install_path.setText(install_path[0])
+		self.ui.install_path.setText(install_path)
 
 	@QtCore.Slot()
 	def on_install_path_returnPressed(self):
@@ -309,7 +309,7 @@ class Miaschiev(QtGui.QWidget):
 		save_path = self.ui.save_path.text()
 		save_path = QtGui.QFileDialog.getOpenFileName(self,
 				"Select Miasmata Saved Game...",
-				save_path)
+				save_path, 'Miasmata save files (*.dat)')[0]
 		if not save_path:
 			return
 		self.ui.save_path.setText(save_path)
