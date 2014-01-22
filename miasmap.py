@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import Image
+import ImageDraw
 import sys
 
 width = 8238
@@ -12,18 +13,29 @@ width = 4096
 height = 4096
 scale = 2
 
-try:
-	image = Image.open('Map_FilledIn.jpg').transpose(Image.ROTATE_270).resize((width, height))
-except:
-	import traceback
-	traceback.print_exc()
-	image = Image.new('RGB', (width, height), (0,0,0))
-image = Image.eval(image, lambda x: x/3)
-pix = image.load()
+def init(rot = True):
+	global image, draw, pix, rotate
+	rotate = rot
+
+	try:
+		image = Image.open('Map_FilledIn.jpg')
+		if rotate:
+			image = image.transpose(Image.ROTATE_270)
+		image = image.resize((width, height))
+	except:
+		import traceback
+		traceback.print_exc()
+		image = Image.new('RGB', (width, height), (0,0,0))
+	image = Image.eval(image, lambda x: x/3)
+	draw = ImageDraw.Draw(image)
+	pix = image.load()
 
 def save_image(filename):
 	print>>sys.stderr, 'Saving %s...' % filename
-	image.transpose(Image.ROTATE_90).save(filename)
+	save_image = image
+	if rotate:
+		save_image = image.transpose(Image.ROTATE_90)
+	save_image.save(filename)
 
 def plot(x, y, (r, g, b)):
 	x = max(0, min(x / scale, width-1))
@@ -69,3 +81,7 @@ def plot_square(x, y, d = 20, rgb = (255, 255, 255)):
 	for y1 in range(y-d, y+d, scale):
 		for x1 in range(x-d, x+d, scale):
 			plot(x1, y1, rgb)
+
+def plot_line(coords, **kwargs):
+	coords = [ (x / scale, y / scale) for (x, y) in coords ]
+	draw.line(coords, **kwargs)
