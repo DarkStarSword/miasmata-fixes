@@ -69,3 +69,5 @@ def plot_square(x, y, d = 20, rgb = (255, 255, 255)):
 	for y1 in range(y-d, y+d, scale):
 		for x1 in range(x-d, x+d, scale):
 			plot(x1, y1, rgb)
+
+# vi:noexpandtab:sw=8:ts=8

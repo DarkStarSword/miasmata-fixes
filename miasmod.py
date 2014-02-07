@@ -693,3 +693,5 @@ def start_gui_process(pipe=None):
 
 if __name__ == '__main__':
 	start_gui_process()
+
+# vi:noexpandtab:sw=8:ts=8

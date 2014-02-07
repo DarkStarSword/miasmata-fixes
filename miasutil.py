@@ -13,3 +13,5 @@ def find_miasmata_save():
 			'IonFx', 'Miasmata', 'saves.dat')
 	# return os.path.join(os.path.expanduser('~'), 'AppData', 'Roaming',
 	# 		'IonFx', 'Miasmata', 'saves.dat')
+
+# vi:noexpandtab:sw=8:ts=8

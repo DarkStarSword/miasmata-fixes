@@ -247,3 +247,5 @@ class Rs5ArchiveUpdater(Rs5ArchiveEncoder, Rs5ArchiveDecoder):
 	def save(self):
 		self.fp.seek(0, 2)
 		return Rs5ArchiveEncoder.save(self)
+
+# vi:noexpandtab:sw=8:ts=8

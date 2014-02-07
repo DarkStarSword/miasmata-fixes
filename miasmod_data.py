@@ -761,3 +761,5 @@ class MiasmataDataView(QtGui.QWidget):
 	def on_actionRemove_Row_triggered(self):
 		index = self.ui.value_list.selectionModel().currentIndex()
 		self.ui.value_list.model().removeRows(index.row(), 1)
+
+# vi:noexpandtab:sw=8:ts=8

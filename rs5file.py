@@ -152,3 +152,5 @@ def rs5_file_decoder_factory(data):
 		return Rs5ChunkedFileDecoder(data)
 	except:
 		return Rs5FileDecoder(data)
+
+# vi:noexpandtab:sw=8:ts=8

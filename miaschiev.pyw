@@ -466,3 +466,5 @@ if __name__ == '__main__':
 	# If using PyQt4, this prevents "python.exe has stopped working..." on
 	# close (Seems unnecessary with PySide):
 	del dialog
+
+# vi:noexpandtab:sw=8:ts=8

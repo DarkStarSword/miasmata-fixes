@@ -48,3 +48,5 @@ def plot_node(x1, y1, z1, x2, y2, z2, r=64, wierd=8, exists=64):
 		rgb2 = (r, 0, 0)
 
 	miasmap.plot_rect(int(x1), int(y1), rgb1, int(x2), int(y2), rgb2)
+
+# vi:noexpandtab:sw=8:ts=8

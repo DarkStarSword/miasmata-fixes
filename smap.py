@@ -35,3 +35,5 @@ def main():
 
 if __name__ == '__main__':
 	main()
+
+# vi:noexpandtab:sw=8:ts=8

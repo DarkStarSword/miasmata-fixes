@@ -22,3 +22,5 @@ def catch_error(f):
 			dialog.exec_()
 			return
 	return catch_unhandled_exceptions
+
+# vi:noexpandtab:sw=8:ts=8

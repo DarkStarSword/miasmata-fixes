@@ -199,3 +199,5 @@ if __name__ == '__main__':
 	image = open_rs5file_imag(file, (1024, 1024), 'RGB')
 	print 'Saving image...'
 	image.save('test.jpg')
+
+# vi:noexpandtab:sw=8:ts=8
