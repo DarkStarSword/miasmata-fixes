@@ -26,7 +26,7 @@ def list_files(archive, file_list, list_chunks=False):
 				print '%4s %8s - %4s %8i' % ('', '', chunk.name, chunk.size)
 			print
 
-def extract(archive, dest, file_list, strip, overwrite):
+def extract(archive, dest, file_list, strip, chunks, overwrite):
 	rs5 = rs5archive.Rs5ArchiveDecoder(open(archive, 'rb'))
 	print 'Extracting files to %s' % dest
 	if not file_list:
@@ -38,7 +38,10 @@ def extract(archive, dest, file_list, strip, overwrite):
 			continue
 		try:
 			print 'Extracting %s %s...' % (repr(rs5[filename].type), filename)
-			rs5[filename].extract(dest, strip, overwrite)
+                        if chunks:
+                            rs5[filename].extract_chunks(dest, overwrite)
+                        else:
+                            rs5[filename].extract(dest, strip, overwrite)
 		except OSError as e:
 			print>>sys.stderr, 'ERROR EXTRACTING %s: %s, SKIPPING!' % (file.filename, str(e))
 
@@ -147,8 +150,12 @@ def parse_args():
 	parser.add_argument('-C', '--directory', metavar='DIR',
 			help='Change to directory DIR before extacting')
 
-	parser.add_argument('--strip', action='store_true',
+	group1 = parser.add_mutually_exclusive_group()
+	group1.add_argument('--strip', action='store_true',
 			help='Strip the local file headers during extraction')
+	group1.add_argument('--chunks', action='store_true',
+			help='Split files up into their component chunks while extracting')
+
 	parser.add_argument('--overwrite', action='store_true',
 			help='Overwrite files without asking')
 
@@ -172,7 +179,7 @@ def main():
 			if directory == args.file:
 				print 'Unable to determine target directory'
 				return
-		return extract(args.file, directory, args.files, args.strip, args.overwrite)
+		return extract(args.file, directory, args.files, args.strip, args.chunks, args.overwrite)
 
 	if args.create:
 		return create_rs5(args.file, args.files, args.overwrite)

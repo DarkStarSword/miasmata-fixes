@@ -32,14 +32,14 @@ def parse_rs5file_header(f):
 	assert(f.read(pad) == '\0'*pad)
 	return (magic, filename, filesize, u2)
 
-def _enc_header(magic, name, size, u2):
+def enc_header(magic, name, size, u2):
 	name = name + '\0'
 	ret = struct.pack('<4s2sBBI', magic, '\0\0', len(name), u2, size)
 	ret += name + padding(12 + len(name), 8)
 	return ret
 
 def enc_file(magic, name, data, u2):
-	header = _enc_header(magic, name, len(data), u2)
+	header = enc_header(magic, name, len(data), u2)
 	return header + data + padding(len(data), 8)
 
 
@@ -87,6 +87,9 @@ class Rs5ChunkEncoder(Rs5Chunk):
 
 
 class Rs5File(object):
+        def header(self):
+                return enc_header(self.magic, self.filename, len(self.data), self.u2)
+
 	def encode(self):
 		return enc_file(self.magic, self.filename, self.data, self.u2)
 
