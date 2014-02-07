@@ -26,7 +26,7 @@ def list_files(archive, file_list, list_chunks=False):
 				print '%4s %8s - %4s %8i' % ('', '', chunk.name, chunk.size)
 			print
 
-def extract(archive, dest, file_list, strip, chunks, overwrite):
+def extract(archive, dest, file_list, strip, chunks, overwrite, filter):
 	rs5 = rs5archive.Rs5ArchiveDecoder(open(archive, 'rb'))
 	print 'Extracting files to %s' % dest
 	if not file_list:
@@ -36,8 +36,11 @@ def extract(archive, dest, file_list, strip, chunks, overwrite):
 		if filename not in rs5:
 			print '%s not found in %s!' % (filename, archive)
 			continue
+                type = rs5[filename].type
+                if filter and type not in filter:
+                        continue
 		try:
-			print 'Extracting %s %s...' % (repr(rs5[filename].type), filename)
+			print 'Extracting %s %s...' % (repr(type), filename)
                         if chunks:
                             rs5[filename].extract_chunks(dest, overwrite)
                         else:
@@ -155,6 +158,8 @@ def parse_args():
 			help='Strip the local file headers during extraction')
 	group1.add_argument('--chunks', action='store_true',
 			help='Split files up into their component chunks while extracting')
+        parser.add_argument('--filter', action='append',
+                        help='Only extract files of this type')
 
 	parser.add_argument('--overwrite', action='store_true',
 			help='Overwrite files without asking')
@@ -179,7 +184,7 @@ def main():
 			if directory == args.file:
 				print 'Unable to determine target directory'
 				return
-		return extract(args.file, directory, args.files, args.strip, args.chunks, args.overwrite)
+		return extract(args.file, directory, args.files, args.strip, args.chunks, args.overwrite, args.filter)
 
 	if args.create:
 		return create_rs5(args.file, args.files, args.overwrite)
