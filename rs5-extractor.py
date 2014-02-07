@@ -36,15 +36,15 @@ def extract(archive, dest, file_list, strip, chunks, overwrite, filter):
 		if filename not in rs5:
 			print '%s not found in %s!' % (filename, archive)
 			continue
-                type = rs5[filename].type
-                if filter and type not in filter:
-                        continue
+		type = rs5[filename].type
+		if filter and type not in filter:
+			continue
 		try:
 			print 'Extracting %s %s...' % (repr(type), filename)
-                        if chunks:
-                            rs5[filename].extract_chunks(dest, overwrite)
-                        else:
-                            rs5[filename].extract(dest, strip, overwrite)
+			if chunks:
+			    rs5[filename].extract_chunks(dest, overwrite)
+			else:
+			    rs5[filename].extract(dest, strip, overwrite)
 		except OSError as e:
 			print>>sys.stderr, 'ERROR EXTRACTING %s: %s, SKIPPING!' % (file.filename, str(e))
 
@@ -158,8 +158,8 @@ def parse_args():
 			help='Strip the local file headers during extraction')
 	group1.add_argument('--chunks', action='store_true',
 			help='Split files up into their component chunks while extracting')
-        parser.add_argument('--filter', action='append',
-                        help='Only extract files of this type')
+	parser.add_argument('--filter', action='append',
+			help='Only extract files of this type')
 
 	parser.add_argument('--overwrite', action='store_true',
 			help='Overwrite files without asking')

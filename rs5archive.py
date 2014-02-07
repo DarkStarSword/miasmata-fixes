@@ -14,7 +14,7 @@ import collections
 import rs5file
 
 chunk_extensions = {
-        ('IMAG', 'DATA'): '.dds',
+	('IMAG', 'DATA'): '.dds',
 }
 
 # http://msdn.microsoft.com/en-us/library/system.datetime.fromfiletimeutc.aspx:
@@ -94,38 +94,38 @@ class Rs5CompressedFileDecoder(Rs5CompressedFile):
 		f.close()
 		os.utime(dest, (self.modtime, self.modtime))
 
-        def extract_chunks(self, base_path, overwrite):
-                dest = os.path.join(base_path, self.filename.replace('\\', os.path.sep))
-                data = self.decompress()
+	def extract_chunks(self, base_path, overwrite):
+		dest = os.path.join(base_path, self.filename.replace('\\', os.path.sep))
+		data = self.decompress()
 
-                try:
-                        chunks = rs5file.Rs5ChunkedFileDecoder(data)
-                except:
-                        # print>>sys.stderr, 'NOTE: %s does not contain chunks, extracting whole file...' % dest
-                        return self.extract(base_path, False, overwrite)
+		try:
+			chunks = rs5file.Rs5ChunkedFileDecoder(data)
+		except:
+			# print>>sys.stderr, 'NOTE: %s does not contain chunks, extracting whole file...' % dest
+			return self.extract(base_path, False, overwrite)
 
-                if os.path.exists(dest) and not os.path.isdir(dest):
-                        print>>sys.stderr, 'WARNING: %s exists, but is not a directory, skipping!' % dest
-                        return
-                mkdir_recursive(dest)
+		if os.path.exists(dest) and not os.path.isdir(dest):
+			print>>sys.stderr, 'WARNING: %s exists, but is not a directory, skipping!' % dest
+			return
+		mkdir_recursive(dest)
 
-                path = os.path.join(dest, '00-HEADER')
-                if os.path.isfile(path) and not overwrite: # and size != 0
-                        print>>sys.stderr, 'Skipping %s - file exists.' % dest
-                else:
-                        f = open(path, 'wb')
-                        f.write(chunks.header())
-                        f.close()
+		path = os.path.join(dest, '00-HEADER')
+		if os.path.isfile(path) and not overwrite: # and size != 0
+			print>>sys.stderr, 'Skipping %s - file exists.' % dest
+		else:
+			f = open(path, 'wb')
+			f.write(chunks.header())
+			f.close()
 
-                for (i, chunk) in enumerate(chunks.itervalues(), 1):
-                        extension = (self.type, chunk.name)
-                        path = os.path.join(dest, '%.2i-%s%s' % (i, chunk.name, chunk_extensions.get(extension, '')))
-                        if os.path.isfile(path) and not overwrite: # and size != 0
-                                print>>sys.stderr, 'Skipping %s - file exists.' % dest
-                                continue
-                        f = open(path, 'wb')
-                        f.write(chunk.data)
-                        f.close()
+		for (i, chunk) in enumerate(chunks.itervalues(), 1):
+			extension = (self.type, chunk.name)
+			path = os.path.join(dest, '%.2i-%s%s' % (i, chunk.name, chunk_extensions.get(extension, '')))
+			if os.path.isfile(path) and not overwrite: # and size != 0
+				print>>sys.stderr, 'Skipping %s - file exists.' % dest
+				continue
+			f = open(path, 'wb')
+			f.write(chunk.data)
+			f.close()
 
 class Rs5CompressedFileEncoder(Rs5CompressedFile):
 	def __init__(self, fp, filename = None, buf = None):

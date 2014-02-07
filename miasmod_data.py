@@ -429,7 +429,7 @@ class MiasmataDataView(QtGui.QWidget):
 		del self.ui
 		del self.model
 
-        def keyPressEvent(self, event):
+	def keyPressEvent(self, event):
 		if event.matches(QtGui.QKeySequence.Save):
 			return self.save()
 		super(MiasmataDataView, self).keyPressEvent(event)
@@ -550,7 +550,7 @@ class MiasmataDataView(QtGui.QWidget):
 				% (e.__class__.__name__, str(e)))
 			return
 
-                try:
+		try:
 			timestamp_str = time.strftime('%Y%m%d%H%M%S')
 			backup = '%s~%s' % (self.save_path, timestamp_str)
 			os.rename(self.save_path, backup)
@@ -560,7 +560,7 @@ class MiasmataDataView(QtGui.QWidget):
 				% (e.__class__.__name__, str(e)))
 			return
 
-                try:
+		try:
 			open(self.save_path, 'wb').write(buf)
 		except Exception as e:
 			QtGui.QMessageBox.warning(self, 'MiasMod',

@@ -87,8 +87,8 @@ class Rs5ChunkEncoder(Rs5Chunk):
 
 
 class Rs5File(object):
-        def header(self):
-                return enc_header(self.magic, self.filename, len(self.data), self.u2)
+	def header(self):
+		return enc_header(self.magic, self.filename, len(self.data), self.u2)
 
 	def encode(self):
 		return enc_file(self.magic, self.filename, self.data, self.u2)

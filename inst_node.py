@@ -44,7 +44,7 @@ def parse_inod(f):
 
 # Search for objects matching a pattern in all nodes:
 def main():
-        nodes = map(str.rstrip, open('inst_list', 'r').readlines())
+	nodes = map(str.rstrip, open('inst_list', 'r').readlines())
 	filters = sys.argv[1:]
 	colours = ((128, 0, 0), (0, 128, 0), (0, 0, 128), (128, 128, 0), (128, 0, 128), (0, 128, 128), (128, 128, 128))
 	items = {}
