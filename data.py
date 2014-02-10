@@ -49,12 +49,12 @@ def dumps_json_node(node):
 	return json.dumps((node.id, node), default=encode_json_types, ensure_ascii=True, separators=(',', ': '))
 
 def parse_json(j):
-	j = json.load(j, object_pairs_hook=decode_json_types, parse_int=data_int, parse_float=data_float)
+	j = json.load(j, 'latin-1', object_pairs_hook=decode_json_types, parse_int=data_int, parse_float=data_float)
 	root = data_tree()
 	root.from_json(j)
 	return root
 def parse_json_node(j):
-	(type, node) = json.loads(j, object_pairs_hook=decode_json_types, parse_int=data_int, parse_float=data_float)
+	(type, node) = json.loads(j, 'latin-1', object_pairs_hook=decode_json_types, parse_int=data_int, parse_float=data_float)
 	if type in json_decoders:
 		r = json_decoders[type]()
 		r.from_json(node)
@@ -81,7 +81,7 @@ class data_null(object):
 		return '<NULL>'
 
 @data_type
-class null_str(str):
+class null_str(unicode):
 	id = 's'
 	desc = 'String'
 	@classmethod
@@ -94,7 +94,7 @@ class null_str(str):
 				return str.__new__(cls, r)
 			r += c
 	def enc(self):
-		return self + '\0'
+		return bytes(self.encode('latin-1') + '\0')
 
 	def search(self, s):
 		return self.lower().find(s) != -1
@@ -132,13 +132,18 @@ class data_tree(object):
 	def from_json(self, c):
 		for (name, child) in c.iteritems():
 			if isinstance(child, unicode):
+				# print repr(child)
 				child = null_str(child)
 			self[null_str(name[2:])] = child
 	def enc(self):
 		ret = ''
 		for (name, child) in self.iteritems():
 			try:
-				ret += name.enc() + child.id + child.enc()
+				# print repr(name.enc()), repr(child.enc())
+				# print type(child.enc())
+				ret += name.enc() + \
+						child.id + \
+						child.enc()
 			except:
 				print name, type(name), child
 				raise
