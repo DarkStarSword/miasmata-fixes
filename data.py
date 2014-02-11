@@ -49,12 +49,12 @@ def dumps_json_node(node):
 	return json.dumps((node.id, node), default=encode_json_types, ensure_ascii=True, separators=(',', ': '))
 
 def parse_json(j):
-	j = json.load(j, 'latin-1', object_pairs_hook=decode_json_types, parse_int=data_int, parse_float=data_float)
+	j = json.load(j, 'cp1252', object_pairs_hook=decode_json_types, parse_int=data_int, parse_float=data_float)
 	root = data_tree()
 	root.from_json(j)
 	return root
 def parse_json_node(j):
-	(type, node) = json.loads(j, 'latin-1', object_pairs_hook=decode_json_types, parse_int=data_int, parse_float=data_float)
+	(type, node) = json.loads(j, 'cp1252', object_pairs_hook=decode_json_types, parse_int=data_int, parse_float=data_float)
 	if type in json_decoders:
 		r = json_decoders[type]()
 		r.from_json(node)
@@ -91,10 +91,10 @@ class null_str(unicode):
 			c = f.read(1)
 			if c == '\0':
 				# print>>sys.stderr, 'string: '+r
-				return str.__new__(cls, r)
+				return unicode.__new__(cls, r)
 			r += c
 	def enc(self):
-		return bytes(self.encode('latin-1') + '\0')
+		return bytes(self.encode('cp1252') + '\0')
 
 	def search(self, s):
 		return self.lower().find(s) != -1
