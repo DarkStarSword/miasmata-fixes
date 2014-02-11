@@ -91,7 +91,7 @@ class null_str(unicode):
 			c = f.read(1)
 			if c == '\0':
 				# print>>sys.stderr, 'string: '+r
-				return unicode.__new__(cls, r)
+				return unicode.__new__(cls, r.decode('cp1252'))
 			r += c
 	def enc(self):
 		return bytes(self.encode('cp1252') + '\0')
