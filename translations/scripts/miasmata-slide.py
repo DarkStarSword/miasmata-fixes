@@ -57,22 +57,44 @@ def blur_layer(image, layer):
 
 def save_dds(image, filename, alpha):
     alpha = alpha and 3 or 1
-    pdb.file_dds_save(
-            image,
-            image.active_layer,
-            filename, # filename
-            filename, # raw_filename
-            alpha, # 1 = DXT1 (no alpha), 3 = DXT5 (alpha)
-            0, # 1 = generate mipmaps
-            0, # 0 = save current layer
-            0, # format
-            -1, # transparent-index
-            0, # DXT compression color-type (Tweaking may help in some cases)
-            0, # Dither
-            0, # mipmap-filter - maybe try tweaking this for in-game objects
-            0, # gamma-correct
-            2.2, # gamma
-    )
+    try:
+        pdb.file_dds_save(
+                image,
+                image.active_layer,
+                filename, # filename
+                filename, # raw_filename
+                alpha, # 1 = DXT1 (no alpha), 3 = DXT5 (alpha)
+                0, # 1 = generate mipmaps <--- XXX Set this for in-game objects
+                0, # 0 = save current layer
+                0, # format
+                -1, # transparent-index
+                0, # DXT compression color-type (Tweaking may help in some cases)
+                0, # Dither
+                0, # mipmap-filter - maybe try tweaking this for in-game objects
+                0, # gamma-correct
+                2.2, # gamma
+        )
+    except:
+        # Try newer API
+        pdb.file_dds_save(
+                image,
+                image.active_layer,
+                filename, # filename
+                filename, # raw_filename
+                alpha, # 1 = DXT1 (no alpha), 3 = DXT5 (alpha)
+                0, # 1 = generate mipmaps <--- XXX Set this for in-game objects
+                0, # 0 = save current layer
+                0, # format
+                -1, # transparent-index
+                0, # mipmap-filter - maybe try tweaking this for in-game objects
+                0, # mipmap-wrap
+                0, # gamma-correct
+                0, # use srgb colorspace for gamma correction
+                2.2, # gamma
+                0, # use perceptual error metric during DXT compression
+                0, # preserve alpha coverage
+                0.5, # alpha test threshold
+        )
 
 def save_png(image, filename):
     pdb.file_png_save2(image, image.active_layer, filename, filename,
