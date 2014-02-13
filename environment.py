@@ -67,7 +67,7 @@ def diff_environments((f1, f2), output, pretty=False):
 def apply_diff((input_fd, diff_fd), output_fd):
 	env = data.parse_chunk(get_env_chunk(input_fd))
 	diff = data.json_decode_diff(diff_fd)
-	print diff
+	# print diff
 	data.apply_diff(env, diff)
 	output_fd.write(make_chunks(data.encode(env)))
 
