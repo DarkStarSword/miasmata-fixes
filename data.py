@@ -42,11 +42,11 @@ def decode_json_types(dct):
 	return ret
 
 def dump_json(node, outputfd):
-	return json.dump(node, outputfd, default=encode_json_types, ensure_ascii=True, indent=4, separators=(',', ': '))
+	return json.dump(node, outputfd, default=encode_json_types, ensure_ascii=False, indent=4, separators=(',', ': '))
 def dumps_json(node):
-	return json.dumps(node, default=encode_json_types, ensure_ascii=True, indent=4, separators=(',', ': '))
+	return json.dumps(node, default=encode_json_types, ensure_ascii=False, indent=4, separators=(',', ': '))
 def dumps_json_node(node):
-	return json.dumps((node.id, node), default=encode_json_types, ensure_ascii=True, separators=(',', ': '))
+	return json.dumps((node.id, node), default=encode_json_types, ensure_ascii=False, separators=(',', ': '))
 
 def parse_json(j):
 	j = json.load(j, 'cp1252', object_pairs_hook=decode_json_types, parse_int=data_int, parse_float=data_float)
@@ -500,7 +500,8 @@ def json_encode_diff(diff, outputfd):
 	tmp['changed'] = [ (plist, dumps_json_node(node1), dumps_json_node(node2)) \
 			for (plist, node1, node2) in diff['changed'] ]
 
-	json.dump(tmp, outputfd, indent=4)
+	t = json.dumps(tmp, indent=4, ensure_ascii=False)
+	outputfd.write(t.encode('utf-8'))
 
 def json_decode_diff(inputfd):
 	diff = json.load(inputfd)
