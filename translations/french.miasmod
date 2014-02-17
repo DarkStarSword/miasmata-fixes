@@ -1,0 +1,1014 @@
+{
+    "removed": [], 
+    "added": [], 
+    "changed": [
+        [
+            [
+                "tutorial", 
+                "exit1"
+            ], 
+            "[\"s\",\"Press {HELP} to close this topic\"]", 
+            "[\"s\",\"Appuyez sur {HELP} pour fermer ce message\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "exit2"
+            ], 
+            "[\"s\",\"Press {MENU} to close and disable this topic\"]", 
+            "[\"s\",\"Appuyez sur {MENU} pour fermer et désactiver ce message\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "player_fatigue", 
+                "text"
+            ], 
+            "[\"s\",\"You have become fatigued by sprinting excessively. To recover from fatigue, move slowly for a short while. Drinking water will also help you recover. While you are fatigued, you will not be able to sprint effectively.\"]", 
+            "[\"s\",\"Vous êtes fatigué parce que vous avez avez sprinté excessivement. Pour récupérer vos forces, marchez pendant un moment. Boire de l'eau va aussi vous aider à récupérer. Lorsque vous êtes fatigué, vous ne serez pas capable de sprinter efficacement.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "player_fatigue", 
+                "icon_text"
+            ], 
+            "[\"s\",\"You have become fatigued. Press {HELP} to learn more\"]", 
+            "[\"s\",\"Vous êtes fatigué. Appuyez sur {HELP} pour en savoir plus.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "building2beds_approach", 
+                "icon_text"
+            ], 
+            "[\"s\",\"Use beds to recuperate strength and also save your game.\"]", 
+            "[\"s\",\"Utilisez les lits pour récupérer vos forces et aussi sauvegarder votre partie.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "first_plant", 
+                "icon_text"
+            ], 
+            "[\"s\",\"Take plants and fungi by pressing {ACTIVATE} \"]", 
+            "[\"s\",\"Prenez les plantes et les champignons en appuyant sur {ACTIVATE} \"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "MAP_OPEN", 
+                "icon_text"
+            ], 
+            "[\"s\",\"Press {MAP} to take out your map\"]", 
+            "[\"s\",\"Appuyez sur {MAP} pour sortir votre carte.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "player_thirst", 
+                "icon_text"
+            ], 
+            "[\"s\",\"You are thirsty. Press {HELP} to learn more\"]", 
+            "[\"s\",\"Vous êtes assoiffé. Appuyez sur {HELP} pour en savoir plus.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "player_thirst", 
+                "text"
+            ], 
+            "[\"s\",\"You have become thirsty and should drink water soon. Water can be optained in freshwater lakes, ponds and puddles as well as from pichers found inside cabins. You may also carry water with you in a canteen. The  canteen is accessable from within your Journal. To open your Journal, press {JOURNAL}. If your canteen is filled with water, you'll find it hanging on a strap beneath your journal.\"]", 
+            "[\"s\",\"Vous êtes assoiffé et devriez vous désaltérer. Vous pouvez trouver de l'eau dans un lac, dans un étang ou une mare ainsi que dans les cruches situées à l'intérieur des cabines. Vous pouvez aussi transporter de l'eau dans votre gourde. La gourde est accessible en ouvrant votre Journal. Pour ouvrir votre journal, appuyez sur {JOURNAL}. Si votre gourde est remplie d'eau, vous la verrez suspendue à une sangle sous votre journal.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "lab_research", 
+                "icon_text"
+            ], 
+            "[\"s\",\"This is a Research Station. Press {HELP} to learn more.\"]", 
+            "[\"s\",\"C'est une Station de Recherche. Appuyez sur {HELP} pour en savoir plus.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "lab_research", 
+                "text"
+            ], 
+            "[\"s\",\"Research Stations allow you to discover any important medicinal characteristic a specimin may have. To use a Research Station, place your specimin on the tray using {ACTIVATE}. If you have more than 1 item in your hand, you may need to press it multiple times to cycle to your desired specimin. Now look at the microscope and press {ACTIVATE} for a second time. The research will be performed and results will be documented in your journal.\"]", 
+            "[\"s\",\"Les Stations de Recherche vous permettent de découvrir les caractéristique qu'un spécimen possède. Pour utiliser une Station de Recherche, placez votre spécimen sur le plateau en utilisant {ACTIVATE}. Si vous en avez plusieurs en main, répétez l'opération jusqu'au résultat escompté. Puis, regardez à travers le microscope en appuyant sur {ACTIVATE}. La recherche sera effectuée et les résultats seront documentés dans votre journal.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "player_fever", 
+                "text"
+            ], 
+            "[\"s\",\"You have developed a fever and should use medicine or find a bed soon. You can create medicine by bringing certain types of plants and fungi to a laboratory. Once a medicine is synthesized, it will be  accessible from within the front cover of your journal.\\\\n\\\\nFever will develop more rapidly if you are dehydrated, or if you sustain physical damage from falls or attacks.\"]", 
+            "[\"s\",\"Vous avez développé une fièvre et devriez utiliser un médicament ou trouver un lit pour vous y reposer. Vous pouvez créer un médicament avec certaines plantes et champignons que vous devez synthétiser dans un laboratoire. Une fois synthétisé, le médicament sera accessible dans votre journal.\\n\\nVotre fièvre va se développer plus rapidement si vous êtes déshydraté, si vous souffrez d'une chute ou d'une attaque.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "player_fever", 
+                "icon_text"
+            ], 
+            "[\"s\",\"You have a fever. Press {HELP} to learn more\"]", 
+            "[\"s\",\"Vous avez une fièvre. Appuyez sur {HELP} pour en savoir plus\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "lab_synthesis", 
+                "icon_text"
+            ], 
+            "[\"s\",\"This is a Synthesis Station. Press {HELP} to learn more.\"]", 
+            "[\"s\",\"C'est une Station de Synthèse. Appuyez sur {HELP} pour en savoir plus.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "lab_synthesis", 
+                "text"
+            ], 
+            "[\"s\",\"Synthesis Stations allow you to create medicines and tonics from the specimins you discover on the island. To use a Synthesis Station, place a specimin on at least one tray using {ACTIVATE}. Then, look at the distillation rig and press {ACTIVATE} again to attempt sysnthesis. If the synthesis of a medicine was successful, the item will materialize on the Yeild Tray. \\\\n\\\\n You'll find that some medicines can be created from a single specimin, while others are created with two.\"]", 
+            "[\"s\",\"Une Station de Synthèse vous permet de créer des médicaments et des toniques grâce aux spécimens que vous découvrirez sur l'île. Pour utiliser une Station de Synthèse, placez un spécimen sur un plateau en appuyant sur {ACTIVATE}. Puis, regardez la plateforme de distillation et appuyez sur {ACTIVATE} à nouveau pour tenter une synthèse. Si la synthèse est réussie, un objet va se matérialiser sur le plateau de production. \\n\\n Vous découvrirez que certains médicaments peuvent être synthétisés avec un spécimen, alors que d'autres en requiert deux.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "player_thirsty", 
+                "icon_text"
+            ], 
+            "[\"s\",\"You are thirsty. Press {HELP} to learn more\"]", 
+            "[\"s\",\"Vous êtes assoiffé. Appuyez sur {HELP} pour en savoir plus.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "player_thirsty", 
+                "text"
+            ], 
+            "[\"s\",\"You have become thirsty and should drink water soon. Water can be optained in freshwater lakes, ponds and puddles as well as from pichers found inside cabins. You may also carry water with you in a canteen. The  canteen is accessable from within your Journal. To open your Journal, press {JOURNAL}. If your canteen is filled with water, you'll find it hanging on a strap beneath your journal.\"]", 
+            "[\"s\",\"Vous êtes assoiffé et devriez vous désaltérer. Vous pouvez trouver de l'eau dans un lac, dans un étang ou une mare ainsi que dans les cruches situées à l'intérieur des cabines. Vous pouvez aussi transporter de l'eau dans votre gourde. La gourde est accessible en ouvrant votre Journal. Pour ouvrir votre journal, appuyez sur {JOURNAL}. Si votre gourde est remplie d'eau, vous la verrez suspendue à une sangle sous votre journal.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "journal_open", 
+                "icon_text"
+            ], 
+            "[\"s\",\"Press {JOURNAL} to open your Journal\"]", 
+            "[\"s\",\"Appuyez sur {JOURNAL} pour ouvrir votre journal.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "cartographytable_approach", 
+                "icon_text"
+            ], 
+            "[\"s\",\"Ahead of you is a Cartography Table. {HELP} to learn more.\"]", 
+            "[\"s\",\"En face de vous se trouve une table de Cartographie. {HELP} pour en savoir plus.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "cartographytable_approach", 
+                "text"
+            ], 
+            "[\"s\",\"Cartography tables provide instructions for triangulating your location and constructing a map of the island.\"]", 
+            "[\"s\",\"Les tables de Cartographie vous offre des instructions pour trianguler votre location et créer une carte de l'île.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "journal_desc", 
+                "text"
+            ], 
+            "[\"s\",\"Your Journal provides you with your health status, medicine inventory and objectives. It also includes all of the notes you collect and research you perform on the island.\\\\n\\\\nClick on the tabs at the top of the journal to explore its various sections.\\\\n\\\\nUse {LEFT} and {RIGHT} to navigate the journal page-by-page.\\\\nUse {ZOOM} to zoom in.\"]", 
+            "[\"s\",\"Votre Journal vous fournit votre statut de santé, votre inventaire de médicaments et vos objectifs. Il inclut aussi toutes les notes et les recherches que vous effectuerez sur l'île.\\n\\nCliquez sur un marque-page au sommet de votre journal pour en explorer les différentes sections.\\n\\nAppuyez sur {LEFT} et {RIGHT} pour naviguer le journal page par page.\\nAppuyez sur {ZOOM} pour zoomer.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "map_desc", 
+                "text"
+            ], 
+            "[\"s\",\"With your map and compass in-hand, you can determine your location by using Triangulation. To do this, click on 2 known landmarks. A landmark can be a statue or structure of some kind. It is considered 'known' if it is already  represented on your map. Your crosshair will turn into a Triangle if the landmark you are looking at is known. \\\\n \\\\n Additionally, your location will automatically be revealed whenever you are standing next to a known landmark.\"]", 
+            "[\"s\",\"Carte et compas en main, vous pouvez déterminer votre location en utilisant la Triangulation. Pour se faire, cliquez sur 2 points de repère connu. Un point de repère peut être une statue ou une structure humaine. Ceux-ci sont considérés comme connu si ils apparaissent déjà sur votre carte. Votre réticule va devenir un triangle si le point de repère que vous regardez est connu. \\n \\n De plus, votre location sera automatiquement révélée lorsque vous serez à côté d'un point de repère connu.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "dead_professor", 
+                "icon_text"
+            ], 
+            "[\"s\",\"This is a Laboratory. Press {HELP} to learn more.\"]", 
+            "[\"s\",\"C'est un Laboratoire. Appuyez sur {HELP} pour en savoir plus.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "dead_professor", 
+                "text"
+            ], 
+            "[\"s\",\"Laboratories allow you to research the plants and fungi you discover on the island. They also let you synthesize many of these specimins into life-saving medicines and tonics.\"]", 
+            "[\"s\",\"Les Laboratoires vous permettent de rechercher les plantes et les champignons que vous découvrez sur l'île. Ils vous permettent aussi de synthétiser certains spécimens en médicaments et en toniques.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "make_torch", 
+                "text"
+            ], 
+            "[\"s\",\"You can create simple torches out of sticks. When you are standing over a pile of sticks, look down. A Torch icon should appear. Press {LMB}.\\\\n\\\\nA Simple Torch can be used to illuminate the night, as well as provide protection. You can toss your torch into a firepit or Urn. You can also swing your torch by tapping {LMB}. Finally, You can throw your torch by holding {LMB} for more than 1 second, then releasing. The longer you hold the button before release, the further your torch will fly.\"]", 
+            "[\"s\",\"Vous pouvez créer une simple torche avec des brindilles. Lorsque vous trouvez des brindilles à vos pieds, regardez les. L'icone d'une Torche devrait apparaître. Appuyez sur {LMB}.\\n\\nUne simple torche peux être utilisée pour vous illuminer durant la nuit, elle peux aussi vous servir de protection. Vous pouvez jeter votre torche dans un feux de camps ou une Urne. Vous pouvez aussi lancer votre torche en restant appuyé sur {LMB} pendant plus d'1 seconde avant de lâcher. Plus vous garderez le bouton appuyé, plus votre torche ira loin.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "pickups_general", 
+                "icon_text"
+            ], 
+            "[\"s\",\"Grab rocks and fallen sticks. {HELP} to learn more.\"]", 
+            "[\"s\",\"Vous pouvez ramasser des rocs et des bâtons. {HELP} pour en savoir plus.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "pickups_general", 
+                "text"
+            ], 
+            "[\"s\",\"Sticks can be used to construct makeshift torches, which will help you see at night. You can also swing and throw torches to protect yourself from aggressors. Pressing {ACTIVATE} quickly will swing your torch. You can throw your torch by holding {ACTIVATE} for several seconds and then releasing.\\\\n \\\\n Rocks and many other items can also be used for defense.\"]", 
+            "[\"s\",\"Un bâton peut être utilisé pour créer une Torche de fortune qui vous permettra de mieux voir la nuit. Vous pouvez aussi l'utiliser pour vous défendre d'agresseurs. Appuyez sur {ACTIVATE} rapidement pour frapper avec votre torche. Vous pouvez aussi lancer votre torche en restant appuyé sur {ACTIVATE} pendant plus d'1 seconde avant de lâcher.\\n \\n Des rocs et beaucoup d'autre objets peuvent être utilisé pour votre défense.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "heartbeat", 
+                "text"
+            ], 
+            "[\"s\",\"When you hear your heart beat, The Creature is nearby. To elude him, find some tall grass or bushes in which to duck. You can also try hiding behind trees or rocks.\\\\n\\\\nIf the Creature discovers you, you may need to defend yourself until you find an opportunity to flee. The enemy can be distracted or fazed by throwing an object such as a rock, stick or knife.\"]", 
+            "[\"s\",\"Quand vous entendez votre cœur battre, la Créature est proche. Pour lui échapper, trouvez des haute herbes, des buissons où vous accroupir en appuyant sur la touche {STEALTH}. Vous pouvez aussi essayer de vous cacher derrière des arbres ou des rochers.\\n\\n Si la créature vous découvre, il se peux que vous soyez obligé de vous défendre jusqu'à trouver une opportunité de fuir. La Créature peux être distraite ou déconcertée en lui envoyant des objets tels que des rocs, un bâton ou un couteau.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "heartbeat", 
+                "icon_text"
+            ], 
+            "[\"s\",\"The Creature is near! Press {HELP} to learn more.\"]", 
+            "[\"s\",\"La Créature est proche! Appuyez sur {HELP} pour en savoir plus.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "labratory_desc", 
+                "icon_text"
+            ], 
+            "[\"s\",\"There is a note on the table in the shed. Take it with {ACTIVATE} \"]", 
+            "[\"s\",\"Il y a une note sur la table dans le cabanon. Prenez la avec {ACTIVATE} \"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "lab_storage", 
+                "icon_text"
+            ], 
+            "[\"s\",\"This is a Storage Bin. Press {HELP} to learn more.\"]", 
+            "[\"s\",\"C'est un Bac de Stockage. Appuyez sur {HELP} pour en savoir plus.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "lab_storage", 
+                "text"
+            ], 
+            "[\"s\",\"Storage Bins allow you to preserve up to 6 plant/fungal specimins at a time. You'll be able to access these specimins from any other Storage Bins you encounter on the island. To use a Storage Bin, look at one of the 6 slots and press {ACTIVATE}. This will place a specimin in the slot and/or take a specimin from it.  \\\\n\\\\n You'll notice that you can only carry 3 specimins in your hand at a time, so Storage Bins are a great way to transport these important items.\"]", 
+            "[\"s\",\"Les Bacs de Stockage vous permettent de préserver jusqu'à 6 spécimens à la fois. Vous pourrez accéder à ces spécimens dans tous les Bacs de Stockage que vous rencontrerez sur l'île. Pour utiliser un Bac de Stockage, regardez le et appuyez sur {ACTIVATE}.  \\n\\n Vous remarquerez que vous ne pouvez transporter que 3 spécimens dans votre main, les Bacs de Stockage sont un excellent moyen de les transporter.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "building2_approach", 
+                "icon_text"
+            ], 
+            "[\"s\",\"Find freshwater to drink. {HELP} to learn more.\"]", 
+            "[\"s\",\"Trouvez de l'eau douce pour boire. {HELP} pour en savoir plus.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "building2_approach", 
+                "text"
+            ], 
+            "[\"s\",\"Since you are stricken with plague, you will become dehydrated very quickly. There are freshwater lakes and ponds all over the island. Press {ACTIVATE} when you're looking down at the water's edge to drink. This will also fill up your canteen for future use. \\\\n \\\\n You'll notice that the sea around the island is salt-water, which you cannot drink.\"]", 
+            "[\"s\",\"Puisque vous êtes affecté par la peste, vous allez vous déshydrater très vite. Il y a des lacs et des mares partout sur l'île. Appuyez sur {ACTIVATE} pour boire l'eau à vos pieds. Cela va aussi remplir votre gourde. \\n \\n Remarquez que l'eau autour de l'île est salée, vous ne pouvez pas la boire.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "approach_urn", 
+                "text"
+            ], 
+            "[\"s\",\"Flaming Urns provide a zone of protection from aggressors.\"]", 
+            "[\"s\",\"Une urne enflammée fournit une zone de protection des agresseurs.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "player_drowning", 
+                "icon_text"
+            ], 
+            "[\"s\",\"You are drowning. Press {HELP} to learn more\"]", 
+            "[\"s\",\"Vous êtes en train de vous noyer. Appuyez sur {HELP} pour en savoir plus.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "player_drowning", 
+                "text"
+            ], 
+            "[\"s\",\"You are starting to drown. Your strength is currently 'poor' and you cannot swim.\"]", 
+            "[\"s\",\"Vous êtes en train de vous noyer. Votre force est 'pauvre' et vous ne pouvez pas nager.\"]"
+        ], 
+        [
+            [
+                "tutorial", 
+                "pages", 
+                "building2_inside", 
+                "icon_text"
+            ], 
+            "[\"s\",\"Save your game by lighting candles, lanterns, campfires and urns\"]", 
+            "[\"s\",\"Sauvegardez votre partie en allumant des bougies, des lanternes, des feux de camps ou des urnes.\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "templates", 
+                "setting_slider", 
+                "text"
+            ], 
+            "[\"s\",\"default\"]", 
+            "[\"s\",\"Défaut\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "templates", 
+                "button_cancel", 
+                "text"
+            ], 
+            "[\"s\",\"Cancel\"]", 
+            "[\"s\",\"Annuler\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "templates", 
+                "button_savegame", 
+                "text"
+            ], 
+            "[\"s\",\"Empty\"]", 
+            "[\"s\",\"Vide\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "templates", 
+                "button_ok", 
+                "text"
+            ], 
+            "[\"s\",\"Accept\"]", 
+            "[\"s\",\"Accepter\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "PAUSE_MENU", 
+                "children", 
+                "button_settings", 
+                "text"
+            ], 
+            "[\"s\",\"Settings\"]", 
+            "[\"s\",\"Paramètres\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "PAUSE_MENU", 
+                "children", 
+                "button_quit", 
+                "text"
+            ], 
+            "[\"s\",\"Quit\"]", 
+            "[\"s\",\"Quitter\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "PAUSE_MENU", 
+                "children", 
+                "button_resume", 
+                "text"
+            ], 
+            "[\"s\",\"Resume\"]", 
+            "[\"s\",\"Reprendre le jeu\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "BIND_KEY", 
+                "text"
+            ], 
+            "[\"s\",\"Waiting For Key\"]", 
+            "[\"s\",\"Entrez une touche\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "DELETE_CONFIRM", 
+                "text"
+            ], 
+            "[\"s\",\"Are you sure you want to delete this save game?\"]", 
+            "[\"s\",\"Êtes vous sûr de vouloir supprimer cette sauvegarde?\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SELECT_GAME", 
+                "children", 
+                "tab_settings", 
+                "text"
+            ], 
+            "[\"s\",\"Settings\"]", 
+            "[\"s\",\"Paramètres\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SELECT_GAME", 
+                "children", 
+                "tab_quit", 
+                "text"
+            ], 
+            "[\"s\",\"Quit\"]", 
+            "[\"s\",\"Quitter\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "button_cancel", 
+                "text"
+            ], 
+            "[\"s\",\"Cancel\"]", 
+            "[\"s\",\"Annuler\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "button_ok", 
+                "text"
+            ], 
+            "[\"s\",\"Accept\"]", 
+            "[\"s\",\"Accepter\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_graphics", 
+                "text"
+            ], 
+            "[\"s\",\"Graphics\"]", 
+            "[\"s\",\"Graphisme\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_graphics", 
+                "children", 
+                "GFX_WATER_QUALITY", 
+                "text"
+            ], 
+            "[\"s\",\"Water Quality\"]", 
+            "[\"s\",\"Qualité de l’eau\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_graphics", 
+                "children", 
+                "GFX_ANTIALIASING", 
+                "text"
+            ], 
+            "[\"s\",\"Antialiasing\"]", 
+            "[\"s\",\"Anti-aliasing\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_graphics", 
+                "children", 
+                "GFX_TEX_DETAIL", 
+                "text"
+            ], 
+            "[\"s\",\"Texture Detail\"]", 
+            "[\"s\",\"Détail des Textures\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_graphics", 
+                "children", 
+                "GFX_WINDOWED", 
+                "text"
+            ], 
+            "[\"s\",\"  Windowed Mode\"]", 
+            "[\"s\",\"  Mode Fenêtre\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_graphics", 
+                "children", 
+                "GFX_LIGHTSHAFTS", 
+                "text"
+            ], 
+            "[\"s\",\"Lightshaft Quality\"]", 
+            "[\"s\",\"Qualité des Torches\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_graphics", 
+                "children", 
+                "GFX_RESOLUTION", 
+                "text"
+            ], 
+            "[\"s\",\"Resolution\"]", 
+            "[\"s\",\"Résolution\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_graphics", 
+                "children", 
+                "GFX_SHADOW_FILT", 
+                "text"
+            ], 
+            "[\"s\",\"Shadow Filtering\"]", 
+            "[\"s\",\"Filtrage des Ombres\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_graphics", 
+                "children", 
+                "GFX_MDL_DETAIL", 
+                "text"
+            ], 
+            "[\"s\",\"Model Detail\"]", 
+            "[\"s\",\"Détail des Modèles\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_graphics", 
+                "children", 
+                "GFX_FOV", 
+                "text"
+            ], 
+            "[\"s\",\"  Field of View\"]", 
+            "[\"s\",\"  Champs de Vision\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_graphics", 
+                "children", 
+                "GFX_SKY_QUAL", 
+                "text"
+            ], 
+            "[\"s\",\"Sky Quality\"]", 
+            "[\"s\",\"Qualité du Ciel\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_bindings", 
+                "text"
+            ], 
+            "[\"s\",\"Control Keys\"]", 
+            "[\"s\",\"Contrôle\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_bindings", 
+                "children", 
+                "GI_CAM_R", 
+                "text"
+            ], 
+            "[\"s\",\"Look Right\"]", 
+            "[\"s\",\"Regarder à Droite\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_bindings", 
+                "children", 
+                "GI_CAM_L", 
+                "text"
+            ], 
+            "[\"s\",\"Look Left\"]", 
+            "[\"s\",\"Regarder à Gauche\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_bindings", 
+                "children", 
+                "GI_WALK", 
+                "text"
+            ], 
+            "[\"s\",\"Sneak\"]", 
+            "[\"s\",\"Furtif\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_bindings", 
+                "children", 
+                "GI_JUMP", 
+                "text"
+            ], 
+            "[\"s\",\"Jump\"]", 
+            "[\"s\",\"Sauter\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_bindings", 
+                "children", 
+                "GI_UP", 
+                "text"
+            ], 
+            "[\"s\",\"Move Forward\"]", 
+            "[\"s\",\"Avancer\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_bindings", 
+                "children", 
+                "GI_RUN", 
+                "text"
+            ], 
+            "[\"s\",\"Run\"]", 
+            "[\"s\",\"Courir\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_bindings", 
+                "children", 
+                "GI_LOOK_R", 
+                "text"
+            ], 
+            "[\"s\",\"Glance Right\"]", 
+            "[\"s\",\"Regarder à Droite\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_bindings", 
+                "children", 
+                "GI_LEFT", 
+                "text"
+            ], 
+            "[\"s\",\"Step Left\"]", 
+            "[\"s\",\"Déplacement vers la Gauche\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_bindings", 
+                "children", 
+                "GI_DOWN", 
+                "text"
+            ], 
+            "[\"s\",\"Move Back\"]", 
+            "[\"s\",\"Reculer\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_bindings", 
+                "children", 
+                "GI_ZOOM", 
+                "text"
+            ], 
+            "[\"s\",\"Examine\"]", 
+            "[\"s\",\"Examiner\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_bindings", 
+                "children", 
+                "GI_CAM_D", 
+                "text"
+            ], 
+            "[\"s\",\"Look Down\"]", 
+            "[\"s\",\"Regarder en Bas\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_bindings", 
+                "children", 
+                "GI_CAM_U", 
+                "text"
+            ], 
+            "[\"s\",\"Look Up\"]", 
+            "[\"s\",\"Regarder en Haut\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_bindings", 
+                "children", 
+                "GI_MAP", 
+                "text"
+            ], 
+            "[\"s\",\"Map\"]", 
+            "[\"s\",\"Carte\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_bindings", 
+                "children", 
+                "GI_LOOK_L", 
+                "text"
+            ], 
+            "[\"s\",\"Glance Left\"]", 
+            "[\"s\",\"Regarder à Gauche\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_bindings", 
+                "children", 
+                "GI_RIGHT", 
+                "text"
+            ], 
+            "[\"s\",\"Step Right\"]", 
+            "[\"s\",\"Déplacement vers la Droite\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_bindings", 
+                "children", 
+                "GI_HELP", 
+                "text"
+            ], 
+            "[\"s\",\"Help\"]", 
+            "[\"s\",\"Aide\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_bindings", 
+                "children", 
+                "GI_ACTIVATE", 
+                "text"
+            ], 
+            "[\"s\",\"Activate\"]", 
+            "[\"s\",\"Activer\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_general", 
+                "text"
+            ], 
+            "[\"s\",\"General\"]", 
+            "[\"s\",\"Général\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_general", 
+                "children", 
+                "GEN_MOUSE_INVY", 
+                "text"
+            ], 
+            "[\"s\",\"Invert Y\"]", 
+            "[\"s\",\"Inverser l’axe Y\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_general", 
+                "children", 
+                "GEN_SFX_VOL", 
+                "text"
+            ], 
+            "[\"s\",\"Master Volume\"]", 
+            "[\"s\",\"Volume Principal\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_general", 
+                "children", 
+                "GEN_MOUSE_SPD", 
+                "text"
+            ], 
+            "[\"s\",\"Mouse Speed\"]", 
+            "[\"s\",\"Sensibilité de la Souris\"]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_general", 
+                "children", 
+                "GEN_MUSIC_VOL", 
+                "text"
+            ], 
+            "[\"s\",\"Music Volume\"]", 
+            "[\"s\",\"Volume de la Musique\"]"
+        ], 
+        [
+            [
+                "config", 
+                "new_game", 
+                "text_description"
+            ], 
+            "[\"s\",\"New Game\"]", 
+            "[\"s\",\"Nouvelle Partie\"]"
+        ], 
+        [
+            [
+                "config_presets", 
+                "new_game", 
+                "text_description"
+            ], 
+            "[\"s\",\"New Game\"]", 
+            "[\"s\",\"Nouvelle Partie\"]"
+        ]
+    ]
+}
