@@ -2,31 +2,15 @@
 
 from gimpfu import *
 
-# font = 'Times New Roman,'
-# font = 'Gentium' # Closer
-# font = 'Nimbus Roman No9 L' # Closer, h still not tall enough
-# font = 'STIXGeneral' # No
-# font = 'URW Palladio L Medium' # Still not quite right, shape is off
-# font = 'Liberation Serif'
-# font = 'Georgia' # Close
-# font = 'Gentium Book Basic' # Close
-# font = 'Gentium Basic'
-# font = 'Droid Serif'
-# font = 'DejaVu Serif'
-# font = 'cmr10' # <-- Pretty close, letters aren't quite well enough defined
-# font = 'Century Schoolbook L Medium'  # close
-# font = 'Bitstream Charter'
-# font_size = 40.0
-# line_spacing = 27.0
-# line_spacing = 31.0
-
-font = 'perpetua' # Closest yet for shape. Letters not quite thick enough. Still not quite right - e.g. shape of 'g' slightly off
-font_size = 40.0
-line_spacing = 20.0
+intro_font = 'Norlik'
+end_font = 'Norlik Condensed'
+font_size = 36.0
+intro_line_spacing = 15.0
+end_line_spacing = 20.0
 
 width = height = 1024
 
-def add_slide_text(image, txt):
+def add_slide_text(image, txt, font, line_spacing):
     gimp.set_foreground(255, 255, 255)
     text = pdb.gimp_text_fontname(image, None, 0, 0, txt, 0, True, font_size, PIXELS, font)
     text.name = 'Text'
@@ -35,10 +19,10 @@ def add_slide_text(image, txt):
 
     return text
 
-def enlarge_first_letter(text):
+def enlarge_first_letter(text, txt):
     # XXX: Requires a patched GIMP to set text markup
     # See https://bugzilla.gnome.org/show_bug.cgi?id=724101
-    markup = '<span size=\"61440\">%s</span>%s' % (txt[0], txt[1:])
+    markup = '<span size=\"55000\">%s</span>%s' % (txt[0], txt[1:])
     pdb.gimp_text_layer_set_markup(text, markup)
 
 def scale_text(image, text):
@@ -147,10 +131,13 @@ def render_end_slide(source_txt_file, output_basename):
     image = gimp.Image(width, height, RGB)
     background = add_background(image)
     display_image(image)
-    text = add_slide_text(image, txt)
-    enlarge_first_letter(text)
+    text = add_slide_text(image, txt, end_font, end_line_spacing)
+    enlarge_first_letter(text, txt)
+
     scale_text(image, text)
     blur_layer(image, text)
+
+    # center_layer(image, text)
 
     # image.active_layer = background
     save_xcf(image, '%s.xcf' % output_basename)
@@ -167,7 +154,7 @@ def render_intro_slide(source_txt_file, output_basename):
     image = gimp.Image(width, height, RGB)
     background = add_background(image, 0.0)
     display_image(image)
-    text = add_slide_text(image, txt)
+    text = add_slide_text(image, txt, intro_font, intro_line_spacing)
     pdb.gimp_text_layer_set_justification(text, TEXT_JUSTIFY_CENTER)
     center_layer(image, text)
     blur_layer(image, text)
