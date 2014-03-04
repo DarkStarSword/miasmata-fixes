@@ -9,7 +9,7 @@ line_spacing = -7.0
 letter_spacing = 0.4
 
 x = 205
-w = 1024 - x
+w = 995 - x
 
 def bold_text(layer, txt):
     # XXX: Requires a patched GIMP to set text markup
@@ -45,7 +45,7 @@ def compose_index_image(source_txt_file, source_blank_image, output_basename):
     # pdb.gimp_text_layer_resize(text, w, text.height)
     bold_word_wrap(text, txt, w)
 
-    pdb.gimp_layer_translate(text, x + (image.width - x - text.width) / 2, (image.height - text.height) / 2)
+    pdb.gimp_layer_translate(text, x + (w - text.width) / 2, (image.height - text.height) / 2)
 
     save_xcf(image, '%s.xcf' % output_basename)
     image2 = pdb.gimp_image_duplicate(image)
