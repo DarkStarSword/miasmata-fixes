@@ -17,16 +17,35 @@ def bold_text(layer, txt):
     markup = '<b>%s</b>' % txt
     pdb.gimp_text_layer_set_markup(layer, markup)
 
+def bold_word_wrap(layer, text, width):
+    # This is a workaround for the lack of a fixed-width + dynamic-height
+    # setting for text boxes in the GIMP - otherwise there is no easy way to
+    # wrap the text AND have it vertically centered.
+    txt = ''
+    for word in text.split(' '):
+        txt1 = '%s %s' % (txt, word)
+        markup = '<b>%s</b>' % txt1
+        pdb.gimp_text_layer_set_markup(layer, markup)
+        if layer.width > width:
+            txt1 = '%s\n%s' % (txt, word)
+            markup = '<b>%s</b>' % txt1
+            pdb.gimp_text_layer_set_markup(layer, markup)
+            width = max(width, layer.width)
+        txt = txt1
+
 def compose_index_image(source_txt_file, source_blank_image, output_basename):
     txt = open(source_txt_file, 'rb').read().decode('utf-8').strip()
 
     image = pdb.gimp_file_load(source_blank_image, source_blank_image)
 
-    text = add_text_layer(image, txt, font, font_size, pos=(x, 0))
-    bold_text(text, txt)
+    text = add_text_layer(image, txt, font, font_size)
     pdb.gimp_text_layer_set_justification(text, TEXT_JUSTIFY_CENTER)
-    pdb.gimp_text_layer_resize(text, w, text.height)
-    pdb.gimp_layer_translate(text, 0, (image.height - text.height) / 2)
+
+    # bold_text(text, txt)
+    # pdb.gimp_text_layer_resize(text, w, text.height)
+    bold_word_wrap(text, txt, w)
+
+    pdb.gimp_layer_translate(text, x + (image.width - x - text.width) / 2, (image.height - text.height) / 2)
 
     save_xcf(image, '%s.xcf' % output_basename)
     image2 = pdb.gimp_image_duplicate(image)
