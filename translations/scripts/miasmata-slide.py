@@ -29,9 +29,6 @@ def scale_text(image, text):
 def center_layer(image, layer):
     layer.translate((image.width - layer.width) / 2, (image.height - layer.height) / 2)
 
-def blur_layer(image, layer):
-    pdb.plug_in_gauss_rle2(image, layer, 1.0, 1.0)
-
 def add_background(image, opacity=100.0):
     background = gimp.Layer(image, 'Background', width, height, RGB_IMAGE, opacity, NORMAL_MODE)
     image.add_layer(background, -1)

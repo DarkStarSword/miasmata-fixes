@@ -4,6 +4,7 @@ from gimpfu import *
 
 def add_text_layer(image, txt, font, font_size, line_spacing = None, colour = (0, 0, 0), name = 'Text', pos = (0, 0)):
     gimp.set_foreground(*colour)
+    pdb.gimp_image_set_active_layer(image, image.layers[0])
     text = pdb.gimp_text_fontname(image, None, pos[0], pos[1], txt, 0, True, font_size, PIXELS, font)
     text.name = name
     if line_spacing is not None:
@@ -11,6 +12,34 @@ def add_text_layer(image, txt, font, font_size, line_spacing = None, colour = (0
     pdb.gimp_text_layer_set_hint_style(text, TEXT_HINT_STYLE_NONE)
 
     return text
+
+def bold_text(layer, txt):
+    # XXX: Requires a patched GIMP to set text markup
+    # See https://bugzilla.gnome.org/show_bug.cgi?id=724101
+    markup = '<b>%s</b>' % txt
+    pdb.gimp_text_layer_set_markup(layer, markup)
+
+def bold_word_wrap(layer, text, width, start_tag='<b>', end_tag='</b>'):
+    # This is a workaround for the lack of a fixed-width + dynamic-height
+    # setting for text boxes in the GIMP - otherwise there is no easy way to
+    # wrap the text AND have it vertically centered.
+    words = text.split(' ')
+    if not len(words):
+        return
+    txt = words[0]
+    for word in words[1:]:
+        txt1 = '%s %s' % (txt, word)
+        markup = '%s%s%s' % (start_tag, txt1, end_tag)
+        pdb.gimp_text_layer_set_markup(layer, markup)
+        if layer.width > width:
+            txt1 = '%s\n%s' % (txt, word)
+            markup = '%s%s%s' % (start_tag, txt1, end_tag)
+            pdb.gimp_text_layer_set_markup(layer, markup)
+            width = max(width, layer.width)
+        txt = txt1
+
+def blur_layer(image, layer, radius = 1.0):
+    pdb.plug_in_gauss_rle2(image, layer, radius, radius)
 
 def save_dds(image, filename, alpha):
     alpha = alpha and 3 or 1
@@ -82,4 +111,3 @@ def save_jpg(image, filename):
 def save_xcf(image, filename):
     pdb.gimp_xcf_save(0, image, image.active_layer, filename, filename)
     image.clean_all()
-
