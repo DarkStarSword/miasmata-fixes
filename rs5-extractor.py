@@ -51,15 +51,7 @@ def extract(archive, dest, file_list, strip, chunks, overwrite, filter):
 def is_chunk_dir(path):
 	return os.path.isfile(os.path.join(path, '00-HEADER'))
 
-def create_rs5(archive, file_list, overwrite):
-	if not file_list:
-		print 'Must specify at least one file!'
-		return
-	if os.path.exists(archive) and not overwrite:
-		print '%s already exists, refusing to continue!' % archive
-		return
-	rs5 = rs5archive.Rs5ArchiveEncoder(archive)
-
+def add_files(rs5, file_list):
 	for filename in file_list:
 		if os.path.isdir(filename):
 			if is_chunk_dir(filename):
@@ -76,15 +68,20 @@ def create_rs5(archive, file_list, overwrite):
 		else:
 			rs5.add(filename)
 
+def create_rs5(archive, file_list, overwrite):
+	if not file_list:
+		print 'Must specify at least one file!'
+		return
+	if os.path.exists(archive) and not overwrite:
+		print '%s already exists, refusing to continue!' % archive
+		return
+	rs5 = rs5archive.Rs5ArchiveEncoder(archive)
+	add_files(rs5, file_list)
 	rs5.save()
 
 def add_rs5_files(archive, file_list):
 	rs5 = rs5archive.Rs5ArchiveUpdater(open(archive, 'rb+'))
-	for filename in file_list:
-		if is_chunk_dir(filename):
-			rs5.add_chunk_dir(filename)
-		else:
-			rs5.add(filename)
+	add_files(rs5, file_list)
 	rs5.save()
 
 def repack_rs5(old_archive, new_archive):
