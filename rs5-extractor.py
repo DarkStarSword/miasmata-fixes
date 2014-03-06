@@ -48,6 +48,9 @@ def extract(archive, dest, file_list, strip, chunks, overwrite, filter):
 		except OSError as e:
 			print>>sys.stderr, 'ERROR EXTRACTING %s: %s, SKIPPING!' % (file.filename, str(e))
 
+def is_chunk_dir(path):
+	return os.path.isfile(os.path.join(path, '00-HEADER'))
+
 def create_rs5(archive, file_list, overwrite):
 	if not file_list:
 		print 'Must specify at least one file!'
@@ -59,7 +62,15 @@ def create_rs5(archive, file_list, overwrite):
 
 	for filename in file_list:
 		if os.path.isdir(filename):
+			if is_chunk_dir(filename):
+				rs5.add_chunk_dir(filename)
+				continue
 			for (root, dirs, files) in os.walk(filename):
+				for dir in dirs[:]:
+					path = os.path.join(root, dir)
+					if is_chunk_dir(path):
+						rs5.add_chunk_dir(path)
+						dirs.remove(dir)
 				for file in files:
 					rs5.add(os.path.join(root, file))
 		else:
@@ -70,7 +81,10 @@ def create_rs5(archive, file_list, overwrite):
 def add_rs5_files(archive, file_list):
 	rs5 = rs5archive.Rs5ArchiveUpdater(open(archive, 'rb+'))
 	for filename in file_list:
-		rs5.add(filename)
+		if is_chunk_dir(filename):
+			rs5.add_chunk_dir(filename)
+		else:
+			rs5.add(filename)
 	rs5.save()
 
 def repack_rs5(old_archive, new_archive):

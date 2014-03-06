@@ -207,6 +207,27 @@ class Rs5ArchiveEncoder(collections.OrderedDict):
 		print "Adding %s..." % entry.filename
 		self[entry.filename] = entry
 
+	def add_chunk_dir(self, path):
+		print "Adding chunks from %s..." % path
+		files = sorted(os.listdir(path))
+		files.remove('00-HEADER')
+		header = open(os.path.join(path, '00-HEADER'), 'rb')
+		header = rs5file.Rs5FileDecoder(header.read())
+		chunks = collections.OrderedDict()
+		for filename in files:
+			chunk_path = os.path.join(path, filename)
+			if not os.path.isfile(chunk_path) or '-' not in filename:
+				print 'Skipping %s: not a valid chunk' % chunk_path
+				continue
+			chunk_name = filename.split('-', 1)[1]
+			print '  %s' % filename
+			chunk = open(chunk_path, 'rb')
+			chunk = rs5file.Rs5ChunkEncoder(chunk_name, chunk.read())
+			chunks[chunk.name] = chunk
+		chunks = rs5file.Rs5ChunkedFileEncoder(header.magic, header.filename, header.u2, chunks)
+		entry = Rs5CompressedFileEncoder(self.fp, buf=chunks.encode())
+		self[entry.filename] = entry
+
 	def _write_directory(self):
 		print "Writing central directory..."
 		self.d_off = self.fp.tell()
