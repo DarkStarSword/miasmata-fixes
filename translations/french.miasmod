@@ -574,7 +574,7 @@
                 "text"
             ], 
             "[\"s\",\"Texture Detail\"]", 
-            "[\"s\",\"Détail des Textures\"]"
+            "[\"s\",\"Qualité des Textures\"]"
         ], 
         [
             [
@@ -644,7 +644,7 @@
                 "text"
             ], 
             "[\"s\",\"Model Detail\"]", 
-            "[\"s\",\"Détail des Modèles\"]"
+            "[\"s\",\"Qualité des Modèles\"]"
         ], 
         [
             [
