@@ -1,0 +1,5 @@
+Agent X - Antibiotique
+
+L'Agent X est un des composants nécessaire à la synthèse du Vaccin.
+
+Pour y parvenir, il est nécessaire de posséder aussi l'Agent Y et Z: L'Anti-Toxine et l'Adjuvant.

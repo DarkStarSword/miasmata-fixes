@@ -1,0 +1,5 @@
+Agent Z - Adjuvant
+
+L'Agent Z est un des composants nécessaire à la synthèse du Vaccin.
+
+Pour y parvenir, il est nécessaire de posséder aussi l'Agent X et Y: L'Antibiotique et l'Anti-Toxine.

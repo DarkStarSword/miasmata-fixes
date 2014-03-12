@@ -1,0 +1,5 @@
+Agent Y - Anti-Toxine
+
+L'Agent Y est un des composants nécessaire à la synthèse du Vaccin.
+
+Pour y parvenir, il est nécessaire de posséder aussi l'Agent X et Z: L'Antibiotique et l'Adjuvant.

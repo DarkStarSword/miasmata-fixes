@@ -1,0 +1,7 @@
+Stimulant Intellectuel
+
+Ce Stimulant Intellectuel vous apporte une amélioration temporaire à l'acuité de vos sens, vous offrant les avantages suivant dans votre interaction avec la créature:
+
+1. Restez appuyé sur Furtif et ne bougez pas. Votre tête va se tourner automatiquement pour regarder dans la direction de la créature.
+
+2. Lorsque vous restez appuyé sur Furtif, une image va apparaître dans votre champs de vision. L'opacité de celle-ci est proportionnelle à la proximité de la créature par-rapport à vous. Si l'image passe du blanc au rouge, vous n'êtes pas suffisamment bien caché, et la créature sera capable de vous voir.
