@@ -6,7 +6,7 @@ Cher Harlo,
 
 Mes tests ont été un succès. Nous avons le remède !
 Commencez immédiatement la synthèse de la Tricordrazine en combinant les agents suivant:
-<span color="#10147b">
+<span color="#102080">
 · Agent X: Antibiotique
 · Agent Y: Anti-toxine
 · Agent Z: Adjuvant

@@ -17,6 +17,7 @@ def add_text(image, txt, font=default_font, font_size=default_font_size, line_sp
     layer = add_text_layer(image, txt, font, font_size)
     pdb.gimp_text_layer_set_line_spacing(layer, line_spacing)
     pdb.gimp_text_layer_set_markup(layer, txt)
+    pdb.gimp_layer_set_mode(layer, MULTIPLY_MODE)
     bold_text(layer, txt)
     return layer
 
