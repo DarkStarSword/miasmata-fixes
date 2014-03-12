@@ -7,9 +7,16 @@
 # 	gimp --no-interface --batch '(python-fu-miasmata-merge-journal-mask RUN-NONINTERACTIVE "'${file}.png'" "research_left_mask.png" "'${file}_blank.xcf'")' --batch '(gimp-quit 1)'
 # done
 
-# Drugs
-for file in Plant_A Plant_B Plant_C Plant_D Plant_E Plant_F Plant_H Plant_I Plant_J Plant_K Plant_X Plant_Y Plant_Z
+# # Drugs
+# for file in Plant_A Plant_B Plant_C Plant_D Plant_E Plant_F Plant_H Plant_I Plant_J Plant_K Plant_X Plant_Y Plant_Z
+# do
+# 	echo "$file"
+# 	gimp --no-interface --batch '(python-fu-miasmata-merge-journal-mask RUN-NONINTERACTIVE "'${file}.png'" "research_left_drug_mask.png" "'${file}_blank.xcf'")' --batch '(gimp-quit 1)'
+# done
+
+# Plant research
+for file in RESEARCH_00 RESEARCH_0 RESEARCH_10 RESEARCH_11 RESEARCH_12 RESEARCH_13 RESEARCH_14 RESEARCH_15 RESEARCH_16 RESEARCH_17 RESEARCH_18 RESEARCH_19 RESEARCH_1 RESEARCH_20 RESEARCH_21 RESEARCH_22 RESEARCH_23 RESEARCH_24 RESEARCH_25 RESEARCH_26 RESEARCH_27 RESEARCH_28 RESEARCH_29 RESEARCH_2 RESEARCH_30 RESEARCH_31 RESEARCH_32 RESEARCH_33 RESEARCH_34 RESEARCH_3 RESEARCH_4 RESEARCH_5 RESEARCH_6 RESEARCH_7 RESEARCH_8 RESEARCH_9 Research_K
 do
 	echo "$file"
-	gimp --no-interface --batch '(python-fu-miasmata-merge-journal-mask RUN-NONINTERACTIVE "'${file}.png'" "research_left_drug_mask.png" "'${file}_blank.xcf'")' --batch '(gimp-quit 1)'
+	gimp --no-interface --batch '(python-fu-miasmata-merge-journal-mask RUN-NONINTERACTIVE "'${file}.png'" "research_right.png" "'${file}_blank.xcf'")' --batch '(gimp-quit 1)'
 done
