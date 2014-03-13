@@ -2,6 +2,15 @@
 
 from gimpfu import *
 
+LEFT = TOP = 0
+CENTER = 1
+RIGHT = BOTTOM = 2
+
+class Font(object):
+    def __init__(self, font, size, bold = False, line_spacing = 0.0):
+        self.font, self.size, self.bold, self.line_spacing = \
+                font, size, bold, line_spacing
+
 def add_text_layer(image, txt, font, font_size, line_spacing = None, colour = (0, 0, 0), name = 'Text', pos = (0, 0)):
     gimp.set_foreground(*colour)
     pdb.gimp_image_set_active_layer(image, image.layers[0])
@@ -12,6 +21,39 @@ def add_text_layer(image, txt, font, font_size, line_spacing = None, colour = (0
     pdb.gimp_text_layer_set_hint_style(text, TEXT_HINT_STYLE_NONE)
 
     return text
+
+def read_text(filename):
+    return open(filename, 'rb').read().decode('utf-8').strip()
+
+def add_text(image, txt, font, colour = (0, 0, 0)):
+    layer = add_text_layer(image, txt, font.font, font.size, font.line_spacing, colour)
+    pdb.gimp_text_layer_set_markup(layer, txt)
+    if font.bold:
+        bold_text(layer, txt)
+    return layer
+
+def add_text_layer_from_file(image, filename, font, colour=(0, 0, 0)):
+    txt = read_text(filename)
+    return add_text(image, txt, font, colour)
+
+def place_text(layer, x, y, x2=None, y2=None, w=None, h=None, xalign=LEFT, yalign=TOP):
+    if x2 is not None:
+        w = x2 - x
+    if y2 is not None:
+        h = y2 - y
+    if w is not None:
+        if h is None:
+            h = global_h - y
+        pdb.gimp_text_layer_resize(layer, w, h)
+    if xalign == CENTER:
+        x = x - layer.width / 2
+    elif xalign == RIGHT:
+        x = x - layer.width
+    if yalign == CENTER:
+        y = y - layer.height / 2
+    elif yalign == BOTTOM:
+        y = y - layer.height
+    layer.translate(x, y)
 
 def bold_text(layer, txt=None):
     # XXX: Requires a patched GIMP to set text markup

@@ -32,7 +32,7 @@ def heal_text(source_file, output_basename):
     pdb.gimp_context_set_sample_criterion(SELECT_CRITERION_COMPOSITE)
     pdb.gimp_context_set_sample_threshold(15.0 / 255.0)
     pdb.gimp_context_set_sample_transparent(TRUE)
-    pdb.gimp_image_select_color(image, CHANNEL_OP_REPLACE, original_layer, (0, 0, 0))
+    pdb.gimp_image_select_color(image, CHANNEL_OP_REPLACE, original_layer, (255, 255, 255))
 
     pdb.gimp_selection_grow(image, 1)
 

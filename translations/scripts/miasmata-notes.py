@@ -3,15 +3,6 @@
 from gimpfu import *
 from miasmata_gimp import *
 
-LEFT = TOP = 0
-CENTER = 1
-RIGHT = BOTTOM = 2
-
-class Font(object):
-    def __init__(self, font, size, bold = False, line_spacing = 0.0):
-        self.font, self.size, self.bold, self.line_spacing = \
-                font, size, bold, line_spacing
-
 neu_phollick_alpha = Font('Neu Phollick Alpha', 40.0, True, 5.0)
 fnt_23rd_street = Font('23rd Street', 40.0, False, 15.0)
 fnt_23rd_street_b = Font('23rd Street', 40.0, True, 6.0)
@@ -24,50 +15,16 @@ arch_daughter = Font("Architects Daughter", 38.0, False, -13)
 global_w = 2048
 global_h = 1024
 
-def read_text(filename):
-    return open(filename, 'rb').read().decode('utf-8').strip()
-
-def add_text(image, txt, font=neu_phollick_alpha):
-    layer = add_text_layer(image, txt, font.font, font.size)
-    pdb.gimp_text_layer_set_line_spacing(layer, font.line_spacing)
-    pdb.gimp_text_layer_set_markup(layer, txt)
-    pdb.gimp_layer_set_mode(layer, MULTIPLY_MODE)
-    if font.bold:
-        bold_text(layer, txt)
-    return layer
-
-def add_text_layer_from_file(image, filename, font=neu_phollick_alpha):
-    txt = read_text(filename)
-    return add_text(image, txt, font)
-
-def place_text(layer, x, y, x2=None, y2=None, w=None, h=None, xalign=LEFT, yalign=TOP):
-    if x2 is not None:
-        w = x2 - x
-    if y2 is not None:
-        h = y2 - y
-    if w is not None:
-        if h is None:
-            h = global_h - y
-        pdb.gimp_text_layer_resize(layer, w, h)
-    if xalign == CENTER:
-        x = x - layer.width / 2
-    elif xalign == RIGHT:
-        x = x - layer.width
-    if yalign == CENTER:
-        y = y - layer.height / 2
-    elif yalign == BOTTOM:
-        y = y - layer.height
-    layer.translate(x, y)
-
 def compose_note_0(image, note_name):
-    body = add_text_layer_from_file(image, '%s.txt' % note_name)
+    body = add_text_layer_from_file(image, '%s.txt' % note_name, neu_phollick_alpha)
+    pdb.gimp_layer_set_mode(body, MULTIPLY_MODE)
     place_text(body, 235, 55, 980)
 
     def drug_text(filename):
         txt = read_text(filename).split('\n')
         txt[1] = '<span font_size="%i">%s</span>' % (1024 * 30, txt[1])
         txt = '\n'.join(txt)
-        layer = add_text(image, txt)
+        layer = add_text(image, txt, neu_phollick_alpha)
         pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_CENTER)
         return layer
 
