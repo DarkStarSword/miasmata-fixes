@@ -43,7 +43,7 @@ def place_text(layer, x, y, x2=None, y2=None, w=None, h=None, xalign=LEFT, yalig
         h = y2 - y
     if w is not None:
         if h is None:
-            h = global_h - y
+            h = layer.image.height - y
         pdb.gimp_text_layer_resize(layer, w, h)
     if xalign == CENTER:
         x = x - layer.width / 2

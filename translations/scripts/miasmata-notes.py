@@ -12,9 +12,6 @@ flute = Font('Flute', 40.0, True, -5.0)
 wiki = Font('Wiki', 40.0, True, 5.0)
 arch_daughter = Font("Architects Daughter", 38.0, False, -13)
 
-global_w = 2048
-global_h = 1024
-
 def compose_note_0(image, note_name):
     body = add_text_layer_from_file(image, '%s.txt' % note_name, neu_phollick_alpha)
     pdb.gimp_layer_set_mode(body, MULTIPLY_MODE)
