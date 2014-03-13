@@ -15,6 +15,8 @@ def add_text_layer(image, txt, font, font_size, line_spacing = None, colour = (0
     gimp.set_foreground(*colour)
     pdb.gimp_image_set_active_layer(image, image.layers[0])
     text = pdb.gimp_text_fontname(image, None, pos[0], pos[1], txt, 0, True, font_size, PIXELS, font)
+    if text is None:
+        return
     text.name = name
     if line_spacing is not None:
         pdb.gimp_text_layer_set_line_spacing(text, line_spacing)
@@ -27,6 +29,8 @@ def read_text(filename):
 
 def add_text(image, txt, font, colour = (0, 0, 0)):
     layer = add_text_layer(image, txt, font.font, font.size, font.line_spacing, colour)
+    if layer is None:
+        return None
     pdb.gimp_text_layer_set_markup(layer, txt)
     if font.bold:
         bold_text(layer, txt)
@@ -37,6 +41,8 @@ def add_text_layer_from_file(image, filename, font, colour=(0, 0, 0)):
     return add_text(image, txt, font, colour)
 
 def place_text(layer, x, y, x2=None, y2=None, w=None, h=None, xalign=LEFT, yalign=TOP):
+    if layer is None:
+        return
     if x2 is not None:
         w = x2 - x
     if y2 is not None:

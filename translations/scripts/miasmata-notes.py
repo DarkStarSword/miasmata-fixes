@@ -59,9 +59,6 @@ def compose_note_3(image, note_name):
     title = add_text_layer_from_file(image, '%s_title.txt' % note_name, fnt_23rd_street_c)
     place_text(title, 1465, 65, xalign=CENTER)
 
-    vega = add_text_layer_from_file(image, 'Vega.txt', fnt_23rd_street_c)
-    place_text(vega, 1278, 260, xalign=CENTER, yalign=CENTER)
-
     algae = add_text_layer_from_file(image, '%s_algae.txt' % note_name, fnt_23rd_street_c)
     place_text(algae, 1556, 898, xalign=RIGHT, yalign=CENTER)
 
