@@ -19,6 +19,7 @@ fnt_23rd_street_c = Font('23rd Street', 36.0, True, 6.0)
 fg_nora = Font('FG Norah', 40.0, False, -8.0)
 flute = Font('Flute', 40.0, True, -5.0)
 wiki = Font('Wiki', 40.0, True, 5.0)
+arch_daughter = Font("Architects Daughter", 38.0, False, -13)
 
 global_w = 2048
 global_h = 1024
@@ -133,6 +134,10 @@ def compose_note_7(image, note_name):
 def compose_note_8(image, note_name):
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, flute)
     place_text(layer, 1457, 250, xalign=CENTER, yalign=CENTER)
+
+def compose_note_9(image, note_name):
+    layer = add_text_layer_from_file(image, '%s.txt' % note_name, arch_daughter)
+    place_text(layer, 1145, 145, 1830)
 
 def compose_note_image(note_name, source_blank_image, output_basename):
     image = pdb.gimp_file_load(source_blank_image, source_blank_image)
