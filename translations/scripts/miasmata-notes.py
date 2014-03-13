@@ -18,6 +18,7 @@ fnt_23rd_street_b = Font('23rd Street', 40.0, True, 6.0)
 fnt_23rd_street_c = Font('23rd Street', 36.0, True, 6.0)
 fg_nora = Font('FG Norah', 40.0, False, -8.0)
 flute = Font('Flute', 40.0, True, -5.0)
+wiki = Font('Wiki', 40.0, True, 5.0)
 
 global_w = 2048
 global_h = 1024
@@ -96,12 +97,6 @@ def compose_note_2(image, note_name):
     statue = add_text_layer_from_file(image, '%s_statue.txt' % note_name, fg_nora)
     place_text(statue, 1645, 822, yalign=CENTER)
 
-    vega = add_text_layer_from_file(image, 'Vega.txt', fg_nora)
-    place_text(vega, 848, 675, xalign=CENTER, yalign=CENTER)
-
-    north = add_text_layer_from_file(image, 'North.txt', fg_nora)
-    place_text(north, 440, 815, xalign=CENTER, yalign=CENTER)
-
 def compose_note_3(image, note_name):
     body = add_text_layer_from_file(image, '%s.txt' % note_name, fnt_23rd_street_b)
     place_text(body, 205, 55, 970)
@@ -121,6 +116,13 @@ def compose_note_3(image, note_name):
 def compose_note_4(image, note_name):
     body = add_text_layer_from_file(image, '%s.txt' % note_name, flute)
     place_text(body, 1087, 75, 1880)
+
+def compose_note_5(image, note_name):
+    layer = add_text_layer_from_file(image, '%s.txt' % note_name, wiki)
+    place_text(layer, 200, 77, 930)
+
+    layer = add_text_layer_from_file(image, '%s_title.txt' % note_name, wiki)
+    place_text(layer, 1325, 454, xalign=CENTER, yalign=CENTER)
 
 def compose_note_image(note_name, source_blank_image, output_basename):
     image = pdb.gimp_file_load(source_blank_image, source_blank_image)
