@@ -13,10 +13,19 @@ def add_text_layer(image, txt, font, font_size, line_spacing = None, colour = (0
 
     return text
 
-def bold_text(layer, txt):
+def bold_text(layer, txt=None):
     # XXX: Requires a patched GIMP to set text markup
     # See https://bugzilla.gnome.org/show_bug.cgi?id=724101
+    if txt is None:
+        txt = pdb.gimp_text_layer_get_markup(layer)
     markup = '<b>%s</b>' % txt
+    pdb.gimp_text_layer_set_markup(layer, markup)
+
+def underline_text(layer):
+    # XXX: Requires a patched GIMP to set text markup
+    # See https://bugzilla.gnome.org/show_bug.cgi?id=724101
+    markup = pdb.gimp_text_layer_get_markup(layer)
+    markup = '<u>%s</u>' % markup
     pdb.gimp_text_layer_set_markup(layer, markup)
 
 def bold_word_wrap(layer, text, width, start_tag='<b>', end_tag='</b>'):

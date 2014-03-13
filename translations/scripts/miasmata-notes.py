@@ -10,6 +10,7 @@ class Font(object):
 
 neu_phollick_alpha = Font('Neu Phollick Alpha', 40.0, True, 5.0)
 fnt_23rd_street = Font('23rd Street', 40.0, False, 15.0)
+fg_nora = Font('FG Norah', 40.0, False, -8.0)
 
 global_w = 2048
 global_h = 1024
@@ -72,6 +73,23 @@ def compose_note_0(image, note_name):
 def compose_note_1(image, note_name):
     body = add_text_layer_from_file(image, '%s.txt' % note_name, fnt_23rd_street)
     place_text(body, 1100, 100, 1785)
+
+def compose_note_2(image, note_name):
+    body = add_text_layer_from_file(image, '%s.txt' % note_name, fg_nora)
+    place_text(body, 210, 45, 970)
+
+    title = add_text_layer_from_file(image, '%s_title.txt' % note_name, fg_nora)
+    underline_text(title)
+    place_text(title, 1450, 221, xcenter=True)
+
+    statue = add_text_layer_from_file(image, '%s_statue.txt' % note_name, fg_nora)
+    place_text(statue, 1645, 822, ycenter=True)
+
+    vega = add_text_layer_from_file(image, 'Vega.txt', fg_nora)
+    place_text(vega, 848, 675, xcenter=True, ycenter=True)
+
+    north = add_text_layer_from_file(image, 'North.txt', fg_nora)
+    place_text(north, 440, 815, xcenter=True, ycenter=True)
 
 def compose_note_image(note_name, source_blank_image, output_basename):
     image = pdb.gimp_file_load(source_blank_image, source_blank_image)
