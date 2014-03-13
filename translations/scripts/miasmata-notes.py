@@ -17,6 +17,7 @@ fnt_23rd_street = Font('23rd Street', 40.0, False, 15.0)
 fnt_23rd_street_b = Font('23rd Street', 40.0, True, 6.0)
 fnt_23rd_street_c = Font('23rd Street', 36.0, True, 6.0)
 fg_nora = Font('FG Norah', 40.0, False, -8.0)
+flute = Font('Flute', 40.0, True, -5.0)
 
 global_w = 2048
 global_h = 1024
@@ -116,6 +117,10 @@ def compose_note_3(image, note_name):
 
     ruin = add_text_layer_from_file(image, '%s_ruin_site_b.txt' % note_name, fnt_23rd_street_c)
     place_text(ruin, 1630, 940, yalign=CENTER)
+
+def compose_note_4(image, note_name):
+    body = add_text_layer_from_file(image, '%s.txt' % note_name, flute)
+    place_text(body, 1087, 75, 1880)
 
 def compose_note_image(note_name, source_blank_image, output_basename):
     image = pdb.gimp_file_load(source_blank_image, source_blank_image)
