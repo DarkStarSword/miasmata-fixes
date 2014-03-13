@@ -130,6 +130,10 @@ def compose_note_7(image, note_name):
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, neu_phollick_alpha)
     place_text(layer, 1130, 90, 1830)
 
+def compose_note_8(image, note_name):
+    layer = add_text_layer_from_file(image, '%s.txt' % note_name, flute)
+    place_text(layer, 1457, 250, xalign=CENTER, yalign=CENTER)
+
 def compose_note_image(note_name, source_blank_image, output_basename):
     image = pdb.gimp_file_load(source_blank_image, source_blank_image)
 
