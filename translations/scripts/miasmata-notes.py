@@ -3,6 +3,10 @@
 from gimpfu import *
 from miasmata_gimp import *
 
+LEFT = TOP = 0
+CENTER = 1
+RIGHT = BOTTOM = 2
+
 class Font(object):
     def __init__(self, font, size, bold = False, line_spacing = 0.0):
         self.font, self.size, self.bold, self.line_spacing = \
@@ -10,6 +14,8 @@ class Font(object):
 
 neu_phollick_alpha = Font('Neu Phollick Alpha', 40.0, True, 5.0)
 fnt_23rd_street = Font('23rd Street', 40.0, False, 15.0)
+fnt_23rd_street_b = Font('23rd Street', 40.0, True, 6.0)
+fnt_23rd_street_c = Font('23rd Street', 36.0, True, 6.0)
 fg_nora = Font('FG Norah', 40.0, False, -8.0)
 
 global_w = 2048
@@ -31,7 +37,7 @@ def add_text_layer_from_file(image, filename, font=neu_phollick_alpha):
     txt = read_text(filename)
     return add_text(image, txt, font)
 
-def place_text(layer, x, y, x2=None, y2=None, w=None, h=None, xcenter=False, ycenter=False):
+def place_text(layer, x, y, x2=None, y2=None, w=None, h=None, xalign=LEFT, yalign=TOP):
     if x2 is not None:
         w = x2 - x
     if y2 is not None:
@@ -40,10 +46,14 @@ def place_text(layer, x, y, x2=None, y2=None, w=None, h=None, xcenter=False, yce
         if h is None:
             h = global_h - y
         pdb.gimp_text_layer_resize(layer, w, h)
-    if xcenter:
+    if xalign == CENTER:
         x = x - layer.width / 2
-    if ycenter:
+    elif xalign == RIGHT:
+        x = x - layer.width
+    if yalign == CENTER:
         y = y - layer.height / 2
+    elif yalign == BOTTOM:
+        y = y - layer.height
     layer.translate(x, y)
 
 def compose_note_0(image, note_name):
@@ -59,16 +69,16 @@ def compose_note_0(image, note_name):
         return layer
 
     agentx = drug_text('%s_X.txt' % note_name)
-    place_text(agentx, 1478, 172, xcenter=True, ycenter=True)
+    place_text(agentx, 1478, 172, xalign=CENTER, yalign=CENTER)
 
     agenty = drug_text('%s_Y.txt' % note_name)
-    place_text(agenty, 1278, 395, xcenter=True, ycenter=True)
+    place_text(agenty, 1278, 395, xalign=CENTER, yalign=CENTER)
 
     agentz = drug_text('%s_Z.txt' % note_name)
-    place_text(agentz, 1718, 395, xcenter=True, ycenter=True)
+    place_text(agentz, 1718, 395, xalign=CENTER, yalign=CENTER)
 
     cure = drug_text('%s_cure.txt' % note_name)
-    place_text(cure, 1486, 758, xcenter=True, ycenter=True)
+    place_text(cure, 1486, 758, xalign=CENTER, yalign=CENTER)
 
 def compose_note_1(image, note_name):
     body = add_text_layer_from_file(image, '%s.txt' % note_name, fnt_23rd_street)
@@ -80,16 +90,32 @@ def compose_note_2(image, note_name):
 
     title = add_text_layer_from_file(image, '%s_title.txt' % note_name, fg_nora)
     underline_text(title)
-    place_text(title, 1450, 221, xcenter=True)
+    place_text(title, 1450, 221, xalign=CENTER)
 
     statue = add_text_layer_from_file(image, '%s_statue.txt' % note_name, fg_nora)
-    place_text(statue, 1645, 822, ycenter=True)
+    place_text(statue, 1645, 822, yalign=CENTER)
 
     vega = add_text_layer_from_file(image, 'Vega.txt', fg_nora)
-    place_text(vega, 848, 675, xcenter=True, ycenter=True)
+    place_text(vega, 848, 675, xalign=CENTER, yalign=CENTER)
 
     north = add_text_layer_from_file(image, 'North.txt', fg_nora)
-    place_text(north, 440, 815, xcenter=True, ycenter=True)
+    place_text(north, 440, 815, xalign=CENTER, yalign=CENTER)
+
+def compose_note_3(image, note_name):
+    body = add_text_layer_from_file(image, '%s.txt' % note_name, fnt_23rd_street_b)
+    place_text(body, 205, 55, 970)
+
+    title = add_text_layer_from_file(image, '%s_title.txt' % note_name, fnt_23rd_street_c)
+    place_text(title, 1465, 65, xalign=CENTER)
+
+    vega = add_text_layer_from_file(image, 'Vega.txt', fnt_23rd_street_c)
+    place_text(vega, 1278, 260, xalign=CENTER, yalign=CENTER)
+
+    algae = add_text_layer_from_file(image, '%s_algae.txt' % note_name, fnt_23rd_street_c)
+    place_text(algae, 1556, 898, xalign=RIGHT, yalign=CENTER)
+
+    ruin = add_text_layer_from_file(image, '%s_ruin_site_b.txt' % note_name, fnt_23rd_street_c)
+    place_text(ruin, 1630, 940, yalign=CENTER)
 
 def compose_note_image(note_name, source_blank_image, output_basename):
     image = pdb.gimp_file_load(source_blank_image, source_blank_image)
