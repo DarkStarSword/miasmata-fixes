@@ -3,9 +3,13 @@
 from gimpfu import *
 from miasmata_gimp import *
 
-default_font = 'Neu Phollick Alpha'
-default_font_size = 40.0
-default_line_spacing = 5.0
+class Font(object):
+    def __init__(self, font, size, bold = False, line_spacing = 0.0):
+        self.font, self.size, self.bold, self.line_spacing = \
+                font, size, bold, line_spacing
+
+neu_phollick_alpha = Font('Neu Phollick Alpha', 40.0, True, 5.0)
+fnt_23rd_street = Font('23rd Street', 40.0, False, 15.0)
 
 global_w = 2048
 global_h = 1024
@@ -13,17 +17,18 @@ global_h = 1024
 def read_text(filename):
     return open(filename, 'rb').read().decode('utf-8').strip()
 
-def add_text(image, txt, font=default_font, font_size=default_font_size, line_spacing=default_line_spacing):
-    layer = add_text_layer(image, txt, font, font_size)
-    pdb.gimp_text_layer_set_line_spacing(layer, line_spacing)
+def add_text(image, txt, font=neu_phollick_alpha):
+    layer = add_text_layer(image, txt, font.font, font.size)
+    pdb.gimp_text_layer_set_line_spacing(layer, font.line_spacing)
     pdb.gimp_text_layer_set_markup(layer, txt)
     pdb.gimp_layer_set_mode(layer, MULTIPLY_MODE)
-    bold_text(layer, txt)
+    if font.bold:
+        bold_text(layer, txt)
     return layer
 
-def add_text_layer_from_file(image, filename, font=default_font, font_size=default_font_size, line_spacing=default_line_spacing):
+def add_text_layer_from_file(image, filename, font=neu_phollick_alpha):
     txt = read_text(filename)
-    return add_text(image, txt, font, font_size, line_spacing)
+    return add_text(image, txt, font)
 
 def place_text(layer, x, y, x2=None, y2=None, w=None, h=None, xcenter=False, ycenter=False):
     if x2 is not None:
@@ -63,6 +68,10 @@ def compose_note_0(image, note_name):
 
     cure = drug_text('%s_cure.txt' % note_name)
     place_text(cure, 1486, 758, xcenter=True, ycenter=True)
+
+def compose_note_1(image, note_name):
+    body = add_text_layer_from_file(image, '%s.txt' % note_name, fnt_23rd_street)
+    place_text(body, 1100, 100, 1785)
 
 def compose_note_image(note_name, source_blank_image, output_basename):
     image = pdb.gimp_file_load(source_blank_image, source_blank_image)
