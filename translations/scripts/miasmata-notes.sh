@@ -8,3 +8,5 @@ do
 	blank=../../blanks/notes/${note}_blank.xcf
 	${GIMP} --no-interface --batch '(python-fu-miasmata-note RUN-NONINTERACTIVE "'${note}'" "'${blank}'" "'${note}'")' --batch '(gimp-quit 1)'
 done
+
+${GIMP} --no-interface --batch '(python-fu-miasmata-notes-in-world RUN-NONINTERACTIVE)' --batch '(gimp-quit 1)'
