@@ -8,8 +8,10 @@ link_dds_files()
 {
 	src="$1"
 	dst="$2"
+	pattern="$3"
+	[ -z "$pattern" ] && pattern="*.dds"
 
-	for file in $(find "$src" -name "*.dds"); do
+	for file in $(find "$src" -name "$pattern"); do
 		name=$(basename "$file" .dds)
 		mkdir -vp "$staging/$dst/$name"
 		ln -sv "$headers/$dst/$name/"* "$staging/$dst/$name/"
@@ -25,10 +27,14 @@ for dir in index drugs plants research; do
 done
 
 mkdir -p "$staging/TEX/MENU"
-for dir in intro end; do
+for dir in intro end buttons; do
 	link_dds_files "$translation/$dir" "TEX/MENU"
 done
 
 for dir in blackboards; do
 	link_dds_files "$translation/$dir" "TEX"
 done
+
+link_dds_files "$translation/notes" "TEX/J2" "N*_*.dds"
+link_dds_files "$translation/notes" "TEX" "InWorldNotesz_Set*.dds"
+link_dds_files "$translation/notes" "TEX" "Notes.dds"
