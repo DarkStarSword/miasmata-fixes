@@ -12,83 +12,6 @@ flute = Font('Flute', 40.0, True, -5.0)
 wiki = Font('Wiki', 40.0, True, 5.0)
 arch_daughter = Font("Architects Daughter", 38.0, False, -13)
 
-in_world_notes = (
-    ('Notes', 2048, (
-        ('NOTE_9', 'NOTE_16'),
-        ('NOTE_7', 'NOTE_15'),
-        ('NOTE_5', 'NOTE_14'),
-        ('NOTE_4', 'NOTE_13'),
-        ('NOTE_3', 'NOTE_12'),
-        ('NOTE_2', 'NOTE_11'), # Note 2 has no map, left page on right
-        ('NOTE_1', 'NOTE_10'),
-        ('NOTE_0', 'NOTE_9', 'NOTE_17') # Note 0 only has left page, on right
-    )), ('InWorldNotesz_Set2', 2048, (
-        ('NOTE_AA', 'NOTE_II', 'NOTE_NN', 'NOTE_YY'),
-        ('NOTE_BB', 'NOTE_JJ', 'NOTE_RR', 'Note_A1'),
-        ('NOTE_CC', 'NOTE_KK', 'NOTE_SS', 'NOTE_ZZ'),
-        ('NOTE_DD', 'NOTE_LL', 'NOTE_UU', 'NOTE_A2'),
-        ('NOTE_EE', 'NOTE_MM', 'NOTE_TT', 'NOTE_A3'),
-        ('NOTE_FF', 'NOTE_OO', 'NOTE_VV', 'NOTE_A4'),
-        ('NOTE_GG', 'NOTE_PP', 'NOTE_WW', 'NOTE_A5'),
-        ('NOTE_HH', 'NOTE_QQ', 'NOTE_XX', 'NOTE_A6'),
-              # ^^ clippings - will need special handling
-              # II, JJ, MM don't have text, can just copy from originals
-              # KK contains some text cut off from the large image
-              # PP, QQ appears to contains earlier edit vs large image!
-              # LL, OO are normal
-                    # ^^ NN coords differ
-    )), ('InWorldNotesz_Set3', 1024, (
-        ('NOTE_A7', ),
-        ('NOTE_A8', ),
-        ('NOTE_A9', ),
-    ))
-)
-
-translate_left_page_to_right = (
-        '0', '2'
-)
-
-in_world_note_w = 512
-in_world_note_h = 256
-
-def clip_note_borders(layer):
-    border_width = 148
-    image = layer.image
-    pdb.gimp_image_select_rectangle(image, CHANNEL_OP_REPLACE,
-            0, 0,
-            border_width, image.height)
-    pdb.gimp_edit_clear(layer)
-    pdb.gimp_image_select_rectangle(image, CHANNEL_OP_REPLACE,
-            image.width - border_width, 0,
-            border_width, image.height)
-    pdb.gimp_edit_clear(layer)
-    pdb.gimp_selection_clear(image)
-
-def update_in_world_note(image, note, (x, y)):
-    x *= in_world_note_w
-    y *= in_world_note_h
-    print 'upate_in_world_note %s @ %ix%i' % (note, x, y)
-    note_filename = '%s.png' % note
-    note_image = pdb.gimp_file_load(note_filename, note_filename)
-    layer = pdb.gimp_layer_new_from_visible(note_image, image, note)
-    image.add_layer(layer, -1)
-    clip_note_borders(layer)
-    layer.scale(in_world_note_w, in_world_note_h)
-    layer.set_offsets(x, y)
-
-def generate_in_world_notes():
-    for (name, dimensions, notes) in in_world_notes:
-        image = gimp.Image(dimensions, dimensions, RGB)
-        for (y, row) in enumerate(notes):
-            for (x, note) in enumerate(row):
-                update_in_world_note(image, note, (x, y))
-
-        save_xcf(image, '%s.xcf' % name)
-        image2 = pdb.gimp_image_duplicate(image)
-        image2.merge_visible_layers(CLIP_TO_IMAGE)
-        pdb.gimp_layer_resize_to_image_size(image2.active_layer)
-        save_png(image2, '%s.png' % name)
-
 def compose_note_0(image, note_name):
     body = add_text_layer_from_file(image, '%s.txt' % note_name, neu_phollick_alpha)
     pdb.gimp_layer_set_mode(body, MULTIPLY_MODE)
@@ -195,21 +118,6 @@ register(
     ],
     [],
     compose_note_image,
-)
-
-register(
-    "miasmata_notes_in_world",
-    "Generate textures used for the in-world notes",
-    "Generate textures used for the in-world notes",
-    "Ian Munsie",
-    "Ian Munsie",
-    "2014",
-    "<Toolbox>/_Miasmata/In _world notes",
-    None,
-    [
-    ],
-    [],
-    generate_in_world_notes,
 )
 
 main()
