@@ -76,15 +76,15 @@ def underline_text(layer):
     markup = '<u>%s</u>' % markup
     pdb.gimp_text_layer_set_markup(layer, markup)
 
-def bold_word_wrap(layer, text, width, start_tag='<b>', end_tag='</b>'):
+def word_wrap(layer, text, width, max_height = None, start_tag='', end_tag=''):
     # This is a workaround for the lack of a fixed-width + dynamic-height
     # setting for text boxes in the GIMP - otherwise there is no easy way to
     # wrap the text AND have it vertically centered.
     words = text.split(' ')
     if not len(words):
-        return
+        return ''
     txt = words[0]
-    for word in words[1:]:
+    for (i, word) in enumerate(words[1:], 1):
         txt1 = '%s %s' % (txt, word)
         markup = '%s%s%s' % (start_tag, txt1, end_tag)
         pdb.gimp_text_layer_set_markup(layer, markup)
@@ -92,8 +92,16 @@ def bold_word_wrap(layer, text, width, start_tag='<b>', end_tag='</b>'):
             txt1 = '%s\n%s' % (txt, word)
             markup = '%s%s%s' % (start_tag, txt1, end_tag)
             pdb.gimp_text_layer_set_markup(layer, markup)
+            if max_height is not None and layer.height > max_height:
+                markup = '%s%s%s' % (start_tag, txt, end_tag)
+                pdb.gimp_text_layer_set_markup(layer, markup)
+                return ' '.join([word] + words[1+i:])
             width = max(width, layer.width)
         txt = txt1
+    return ''
+
+def bold_word_wrap(layer, text, width, max_height = None):
+    return word_wrap(layer, text, width, max_height, start_tag='<b>', end_tag='</b>')
 
 def blur_layer(image, layer, radius = 1.0):
     pdb.plug_in_gauss_rle2(image, layer, radius, radius)
