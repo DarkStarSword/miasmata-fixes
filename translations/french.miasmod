@@ -698,7 +698,7 @@
                 "text"
             ], 
             "[\"s\",\"Look Right\"]", 
-            "[\"s\",\"Regarder à Droite\"]"
+            "[\"s\",\"Regard Droite\"]"
         ], 
         [
             [
@@ -712,7 +712,7 @@
                 "text"
             ], 
             "[\"s\",\"Look Left\"]", 
-            "[\"s\",\"Regarder à Gauche\"]"
+            "[\"s\",\"Regard Gauche\"]"
         ], 
         [
             [
@@ -782,7 +782,7 @@
                 "text"
             ], 
             "[\"s\",\"Glance Right\"]", 
-            "[\"s\",\"Regarder à Droite\"]"
+            "[\"s\",\"\"]"
         ], 
         [
             [
@@ -796,7 +796,7 @@
                 "text"
             ], 
             "[\"s\",\"Step Left\"]", 
-            "[\"s\",\"Déplacement vers la Gauche\"]"
+            "[\"s\",\"Pas à Gauche\"]"
         ], 
         [
             [
@@ -838,7 +838,7 @@
                 "text"
             ], 
             "[\"s\",\"Look Down\"]", 
-            "[\"s\",\"Regarder en Bas\"]"
+            "[\"s\",\"Regard Bas\"]"
         ], 
         [
             [
@@ -852,7 +852,7 @@
                 "text"
             ], 
             "[\"s\",\"Look Up\"]", 
-            "[\"s\",\"Regarder en Haut\"]"
+            "[\"s\",\"Regard Haut\"]"
         ], 
         [
             [
@@ -880,7 +880,7 @@
                 "text"
             ], 
             "[\"s\",\"Glance Left\"]", 
-            "[\"s\",\"Regarder à Gauche\"]"
+            "[\"s\",\"\"]"
         ], 
         [
             [
@@ -894,7 +894,7 @@
                 "text"
             ], 
             "[\"s\",\"Step Right\"]", 
-            "[\"s\",\"Déplacement vers la Droite\"]"
+            "[\"s\",\"Pas à Droite\"]"
         ], 
         [
             [
