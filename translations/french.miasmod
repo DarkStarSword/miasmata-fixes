@@ -421,6 +421,16 @@
         [
             [
                 "menus", 
+                "fonts", 
+                "default", 
+                "height"
+            ], 
+            "[\"i\",28]", 
+            "[\"i\",27]"
+        ], 
+        [
+            [
+                "menus", 
                 "menus", 
                 "PAUSE_MENU", 
                 "children", 
