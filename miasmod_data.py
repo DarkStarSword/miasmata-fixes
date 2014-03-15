@@ -78,7 +78,7 @@ class MiasmataDataModel(QtCore.QAbstractItemModel):
 					return None
 				if role == Qt.DisplayRole and hasattr(node, 'summary'):
 					return node.summary()
-				return str(node)
+				return unicode(node)
 			return node.name
 		if role == Qt.FontRole:
 			node = self.index_to_node(index)
@@ -269,11 +269,11 @@ class MiasmataDataListModel(QtCore.QAbstractListModel):
 			if role == Qt.DisplayRole:
 				return 'New Entry...'
 			if role == Qt.EditRole:
-				return str(self.new_entry())
+				return unicode(self.new_entry())
 			if role == Qt.FontRole:
 				return QtGui.QFont(None, italic=True)
 		if role in (Qt.DisplayRole, Qt.EditRole):
-			return str(self.node[index.row()])
+			return unicode(self.node[index.row()])
 
 	def flags(self, index):
 		if not index.isValid():
@@ -334,8 +334,8 @@ class MiasmataDataMixedListModel(MiasmataDataListModel):
 			return '""'
 		item = self.node[index.row()]
 		if isinstance(item, data.null_str):
-			return '"%s"' % str(item)
-		return str(item)
+			return '"%s"' % unicode(item)
+		return unicode(item)
 
 	def setData(self, index, value, role):
 		if role != Qt.EditRole:
@@ -492,7 +492,7 @@ class MiasmataDataView(QtGui.QWidget):
 			self.ui.new_value.setEnabled(False)
 
 		if isinstance(node, (data.null_str, data.data_int, data.data_float)):
-			self.ui.value_line.setText(str(node))
+			self.ui.value_line.setText(unicode(node))
 			if isinstance(node, data.data_int):
 				validator = QtGui.QIntValidator(self)
 			elif isinstance(node, data.data_float):
@@ -665,7 +665,7 @@ class MiasmataDataView(QtGui.QWidget):
 	@catch_error
 	def on_value_line_editingFinished(self):
 		text = self.ui.value_line.text()
-		if str(self.cur_node) != text:
+		if unicode(self.cur_node) != text:
 			selection = self.selection_model.currentIndex()
 			self.model.setDataValue(selection, text)
 
