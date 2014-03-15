@@ -4,22 +4,27 @@ from gimpfu import *
 from miasmata_gimp import *
 
 font = 'Neu Phollick Alpha'
-font_size = 55.0
 line_spacing = -7.0
 letter_spacing = 0.4
 
 x = 205
 w = 995 - x
 
+def font_size(name):
+    if name == 'LIST_IAmCured':
+        return 70.0
+    return 55.0
+
 def compose_index_image(source_txt_file, source_blank_image, output_basename):
     txt = open(source_txt_file, 'rb').read().decode('utf-8').strip()
 
     image = pdb.gimp_file_load(source_blank_image, source_blank_image)
 
-    text = add_text_layer(image, txt, font, font_size)
+    text = add_text_layer(image, txt, font, font_size(output_basename))
     pdb.gimp_text_layer_set_justification(text, TEXT_JUSTIFY_CENTER)
     pdb.gimp_text_layer_set_line_spacing(text, line_spacing)
     pdb.gimp_text_layer_set_letter_spacing(text, letter_spacing)
+    pdb.gimp_layer_set_mode(text, BURN_MODE)
 
     # bold_text(text, txt)
     # pdb.gimp_text_layer_resize(text, w, text.height)

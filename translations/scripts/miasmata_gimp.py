@@ -87,7 +87,11 @@ def word_wrap(layer, text, width, max_height = None, start_tag='', end_tag=''):
     for (i, word) in enumerate(words[1:], 1):
         txt1 = '%s %s' % (txt, word)
         markup = '%s%s%s' % (start_tag, txt1, end_tag)
-        pdb.gimp_text_layer_set_markup(layer, markup)
+        try: # Quick hack to avoid splitting up <span> tags
+            pdb.gimp_text_layer_set_markup(layer, markup)
+        except:
+            txt = txt1
+            continue
         if layer.width > width:
             txt1 = '%s\n%s' % (txt, word)
             markup = '%s%s%s' % (start_tag, txt1, end_tag)
