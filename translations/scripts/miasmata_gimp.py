@@ -61,6 +61,12 @@ def place_text(layer, x, y, x2=None, y2=None, w=None, h=None, xalign=LEFT, yalig
         y = y - layer.height
     layer.translate(x, y)
 
+def reduce_text_to_fit(layer, x1, x2):
+    (font_size, units) = pdb.gimp_text_layer_get_font_size(layer)
+    while layer.width > x2 - x1:
+        font_size -= 1
+        pdb.gimp_text_layer_set_font_size(layer, font_size, units)
+
 def bold_text(layer, txt=None):
     # XXX: Requires a patched GIMP to set text markup
     # See https://bugzilla.gnome.org/show_bug.cgi?id=724101

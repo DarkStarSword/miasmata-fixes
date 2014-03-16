@@ -1,1 +1,1 @@
-Mauvaise
+Santé: <span color="#800000">Mauvaise</span>
