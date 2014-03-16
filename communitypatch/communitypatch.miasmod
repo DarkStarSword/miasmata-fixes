@@ -147,6 +147,24 @@
             ], 
             "[\"s\",\"brain_emphasis\"]", 
             "[\"s\",\"mental_stimulant\"]"
+        ], 
+        [
+            [
+                "game_objects", 
+                "plant24", 
+                "objective_d"
+            ], 
+            "[\"s\",\"TEX\\\\J2\\\\OBJNOTE_C_Plant24\"]", 
+            "[\"s\",\"TEX\\\\J2\\\\OBJNOTE_D_Plant24\"]"
+        ], 
+        [
+            [
+                "game_objects", 
+                "Note12", 
+                "objective_d"
+            ], 
+            "[\"s\",\"TEX\\\\J2\\\\OBJNOTE_D_12\"]", 
+            "[\"s\",\"TEX\\\\J2\\\\OBJNOTE_D_11\"]"
         ]
     ]
 }
