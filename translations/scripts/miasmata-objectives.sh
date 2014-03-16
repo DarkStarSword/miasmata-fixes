@@ -4,6 +4,13 @@
 
 for file in OBJNOTE_*.txt; do
 	basename=$(echo "$file" | sed 's/\.[^\.]\+//')
+	blank=../../blanks/objectives/OBJNOTE_A_Placeholder1.png
+	if [ "$basename" = "OBJNOTE_F_A3" \
+			-o "$basename" = "OBJNOTE_G_A2" \
+			-o "$basename" = "OBJNOTE_H_A4" ]; then
+		blank=../../blanks/objectives/OBJNOTE_G_Placeholder1.png
+	fi
+	${GIMP} --no-interface --batch '(python-fu-miasmata-objective-note RUN-NONINTERACTIVE "'${basename}.txt'" "'${blank}'" "'${basename}'")' --batch '(gimp-quit 1)'
 done
 
 basename=STATUS_RightPage

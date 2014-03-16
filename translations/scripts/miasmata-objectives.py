@@ -8,6 +8,10 @@ indent_b = 156
 font_a = Font('Neu Phollick Alpha', 40.0, True, -8.0)
 font_b = Font('Neu Phollick Alpha', 38.0, True)
 
+font_note = Font('Neu Phollick Alpha', 22.0, True)
+objnote_x1 = 57
+objnote_x2 = 200
+
 class Objective(object):
     def __init__(self, indent=indent_a, y=5, wrap=None, font=font_a):
         self.indent, self.y, self.wrap, self.font = indent, y, wrap, font
@@ -24,12 +28,15 @@ objectives = {
     'OBJECTIVE_H': Objective(y=8, font=font_b),
 }
 
-def save(image, output_basename):
+def save(image, output_basename, png=False):
     save_xcf(image, '%s.xcf' % output_basename)
     image2 = pdb.gimp_image_duplicate(image)
     image2.flatten()
     save_dds(image2, '%s.dds' % output_basename, False)
-    save_jpg(image2, '%s.jpg' % output_basename)
+    if png:
+        save_png(image2, '%s.png' % output_basename)
+    else:
+        save_jpg(image2, '%s.jpg' % output_basename)
 
 def compose_objective_image(objective_name, source_blank_image, output_basename):
     objective = objectives[objective_name]
@@ -50,6 +57,27 @@ def compose_objective_page(source_txt_file, source_blank_image, output_basename)
     place_text(layer, 75, 655)
 
     save(image, output_basename)
+
+def compose_objective_note(source_txt_file, source_blank_image, output_basename):
+    image = pdb.gimp_file_load(source_blank_image, source_blank_image)
+    try:
+        pdb.gimp_image_convert_rgb(image)
+    except:
+        pass
+
+    colour = (128, 0, 0)
+    if 'Plant' in source_txt_file:
+        colour = (50, 40, 190)
+
+    text_layer = add_text_layer_from_file(image, source_txt_file, font_note, colour=colour)
+    pdb.gimp_layer_set_mode(text_layer, MULTIPLY_MODE)
+    font_size = font_note.size
+    while text_layer.width > objnote_x2 - objnote_x1:
+        font_size -= 1
+        pdb.gimp_text_layer_set_font_size(text_layer, font_size, PIXELS)
+    place_text(text_layer, objnote_x1, image.height / 2, yalign=CENTER)
+
+    save(image, output_basename, png=True)
 
 register(
     "miasmata_objective",
