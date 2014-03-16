@@ -22,7 +22,7 @@ link_dds_files()
 rm -frv "$staging"
 
 mkdir -p "$staging/TEX/J2"
-for dir in index drugs plants research; do
+for dir in index drugs plants research objectives conditions tabs; do
 	link_dds_files "$translation/$dir" "TEX/J2"
 done
 
@@ -31,7 +31,7 @@ for dir in intro end buttons; do
 	link_dds_files "$translation/$dir" "TEX/MENU"
 done
 
-for dir in blackboards; do
+for dir in blackboards items; do
 	link_dds_files "$translation/$dir" "TEX"
 done
 
