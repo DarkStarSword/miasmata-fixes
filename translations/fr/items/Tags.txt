@@ -1,1 +1,7 @@
-Médicament Basique  Médicament Avancé  Stimulant Énergétique Stimulant Intellectuel Tonique Herculéen Tonique de Clarté Tonique Anti-Psycho
+Médicament Basique
+Médicament Avancé
+Stimulant Énergétique
+Stimulant Intellectuel
+Tonique Herculéen
+Tonique de Clarté
+Tonique Anti-Psycho
