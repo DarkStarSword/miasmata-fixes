@@ -9,13 +9,6 @@ font_s1 = Font('Neu Phollick Alpha', 33.0, True)
 
 lx, rx = 491, 526
 
-def save(image, output_basename):
-    save_xcf(image, '%s.xcf' % output_basename)
-    image2 = pdb.gimp_image_duplicate(image)
-    image2.flatten()
-    save_dds(image2, '%s.dds' % output_basename, False)
-    save_jpg(image2, '%s.jpg' % output_basename)
-
 def compose_condition_page(source_txt_file, source_blank_image, output_basename):
     image = pdb.gimp_file_load(source_blank_image, source_blank_image)
     layer = add_text_layer_from_file(image, source_txt_file, font_l)

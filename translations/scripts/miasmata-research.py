@@ -73,11 +73,7 @@ def compose_drug_image(template_txt_file, source_txt_file, source_blank_image, o
     desc.translate(function_x, y)
     pdb.gimp_text_layer_resize(desc, desc_x2 - function_x, h - y)
 
-    save_xcf(image, '%s.xcf' % output_basename)
-    image2 = pdb.gimp_image_duplicate(image)
-    image2.flatten()
-    save_dds(image2, '%s.dds' % output_basename, False)
-    save_jpg(image2, '%s.jpg' % output_basename)
+    save(image, output_basename)
 
 register(
     "miasmata_drug",

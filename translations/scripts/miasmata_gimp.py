@@ -186,3 +186,13 @@ def save_jpg(image, filename):
 def save_xcf(image, filename):
     pdb.gimp_xcf_save(0, image, image.active_layer, filename, filename)
     image.clean_all()
+
+def save(image, output_basename, alpha=False, png=False):
+    save_xcf(image, '%s.xcf' % output_basename)
+    image2 = pdb.gimp_image_duplicate(image)
+    image2.merge_visible_layers(CLIP_TO_IMAGE)
+    save_dds(image2, '%s.dds' % output_basename, alpha)
+    if alpha or png:
+        save_png(image2, '%s.png' % output_basename)
+    else:
+        save_jpg(image2, '%s.jpg' % output_basename)

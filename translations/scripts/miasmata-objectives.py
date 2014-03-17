@@ -28,16 +28,6 @@ objectives = {
     'OBJECTIVE_H': Objective(y=8, font=font_b),
 }
 
-def save(image, output_basename, png=False):
-    save_xcf(image, '%s.xcf' % output_basename)
-    image2 = pdb.gimp_image_duplicate(image)
-    image2.flatten()
-    save_dds(image2, '%s.dds' % output_basename, False)
-    if png:
-        save_png(image2, '%s.png' % output_basename)
-    else:
-        save_jpg(image2, '%s.jpg' % output_basename)
-
 def compose_objective_image(objective_name, source_blank_image, output_basename):
     objective = objectives[objective_name]
     image = pdb.gimp_file_load(source_blank_image, source_blank_image)
@@ -71,10 +61,7 @@ def compose_objective_note(source_txt_file, source_blank_image, output_basename)
 
     text_layer = add_text_layer_from_file(image, source_txt_file, font_note, colour=colour)
     pdb.gimp_layer_set_mode(text_layer, MULTIPLY_MODE)
-    font_size = font_note.size
-    while text_layer.width > objnote_x2 - objnote_x1:
-        font_size -= 1
-        pdb.gimp_text_layer_set_font_size(text_layer, font_size, PIXELS)
+    reduce_text_to_fit(text_layer, objnote_x1, objnote_x2)
     place_text(text_layer, objnote_x1, image.height / 2, yalign=CENTER)
 
     save(image, output_basename, png=True)
