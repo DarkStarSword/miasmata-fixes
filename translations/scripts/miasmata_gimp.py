@@ -7,11 +7,11 @@ CENTER = 1
 RIGHT = BOTTOM = 2
 
 class Font(object):
-    def __init__(self, font, size, bold = False, line_spacing = 0.0):
-        self.font, self.size, self.bold, self.line_spacing = \
-                font, size, bold, line_spacing
+    def __init__(self, font, size, bold = False, line_spacing = 0.0, letter_spacing = 0.0):
+        self.font, self.size, self.bold, self.line_spacing, self.letter_spacing = \
+                font, size, bold, line_spacing, letter_spacing
 
-def add_text_layer(image, txt, font, font_size, line_spacing = None, colour = (0, 0, 0), name = 'Text', pos = (0, 0)):
+def add_text_layer(image, txt, font, font_size, line_spacing = None, colour = (0, 0, 0), name = 'Text', pos = (0, 0), letter_spacing=None):
     gimp.set_foreground(*colour)
     pdb.gimp_image_set_active_layer(image, image.layers[0])
     text = pdb.gimp_text_fontname(image, None, pos[0], pos[1], txt, 0, True, font_size, PIXELS, font)
@@ -20,6 +20,8 @@ def add_text_layer(image, txt, font, font_size, line_spacing = None, colour = (0
     text.name = name
     if line_spacing is not None:
         pdb.gimp_text_layer_set_line_spacing(text, line_spacing)
+    if letter_spacing is not None:
+        pdb.gimp_text_layer_set_letter_spacing(text, letter_spacing)
     pdb.gimp_text_layer_set_hint_style(text, TEXT_HINT_STYLE_NONE)
 
     return text
@@ -28,7 +30,7 @@ def read_text(filename):
     return open(filename, 'rb').read().decode('utf-8').strip()
 
 def add_text(image, txt, font, colour = (0, 0, 0)):
-    layer = add_text_layer(image, txt, font.font, font.size, font.line_spacing, colour)
+    layer = add_text_layer(image, txt, font.font, font.size, font.line_spacing, colour, letter_spacing=font.letter_spacing)
     if layer is None:
         return None
     pdb.gimp_text_layer_set_markup(layer, txt)
@@ -60,6 +62,10 @@ def place_text(layer, x, y, x2=None, y2=None, w=None, h=None, xalign=LEFT, yalig
     elif yalign == BOTTOM:
         y = y - layer.height
     layer.translate(x, y)
+
+def center_layer(layer):
+    image = layer.image
+    return place_text(layer, image.width/2, image.height/2, xalign=CENTER, yalign=CENTER)
 
 def reduce_text_to_fit(layer, x1, x2):
     (font_size, units) = pdb.gimp_text_layer_get_font_size(layer)
@@ -113,7 +119,7 @@ def word_wrap(layer, text, width, max_height = None, start_tag='', end_tag=''):
 def bold_word_wrap(layer, text, width, max_height = None):
     return word_wrap(layer, text, width, max_height, start_tag='<b>', end_tag='</b>')
 
-def blur_layer(image, layer, radius = 1.0):
+def blur_layer(image, layer, radius = 1.5):
     pdb.plug_in_gauss_rle2(image, layer, radius, radius)
 
 def save_dds(image, filename, alpha):
