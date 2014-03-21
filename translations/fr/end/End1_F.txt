@@ -1,2 +1,3 @@
 Partie Technique
 Programmation, Conception du Moteur, Conception du Toolset, Musique
+Joe Johnson

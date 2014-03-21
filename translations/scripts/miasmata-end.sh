@@ -9,14 +9,14 @@ do
 	${GIMP} --no-interface --batch '(python-fu-miasmata-end-slide RUN-NONINTERACTIVE "End1_'${slide}'.txt" "End1_'${slide}'" '${first}')' --batch '(gimp-quit 1)'
 done
 
-for slide in E F
+for slide in F G
 do
-	# Credits
-	echo
+	${GIMP} --no-interface --batch '(python-fu-miasmata-end-slide-credits RUN-NONINTERACTIVE "End1_'${slide}'.txt" "End1_'${slide}'")' --batch '(gimp-quit 1)'
 done
 
 for slide in H I J
 do
-	# Special Thanks To...
-	echo
+	blank=../../blanks/end/End1_${slide}_blank.png
+	[ ! -f "$blank" ] && blank=
+	${GIMP} --no-interface --batch '(python-fu-miasmata-end-slide-thanks RUN-NONINTERACTIVE "End1_'${slide}'.txt" "End1_'${slide}'" "'${blank}'")' --batch '(gimp-quit 1)'
 done
