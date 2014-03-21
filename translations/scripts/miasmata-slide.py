@@ -11,6 +11,7 @@ end_title_font = Font('Norlik Condensed', 50.0)
 width = height = 1024
 
 header_y = 465
+min_width = 500
 
 def enlarge_first_letter(text, txt):
     # XXX: Requires a patched GIMP to set text markup
@@ -69,15 +70,23 @@ def render_end_slide_credits(source_txt_file, output_basename):
     place_text(details_layer, width/2, header_y, xalign=CENTER)
     blur_layer(image, details_layer)
 
+    if details_layer.width >= min_width:
+        x1 = details_layer.offsets[0]
+        x2 = x1 + details_layer.width
+    else:
+        x1 = (width - min_width) / 2
+        x2 = x1 + min_width
+        details_layer.set_offsets(x1, details_layer.offsets[1])
+
     layer = add_text(image, category, end_title_font, colour = (255, 255, 255))
     scale_layer(image, layer, 0.9, 1.1)
-    place_text(layer, details_layer.offsets[0], header_y, yalign=BOTTOM)
+    place_text(layer, x1, header_y, yalign=BOTTOM)
     blur_layer(image, layer)
     print '--- %i : %i ---' % (layer.offsets[1], layer.offsets[1] + layer.height)
 
     layer = add_text(image, name, end_font, colour = (255, 255, 255))
     scale_layer(image, layer, 0.9, 1.1)
-    place_text(layer, details_layer.offsets[0] + details_layer.width, 600, xalign=RIGHT)
+    place_text(layer, x2, 600, xalign=RIGHT)
     blur_layer(image, layer)
 
     save(image, output_basename)
