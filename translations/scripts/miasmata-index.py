@@ -8,11 +8,11 @@ line_spacing = -7.0
 letter_spacing = 0.4
 
 x = 205
-w = 995 - x
+w = 1000 - x
 
 def font_size(name):
-    if name == 'LIST_IAmCured':
-        return 70.0
+    if name == 'LIST_IAmCured' or name.upper().startswith('LIST_NOTE'):
+        return 68.0
     return 55.0
 
 def compose_index_image(source_txt_file, source_blank_image, output_basename):
@@ -24,7 +24,10 @@ def compose_index_image(source_txt_file, source_blank_image, output_basename):
     pdb.gimp_text_layer_set_justification(text, TEXT_JUSTIFY_CENTER)
     pdb.gimp_text_layer_set_line_spacing(text, line_spacing)
     pdb.gimp_text_layer_set_letter_spacing(text, letter_spacing)
-    pdb.gimp_layer_set_mode(text, BURN_MODE)
+    if output_basename in ('LIST_X', 'LIST_Y', 'LIST_Z', 'List_K'):
+        pdb.gimp_layer_set_mode(text, MULTIPLY_MODE)
+    else:
+        pdb.gimp_layer_set_mode(text, BURN_MODE)
 
     # bold_text(text, txt)
     # pdb.gimp_text_layer_resize(text, w, text.height)
@@ -32,11 +35,7 @@ def compose_index_image(source_txt_file, source_blank_image, output_basename):
 
     pdb.gimp_layer_translate(text, x + (w - text.width) / 2, (image.height - text.height) / 2)
 
-    save_xcf(image, '%s.xcf' % output_basename)
-    image2 = pdb.gimp_image_duplicate(image)
-    image2.flatten()
-    save_dds(image2, '%s.dds' % output_basename, False)
-    save_jpg(image2, '%s.jpg' % output_basename)
+    save(image, output_basename)
 
 register(
     "miasmata_index",
