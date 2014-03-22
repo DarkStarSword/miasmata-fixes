@@ -16,7 +16,7 @@ def add_map_text(image, file, x, y, xalign=CENTER, yalign=CENTER):
     mask = pdb.gimp_layer_create_mask(shadow, ADD_ALPHA_TRANSFER_MASK)
     pdb.gimp_layer_create_mask(shadow, ADD_ALPHA_TRANSFER_MASK)
     pdb.gimp_layer_add_mask(shadow, mask)
-    pdb.gimp_drawable_levels(mask, HISTOGRAM_VALUE, 0.0, 0.6, 1.0, 0.0, 1.0)
+    pdb.gimp_levels(mask, HISTOGRAM_VALUE, 0, 153, 1.0, 0, 255)
     pdb.gimp_layer_remove_mask(shadow, MASK_APPLY)
     layer = add_text(image, txt, font, colour=(255, 255, 255))
     place_text(layer, x, y, xalign=xalign, yalign=yalign)
