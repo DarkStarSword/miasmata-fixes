@@ -123,10 +123,25 @@
     "added": [
         [
             [
+                "player", 
+                "pick_objects", 
+                "modelsets\\EndHammock_Main"
+            ], 
+            "[\"s\",\"special_hammock\"]"
+        ], 
+        [
+            [
                 "achievements", 
                 "map"
             ], 
             "[\"T\",{\"s:shore_complete\": \"map_coastline\"}]"
+        ], 
+        [
+            [
+                "game_objects", 
+                "special_hammock"
+            ], 
+            "[\"T\",{\"s:special_type\": \"BED\",\"i:pick_range\": 8}]"
         ]
     ], 
     "changed": [
