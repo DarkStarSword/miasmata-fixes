@@ -5,7 +5,7 @@ from miasmata_gimp import *
 
 font = Font('Neu Phollick Alpha', 20.0, True)
 
-radius = 5.0
+radius = 8.0
 
 def add_map_text(image, file, x, y, xalign=CENTER, yalign=CENTER):
     txt = read_text(file)
@@ -16,9 +16,10 @@ def add_map_text(image, file, x, y, xalign=CENTER, yalign=CENTER):
     mask = pdb.gimp_layer_create_mask(shadow, ADD_ALPHA_TRANSFER_MASK)
     pdb.gimp_layer_create_mask(shadow, ADD_ALPHA_TRANSFER_MASK)
     pdb.gimp_layer_add_mask(shadow, mask)
-    pdb.gimp_levels(mask, HISTOGRAM_VALUE, 0, 153, 1.0, 0, 255)
+    pdb.gimp_levels(mask, HISTOGRAM_VALUE, 0, 128, 1.0, 0, 255)
     pdb.gimp_layer_remove_mask(shadow, MASK_APPLY)
     layer = add_text(image, txt, font, colour=(255, 255, 255))
+    blur_layer(image, layer, 0.5)
     place_text(layer, x, y, xalign=xalign, yalign=yalign)
 
 def compose_overlay_map(source_blank_image, output_basename, include_text):
