@@ -261,6 +261,10 @@ class Rs5ArchiveUpdater(Rs5ArchiveEncoder, Rs5ArchiveDecoder):
 		self.fp.seek(0, 2)
 		return Rs5ArchiveEncoder.add(self, filename)
 
+	def add_chunk_dir(self, path):
+		self.fp.seek(0, 2)
+		return Rs5ArchiveEncoder.add_chunk_dir(self, path)
+
 	def add_from_buf(self, buf):
 		self.fp.seek(0, 2)
 		return Rs5ArchiveEncoder.add_from_buf(self, buf)
