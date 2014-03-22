@@ -1,3 +1,3 @@
-French Translation
-Modding, Texture Replacement
+Traduction Française
+Implémentation de la Traduction, Éditage des Textures
 Ian Munsie
