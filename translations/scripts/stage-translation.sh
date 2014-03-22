@@ -31,7 +31,7 @@ for dir in intro end buttons; do
 	link_dds_files "$translation/$dir" "TEX/MENU"
 done
 
-for dir in blackboards items; do
+for dir in blackboards items maps; do
 	link_dds_files "$translation/$dir" "TEX"
 done
 
