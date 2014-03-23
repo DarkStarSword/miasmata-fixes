@@ -1,0 +1,7 @@
+Synthèse de l'Agent X
+Sommaire:
+Cette procédure produira l'Agent X, un composé biochimique qui inhibera complètement la réplication de la bactérie de la Peste.
+Lorsqu'il sera combiné avec les Agents Y et Z, le Vaccin pourra être synthétisé.
+Substances Primaire:
+1.Inonotus Caeruleus
+2.Plante X
