@@ -12,7 +12,7 @@ sample_tray_font = Font('Georgia', 42.0, False)
 # bottle_font = Font('Serif', 14.0, True)
 bottle_font = Font('URW Bookman L', 14.0, True)
 
-def compose_tags(image, item_name):
+def compose_tags(image, item_name, output_basename):
     tags = read_text('%s.txt' % item_name).split('\n')
     tag_h = 97
     tag_x = (140, 400)
@@ -25,9 +25,11 @@ def compose_tags(image, item_name):
             # place_text(layer, tag_x[x], y*tag_h + tag_h/2, w=tag_w, xalign=CENTER, yalign=CENTER)
             place_text(layer, tag_x[x], y*tag_h + 20, w=tag_w, xalign=CENTER)
             if tags == []:
-                return
+                break
 
-def compose_lab_sampletrays(image, item_name):
+    save(image, output_basename, True)
+
+def compose_lab_sampletrays(image, item_name, output_basename):
     labels = map(unicode.strip, read_text('%s.txt' % item_name).split('\n\n'))
 
     label_x = (256, 768)
@@ -41,7 +43,9 @@ def compose_lab_sampletrays(image, item_name):
             word_wrap(layer, None, 450)
             place_text(layer, label_x[x], label_y[y], xalign=CENTER, yalign=CENTER)
 
-def compose_lab_darkbottle(image, item_name):
+    save(image, output_basename, False)
+
+def compose_lab_darkbottle(image, item_name, output_basename):
     labels = map(unicode.strip, read_text('%s.txt' % item_name).split('\n'))
 
     label_x = 64
@@ -54,16 +58,12 @@ def compose_lab_darkbottle(image, item_name):
         reduce_text_to_fit(layer, 0, 124)
         place_text(layer, label_x, label_y[y], xalign=CENTER, yalign=CENTER)
 
+    save(image, output_basename, False)
+
 def compose_item_image(item_name, source_blank_image, output_basename):
     image = pdb.gimp_file_load(source_blank_image, source_blank_image)
 
-    globals()['compose_%s' % item_name.lower()](image, item_name)
-
-    save_xcf(image, '%s.xcf' % output_basename)
-    image2 = pdb.gimp_image_duplicate(image)
-    image2.merge_visible_layers(CLIP_TO_IMAGE)
-    save_dds(image2, '%s.dds' % output_basename, True)
-    save_png(image2, '%s.png' % output_basename)
+    globals()['compose_%s' % item_name.lower()](image, item_name, output_basename)
 
 register(
     "miasmata_item",
