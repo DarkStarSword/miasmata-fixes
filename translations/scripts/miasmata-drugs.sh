@@ -2,7 +2,7 @@
 
 [ -z "$GIMP" ] && GIMP=gimp
 
-for drug in A B C D E F H I J X Y Z
+for drug in A B C D E F H I J K X Y Z
 do
 	basename=Plant_$drug
 	blank=../../blanks/drugs/${basename}_blank.xcf
