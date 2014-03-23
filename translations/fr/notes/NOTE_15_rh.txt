@@ -1,4 +1,6 @@
 Substances Primaire:
 
 <span color="#f00000">1. Inonotus Caeruleus</span>
+  (Champignon Lignicole Écailleux Bleu)
 <span color="#f00000">2. Plante X</span>
+  (Plante à Fruit Bulbeuse)
