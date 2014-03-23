@@ -1,11 +1,9 @@
-Cartographie Document B:
-Comment révéler la location de points de repère inconnus.
 Étape 1: Utilisez la Triangulation pour localiser votre position sur votre carte comme décrit dans le Document A.
+
 Étape 2: Regardez autour de vous. Essayez de trouver un point de repère qui n'est pas représenté comme icône sur votre carte.
+
 Étape 3: Dessinez des lignes de visibilité vers ce point de repère inconnu en appuyant sur [Activer] lorsque vous les observez.
+
 Étape 4: Rangez votre carte et votre compas puis marchez jusqu'à un autre point de vue. Répétez les étapes 1-3.
 
 Lorsque vous aurez dessiné 2 lignes de visibilité distinctes vers un point de repère inconnu, sa location sera révélée à l'intersection des 2 lignes de visibilité.
-
-Point de Vue #1 #2
-Point de Repère

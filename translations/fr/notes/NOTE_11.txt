@@ -1,3 +1,2 @@
-SIRIUS
-RIGEL
-Carte Régionale: Avant-Poste Rigel
+Carte Régionale:
+Avant-Poste Rigel

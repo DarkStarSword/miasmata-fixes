@@ -1,7 +1,3 @@
-Synthèse de l'Agent Z
 Sommaire:
 Cette procédure produira l'Agent Z: L'Adjuvant.
 Combiné avec d'autres agents pharmaceutique, il permettra d'améliorer la réponse immunitaire du patient.
-Substances Primaire:
-1. Amorphophallus Vaporum
-2. Nepenthes Viri

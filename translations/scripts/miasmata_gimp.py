@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from gimpfu import *
+import re
 
 LEFT = TOP = 0
 CENTER = 1
@@ -88,28 +89,48 @@ def underline_text(layer):
     markup = '<u>%s</u>' % markup
     pdb.gimp_text_layer_set_markup(layer, markup)
 
+word_wrap_fail_re = re.compile(r"""Element 'markup' was closed, but the currently open element is '(?P<elem>[^']+)'""")
+
 def word_wrap(layer, text, width, max_height = None, start_tag='', end_tag=''):
     # This is a workaround for the lack of a fixed-width + dynamic-height
     # setting for text boxes in the GIMP - otherwise there is no easy way to
     # wrap the text AND have it vertically centered.
+    if not text:
+        text = pdb.gimp_text_layer_get_text(layer)
+    if not text:
+        text = pdb.gimp_text_layer_get_markup(layer)
+        if text.lower().startswith('<markup>') and text.lower().endswith('</markup>'):
+            text = text[8:-9]
     words = text.split(' ')
     if not len(words):
         return ''
     txt = words[0]
     for (i, word) in enumerate(words[1:], 1):
         txt1 = '%s %s' % (txt, word)
-        markup = '%s%s%s' % (start_tag, txt1, end_tag)
-        try: # Quick hack to avoid splitting up <span> tags
-            pdb.gimp_text_layer_set_markup(layer, markup)
-        except:
-            txt = txt1
+        missing_tags = ''
+        fail = False
+        while True: # Hack to avoid splitting up <span> tags
+            markup = '%s%s%s%s' % (start_tag, txt1, missing_tags, end_tag)
+            # print '\n\nTrying text for word wrap:\n%s' % markup
+            try:
+                pdb.gimp_text_layer_set_markup(layer, markup)
+            except RuntimeError as e:
+                match = word_wrap_fail_re.search(e.args[0])
+                if not match:
+                    txt = txt1
+                    fail = True
+                    break
+                missing_tags += '</%s>' % match.group('elem')
+                continue
+            break
+        if fail:
             continue
         if layer.width > width:
             txt1 = '%s\n%s' % (txt, word)
-            markup = '%s%s%s' % (start_tag, txt1, end_tag)
+            markup = '%s%s%s%s' % (start_tag, txt1, missing_tags, end_tag)
             pdb.gimp_text_layer_set_markup(layer, markup)
             if max_height is not None and layer.height > max_height:
-                markup = '%s%s%s' % (start_tag, txt, end_tag)
+                markup = '%s%s%s' % (start_tag, txt, end_tag) # FIXME: Will break if splitting markup!
                 pdb.gimp_text_layer_set_markup(layer, markup)
                 return ' '.join([word] + words[1+i:])
             width = max(width, layer.width)
