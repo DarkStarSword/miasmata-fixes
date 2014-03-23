@@ -1,1 +1,2 @@
-Acide phosphorique    H2O distillé
+Acide phosphorique
+H<span rise="-3072" size="10240">2</span>O distillé
