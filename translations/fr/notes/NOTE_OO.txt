@@ -1,0 +1,9 @@
+Comment Effectuer une Recherche sur une Plante:
+Cette île est remplie d'espèces de plantes et de champignons unique. Beaucoup d'entre eux possèdent des propriétés curative qui peuvent être découverte à travers des recherches dans un laboratoire.
+Étape 1:
+Posez une plante ou un champignon sur le Plateau d'Analyse.
+Étape 2:
+Commencez la recherche sur le spécimen en utilisant le microscope.
+
+1. Placez la plante ici: Plateau d'Analyse
+2. Commencez la recherche ici: Microscope.

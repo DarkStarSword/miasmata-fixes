@@ -1,0 +1,19 @@
+Comment Créer des Médicaments:
+Des médicaments peuvent être développé grâce aux nombreuses plantes trouvable sur cette île.
+Certains médicaments peuvent être crées d'une seule plante. D'autres sont développés à travers la combinaison de deux différents types de plantes.
+Étape 1:
+Placez une plante sur le "Plateau A".
+Ou
+Placez une plante sur le "Plateau A" puis une plante différente sur le "Plateau B"
+Étape 2:
+Initiez la synthèse du médicament en utilisant la Plate-Forme de Distillation.
+Étape 3:
+Si la synthèse a été un succès, le médicament sera sur le Plateau de Résultat.
+
+1. Placez la/les plante(s) ici.
+Plateau A Plateau B
+
+2. Initiez la Synthèse
+Plate-Forme de Distillation
+
+3. Plateau de Résultat
