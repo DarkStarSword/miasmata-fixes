@@ -380,19 +380,19 @@ def compose_note_ee(image, note_name):
     pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_RIGHT)
     place_text(layer, 1100, 820, 1420, xalign=RIGHT)
 
-# -- UNTESTED FROM HERE --
 def compose_note_ff(image, note_name):
-    font = neu_phollick_alpha
+    font = neu_phollick_alpha_l
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 1105, 90, 1865)
 
-    layer = add_text_layer_from_file(image, '%s_fabacea.txt' % note_name, font)
+    layer = add_text(image, get_plant_name('fabaceae'), font)
     place_text(layer, 480, 115, yalign=CENTER)
-    layer = add_text_layer_from_file(image, '%s_poisonous_mushroom.txt' % note_name, font)
+    layer = add_text(image, get_plant_name('red toadstool'), font)
     place_text(layer, 660, 940, xalign=CENTER, yalign=CENTER)
 
+# -- UNTESTED FROM HERE --
 def compose_note_gg(image, note_name):
-    font = neu_phollick_alpha
+    font = neu_phollick_alpha_l
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 1105, 90, 1865)
 
@@ -418,7 +418,7 @@ def compose_note_hh(image, note_name):
     place_text(layer, 1430, 920, yalign=CENTER)
 
 def compose_note_ii(image, note_name):
-    font = neu_phollick_alpha
+    font = neu_phollick_alpha_l
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 230, 535, 940)
 
@@ -426,7 +426,7 @@ def compose_note_ii(image, note_name):
     place_text(layer, 1140, 595, 1825)
 
 def compose_note_jj(image, note_name):
-    font = neu_phollick_alpha
+    font = neu_phollick_alpha_l
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 230, 545, 915)
 
@@ -434,7 +434,7 @@ def compose_note_jj(image, note_name):
     place_text(layer, 1150, 540, 1830)
 
 def compose_note_kk(image, note_name):
-    font = neu_phollick_alpha
+    font = neu_phollick_alpha_l
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 1155, 555, 1840)
 
@@ -455,7 +455,7 @@ def compose_note_kk(image, note_name):
     place_text(layer, x1, header.offsets[1]+header.height, x2)
 
 def compose_note_ll(image, note_name):
-    font = neu_phollick_alpha
+    font = neu_phollick_alpha_l
     txt = read_text('%s.txt' % note_name)
 
     x1, x2 = 208, 965
@@ -475,7 +475,7 @@ def compose_note_ll(image, note_name):
     place_text(layer, 2705, 495, xalign=CENTER, yalign=CENTER)
 
 def compose_note_mm(image, note_name):
-    font = neu_phollick_alpha
+    font = neu_phollick_alpha_l
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 256, 600, 935)
 
@@ -483,12 +483,12 @@ def compose_note_mm(image, note_name):
     place_text(layer, 1158, 573, 1815)
 
 def compose_note_nn(image, note_name):
-    font = neu_phollick_alpha
+    font = neu_phollick_alpha_l
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 1470, 510, xalign=CENTER, yalign=CENTER)
 
 def compose_note_oo(image, note_name):
-    font = neu_phollick_alpha
+    font = neu_phollick_alpha_l
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 208, 45, 900)
 
@@ -498,7 +498,7 @@ def compose_note_oo(image, note_name):
     place_text(layer, 1550, 155, xalign=CENTER, yalign=CENTER)
 
 def compose_note_pp(image, note_name):
-    font = neu_phollick_alpha
+    font = neu_phollick_alpha_l
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 1155, 570, 1815)
 
@@ -511,7 +511,7 @@ def compose_note_pp(image, note_name):
     place_text(layer, x1, 690, x2)
 
 def compose_note_qq(image, note_name):
-    font = neu_phollick_alpha
+    font = neu_phollick_alpha_l
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 1155, 570, 1815)
 
@@ -530,7 +530,7 @@ def compose_note_qq(image, note_name):
     place_text(layer, x1, 875, x2)
 
 def compose_note_rr(image, note_name):
-    font = neu_phollick_alpha
+    font = neu_phollick_alpha_l
     layer = add_text_layer_from_file(image, '%s_boat.txt' % note_name, font)
     pdb.gimp_text_layer_set_justification(header, TEXT_JUSTIFY_CENTER)
     place_text(layer, 465, 245, xalign=CENTER, yalign=CENTER)
