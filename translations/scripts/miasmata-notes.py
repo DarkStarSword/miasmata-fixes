@@ -22,6 +22,12 @@ flute_ex_s = Font('Flute Expanded', 30.0, True, -5.0)
 flute_l = Font('Flute', 43.0, True, -5.0)
 wiki = Font('Wiki', 40.0, True, 5.0)
 
+# I found two variants of this font with different shapes, I believe this is
+# the one used in game: http://www.fontsquirrel.com/fonts/architects-daughter
+arch_daughter = Font("Architects Daughter", 35.0, True, -13)
+arch_daughter_t = Font("Architects Daughter", 45.0, True, -13)
+arch_daughter_s = Font("Architects Daughter Bold", 30.0, False, -13)
+
 # -- UNTESTED FONTS --
 worstveld = Font('Worstveld Sling', 40.0)
 # Some of the tops of the letters are slightly cut off - not very noticeable,
@@ -31,11 +37,6 @@ newspaper_headline = Font('New Yorker', 52.0, True, -1.0)
 # Not sure about this one:
 # newspaper_body = Font('FG Norah', 29.0)
 newspaper_body = Font('Eutheric', 25.0, letter_spacing=-1.0)
-
-# I found two variants of this font with different shapes, I believe this is
-# the one used in game: http://www.fontsquirrel.com/fonts/architects-daughter
-arch_daughter = Font("Architects Daughter", 35.0, True, -13)
-arch_daughter_t = Font("Architects Daughter", 45.0, True, -13)
 
 def compose_note_0(image, note_name):
     body = add_text_layer_from_file(image, '%s.txt' % note_name, neu_phollick_alpha)
@@ -284,33 +285,27 @@ def compose_note_a9(image, note_name):
     layer = add_text(image, txt, font)
     place_text(layer, 1115, y1, 1850)
 
-# -- UNTESTED FROM HERE --
 def compose_note_aa(image, note_name):
-    font = neu_phollick_alpha
-    layer = add_text_layer_from_file(image, '%s_basic_medicine.txt' % note_name, font)
-    place_text(layer, 538, 39, 940)
+    font = arch_daughter_s
+    def place_drug_text(drug, x1, y, x2):
+        yoff = font.line_spacing * -0.5
+        (title, desc) = read_text('%s_%s.txt' % (note_name, drug)).split('\n', 1)
+        layer = add_text(image, title, font)
+        word_wrap_reverse(layer, x2-x1)
+        place_text(layer, x1, int(y + yoff), yalign=BOTTOM)
+        layer = add_text(image, desc, font)
+        place_text(layer, x1, int(y - yoff), x2)
 
-    layer = add_text_layer_from_file(image, '%s_endurance_emphasis.txt' % note_name, font)
-    place_text(layer, 208, 270, 720)
+    place_drug_text('basic_medicine', 538, 77, 956)
+    place_drug_text('endurance_emphasis', 230, 310, 735)
+    place_drug_text('muscle_emphasis', 460, 556, 965)
+    place_drug_text('brain_emphasis', 240, 858, 810)
+    place_drug_text('energy_stim', 1113, 77, 1572)
+    place_drug_text('clarity_tonic', 1267, 310, 1876)
+    place_drug_text('herculean_tonic', 1220, 559, 1705)
+    place_drug_text('mental_stim', 1376, 821, 1880)
 
-    layer = add_text_layer_from_file(image, '%s_muscle_emphasis.txt' % note_name, font)
-    place_text(layer, 460, 517, 940)
-
-    layer = add_text_layer_from_file(image, '%s_brain_emphasis.txt' % note_name, font)
-    place_text(layer, 215, 820, 805)
-
-    layer = add_text_layer_from_file(image, '%s_energy_stim.txt' % note_name, font)
-    place_text(layer, 1113, 41, 1510)
-
-    layer = add_text_layer_from_file(image, '%s_clarity_tonic.txt' % note_name, font)
-    place_text(layer, 1267, 268, 1876)
-
-    layer = add_text_layer_from_file(image, '%s_herculean_tonic.txt' % note_name, font)
-    place_text(layer, 1200, 520, 1645)
-
-    layer = add_text_layer_from_file(image, '%s_mental_stim.txt' % note_name, font)
-    place_text(layer, 1376, 780, 1880)
-
+# -- UNTESTED FROM HERE --
 def compose_note_bb(image, note_name):
     font = worstveld
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)

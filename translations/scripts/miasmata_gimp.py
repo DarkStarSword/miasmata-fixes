@@ -137,6 +137,26 @@ def word_wrap(layer, text, width, max_height = None, start_tag='', end_tag=''):
         txt = txt1
     return ''
 
+def word_wrap_reverse(layer, width):
+    text = pdb.gimp_text_layer_get_text(layer)
+    if not text:
+        text = pdb.gimp_text_layer_get_markup(layer)
+        if text.lower().startswith('<markup>') and text.lower().endswith('</markup>'):
+            text = text[8:-9]
+    words = text.split(' ')
+    if not len(words):
+        return ''
+    txt = words[-1]
+    for (i, word) in reversed(list(enumerate(words[:-1]))):
+        txt1 = '%s %s' % (word, txt)
+        pdb.gimp_text_layer_set_markup(layer, txt1)
+        if layer.width > width:
+            txt1 = '%s\n%s' % (word, txt)
+            pdb.gimp_text_layer_set_markup(layer, txt1)
+            width = max(width, layer.width)
+        txt = txt1
+    return ''
+
 def bold_word_wrap(layer, text, width, max_height = None):
     return word_wrap(layer, text, width, max_height, start_tag='<b>', end_tag='</b>')
 
