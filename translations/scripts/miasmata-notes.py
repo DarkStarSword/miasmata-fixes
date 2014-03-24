@@ -335,7 +335,7 @@ def compose_note_cc(image, note_name):
     place_text(layer, x, 215, xalign=CENTER, yalign=CENTER)
     layer = add_text_layer_from_file(image, '%s_title.txt' % note_name, font_t)
     underline_text(layer)
-    place_text(layer, x, 317, xalign=CENTER, yalign=CENTER)
+    place_text(layer, x, 316, xalign=CENTER, yalign=CENTER)
 
     layer = add_text_layer_from_file(image, 'primary_materials.txt', font)
     place_text(layer, 1350, 70, xalign=CENTER, yalign=CENTER)
@@ -344,30 +344,29 @@ def compose_note_cc(image, note_name):
     layer = add_text(image, '2. %s' % get_plant_name('fleshy purple fruit'), font)
     place_text(layer, 1460, 920, xalign=CENTER, yalign=CENTER)
 
-# -- UNTESTED FROM HERE --
 def compose_note_dd(image, note_name):
     font = arch_daughter
+    font_t = arch_daughter_t2
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
-    place_text(layer, 215, 390, 970)
+    place_text(layer, 215, 350, 970)
 
-    x = 600
+    x = 585
     layer = add_text_layer_from_file(image, 'synthesis_of.txt', font)
     place_text(layer, x, 172, xalign=CENTER, yalign=CENTER)
     layer = add_text_layer_from_file(image, '%s_title.txt' % note_name, font_t)
     underline_text(layer)
-    place_text(layer, x, 265, xalign=CENTER, yalign=CENTER)
+    place_text(layer, x, 269, xalign=CENTER, yalign=CENTER)
 
-    x = 1290
+    txt = '1. %s\n2. %s' % (get_plant_name('giant bloom'), get_plant_name('blue-capped toadstool'))
+    x = 1105
     layer = add_text_layer_from_file(image, 'primary_materials.txt', font)
-    place_text(layer, x, 70, xalign=CENTER, yalign=CENTER)
-    layer = add_text_layer_from_file(image, '%s_rh_primary.txt' % note_name, font)
-    place_text(layer, x, 560)
-    layer = add_text_layer_from_file(image, 'secondary_materials.txt', font)
-    underline_text(layer)
-    place_text(layer, x, 735)
-    layer = add_text_layer_from_file(image, '%s_rh_secondary.txt' % note_name, font)
-    place_text(layer, x, 780)
+    place_text(layer, 1088, 74, yalign=CENTER)
+    layer = add_text(image, txt, font)
+    place_text(layer, x, 550)
+    layer = add_text_layer_from_file(image, '%s_rh.txt' % note_name, font)
+    place_text(layer, x, 725)
 
+# -- UNTESTED FROM HERE --
 def compose_note_ee(image, note_name):
     font = arch_daughter
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
