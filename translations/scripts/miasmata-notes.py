@@ -27,6 +27,7 @@ worstveld = Font('Worstveld Sling Bold', 60.0)
 # the one used in game: http://www.fontsquirrel.com/fonts/architects-daughter
 arch_daughter = Font("Architects Daughter", 35.0, True, -13)
 arch_daughter_t = Font("Architects Daughter", 45.0, True, -13)
+arch_daughter_t2 = Font("Architects Daughter Bold", 40.0)
 arch_daughter_s = Font("Architects Daughter Bold", 30.0, False, -13)
 
 # -- UNTESTED FONTS --
@@ -323,27 +324,27 @@ def compose_note_bb(image, note_name):
     layer = add_text(image, get_plant_name('wood gill fungus'), font)
     place_text(layer, 1625, 955, xalign=RIGHT, yalign=CENTER)
 
-# -- UNTESTED FROM HERE --
 def compose_note_cc(image, note_name):
     font = arch_daughter
-    font_t = arch_daughter_t
+    font_t = arch_daughter_t2
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
-    place_text(layer, 215, 435, 970)
+    place_text(layer, 215, 390, 970)
 
-    x = 600
+    x = 590
     layer = add_text_layer_from_file(image, 'synthesis_of.txt', font)
     place_text(layer, x, 215, xalign=CENTER, yalign=CENTER)
     layer = add_text_layer_from_file(image, '%s_title.txt' % note_name, font_t)
-    underline_layer(layer)
-    place_text(layer, x, 315, xalign=CENTER, yalign=CENTER)
+    underline_text(layer)
+    place_text(layer, x, 317, xalign=CENTER, yalign=CENTER)
 
     layer = add_text_layer_from_file(image, 'primary_materials.txt', font)
     place_text(layer, 1350, 70, xalign=CENTER, yalign=CENTER)
-    layer = add_text_layer_from_file(image, '%s_jungle_flower.txt' % note_name, font)
+    layer = add_text(image, '1. %s' % get_plant_name('large jungle flower'), font)
     place_text(layer, 1455, 520, xalign=CENTER, yalign=CENTER)
-    layer = add_text_layer_from_file(image, '%s_purple_fruit.txt' % note_name, font)
-    place_text(layer, 1480, 920, xalign=CENTER, yalign=CENTER)
+    layer = add_text(image, '2. %s' % get_plant_name('fleshy purple fruit'), font)
+    place_text(layer, 1460, 920, xalign=CENTER, yalign=CENTER)
 
+# -- UNTESTED FROM HERE --
 def compose_note_dd(image, note_name):
     font = arch_daughter
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
@@ -353,7 +354,7 @@ def compose_note_dd(image, note_name):
     layer = add_text_layer_from_file(image, 'synthesis_of.txt', font)
     place_text(layer, x, 172, xalign=CENTER, yalign=CENTER)
     layer = add_text_layer_from_file(image, '%s_title.txt' % note_name, font_t)
-    underline_layer(layer)
+    underline_text(layer)
     place_text(layer, x, 265, xalign=CENTER, yalign=CENTER)
 
     x = 1290
@@ -362,7 +363,7 @@ def compose_note_dd(image, note_name):
     layer = add_text_layer_from_file(image, '%s_rh_primary.txt' % note_name, font)
     place_text(layer, x, 560)
     layer = add_text_layer_from_file(image, 'secondary_materials.txt', font)
-    underline_layer(layer)
+    underline_text(layer)
     place_text(layer, x, 735)
     layer = add_text_layer_from_file(image, '%s_rh_secondary.txt' % note_name, font)
     place_text(layer, x, 780)
@@ -590,7 +591,7 @@ def compose_note_uu(image, note_name):
     layer = add_text_layer_from_file(image, 'synthesis_of.txt', font)
     place_text(layer, x, 220, xalign=CENTER, yalign=CENTER)
     layer = add_text_layer_from_file(image, '%s_title.txt' % note_name, font_t)
-    underline_layer(layer)
+    underline_text(layer)
     place_text(layer, x, 313, xalign=CENTER, yalign=CENTER)
 
     layer = add_text_layer_from_file(image, 'primary_materials.txt', font)
