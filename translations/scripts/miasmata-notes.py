@@ -23,7 +23,7 @@ flute_l = Font('Flute', 43.0, True, -5.0)
 wiki = Font('Wiki', 40.0, True, 5.0)
 
 # -- UNTESTED FONTS --
-worstveld = Font('Worstveld Sting', 40.0)
+worstveld = Font('Worstveld Sling', 40.0)
 # Some of the tops of the letters are slightly cut off - not very noticeable,
 # will have to check if that's in the font or if it's a bug in The GIMP:
 newspaper_big_heading = Font('New Yorker', 106.0, True)
