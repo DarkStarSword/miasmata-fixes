@@ -100,11 +100,17 @@ def place_text(layer, x, y, x2=None, y2=None, w=None, h=None, xalign=LEFT, yalig
     if xalign == CENTER:
         x = x - layer.width / 2
     elif xalign == RIGHT:
-        x = x - layer.width
+        if x2 is not None:
+            x = x2 - layer.width
+        else:
+            x = x - layer.width
     if yalign == CENTER:
         y = y - layer.height / 2
     elif yalign == BOTTOM:
-        y = y - layer.height
+        if y2 is not None:
+            y = y2 - layer.height
+        else:
+            y = y - layer.height
     layer.translate(x, y)
 
 def center_layer(layer):

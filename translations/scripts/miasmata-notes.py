@@ -366,19 +366,21 @@ def compose_note_dd(image, note_name):
     layer = add_text_layer_from_file(image, '%s_rh.txt' % note_name, font)
     place_text(layer, x, 725)
 
-# -- UNTESTED FROM HERE --
 def compose_note_ee(image, note_name):
     font = arch_daughter
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
-    place_text(layer, 215, 97, 970)
+    place_text(layer, 215, 94, 970)
 
-    layer = add_text_layer_from_file(image, '%s_carnivorous_trap.txt' % note_name, font)
-    place_text(layer, 1455, 115, xalign=RIGHT, yalign=CENTER)
-    layer = add_text_layer_from_file(image, '%s_fleshy_root.txt' % note_name, font)
-    place_text(layer, 1310, 530, yalign=CENTER)
-    layer = add_text_layer_from_file(image, '%s_red_green_fungus.txt' % note_name, font)
-    place_text(layer, 1520, 850, xalign=RIGHT, yalign=CENTER)
+    layer = add_text(image, get_plant_name('carnivorous trap plant'), font)
+    pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_RIGHT)
+    place_text(layer, 1095, 105, 1435, xalign=RIGHT)
+    layer = add_text(image, get_plant_name('fleshy rooted plant'), font)
+    place_text(layer, 1310, 480, 1625)
+    layer = add_text(image, get_plant_name('red-green tree fungus'), font)
+    pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_RIGHT)
+    place_text(layer, 1100, 820, 1420, xalign=RIGHT)
 
+# -- UNTESTED FROM HERE --
 def compose_note_ff(image, note_name):
     font = neu_phollick_alpha
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
