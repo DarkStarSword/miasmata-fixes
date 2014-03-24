@@ -1,9 +1,5 @@
 Médicaments Basique
-Il y a de nombreuses plantes sur cette île qui peuvent être synthétisé en des médicaments. Ceux-ci pourront être utilisé pour diminuer temporairement les effets de la peste en réduisant la fièvre et l'épuisement.
--Finnegan
 
-Fleur de Lys
-Fleur des Prés à Pointes
-Champignon Lignicole Blanc
-Champignon Blanc Commun
-Violette Blanche et Rose
+Il y a de nombreuses plantes sur cette île qui peuvent être synthétisé en des médicaments. Ceux-ci pourront être utilisé pour diminuer temporairement les effets de la peste en réduisant la fièvre et l'épuisement.
+
+-Finnegan

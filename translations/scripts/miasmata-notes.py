@@ -21,6 +21,7 @@ flute_s = Font('Flute', 35.0, True, -5.0)
 flute_ex_s = Font('Flute Expanded', 30.0, True, -5.0)
 flute_l = Font('Flute', 43.0, True, -5.0)
 wiki = Font('Wiki', 40.0, True, 5.0)
+worstveld = Font('Worstveld Sling Bold', 60.0)
 
 # I found two variants of this font with different shapes, I believe this is
 # the one used in game: http://www.fontsquirrel.com/fonts/architects-daughter
@@ -29,7 +30,6 @@ arch_daughter_t = Font("Architects Daughter", 45.0, True, -13)
 arch_daughter_s = Font("Architects Daughter Bold", 30.0, False, -13)
 
 # -- UNTESTED FONTS --
-worstveld = Font('Worstveld Sling', 40.0)
 # Some of the tops of the letters are slightly cut off - not very noticeable,
 # will have to check if that's in the font or if it's a bug in The GIMP:
 newspaper_big_heading = Font('New Yorker', 106.0, True)
@@ -305,25 +305,25 @@ def compose_note_aa(image, note_name):
     place_drug_text('herculean_tonic', 1220, 559, 1705)
     place_drug_text('mental_stim', 1376, 821, 1880)
 
-# -- UNTESTED FROM HERE --
 def compose_note_bb(image, note_name):
     font = worstveld
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 205, 70, 915)
 
-    layer = add_text_layer_from_file(image, '%s_pink_spotted_lily.txt' % note_name, font)
+    layer = add_text(image, get_plant_name('pink spotted lily'), font)
     place_text(layer, 880, 907, xalign=RIGHT, yalign=CENTER)
-    layer = add_text_layer_from_file(image, '%s_white_spiked_prairie.txt' % note_name, font)
+    layer = add_text(image, get_plant_name('white spiked prairie flower'), font)
     place_text(layer, 1250, 100, yalign=CENTER)
-    layer = add_text_layer_from_file(image, '%s_white_mushroom.txt' % note_name, font)
-    place_text(layer, 1560, 360, xalign=CENTER, yalign=CENTER)
-    layer = add_text_layer_from_file(image, '%s_white_pink_viola.txt' % note_name, font)
-    place_text(layer, 1595, 505, yalign=CENTER)
-    layer = add_text_layer_from_file(image, '%s_pawn_mushroom.txt' % note_name, font)
+    layer = add_text(image, get_plant_name('common white mushroom'), font)
+    place_text(layer, 1560, 365, xalign=CENTER, yalign=CENTER)
+    layer = add_text(image, get_plant_name('white/pink viola'), font)
+    place_text(layer, 1645, 445, 1880 )
+    layer = add_text(image, get_plant_name('pawn-shaped mushroom'), font)
     place_text(layer, 1250, 870, xalign=CENTER, yalign=CENTER)
-    layer = add_text_layer_from_file(image, '%s_wood_gill_fungus.txt' % note_name, font)
+    layer = add_text(image, get_plant_name('wood gill fungus'), font)
     place_text(layer, 1625, 955, xalign=RIGHT, yalign=CENTER)
 
+# -- UNTESTED FROM HERE --
 def compose_note_cc(image, note_name):
     font = arch_daughter
     font_t = arch_daughter_t

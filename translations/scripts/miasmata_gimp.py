@@ -30,6 +30,49 @@ def add_text_layer(image, txt, font, font_size, line_spacing = None, colour = (0
 def read_text(filename):
     return open(filename, 'rb').read().decode('utf-8').strip()
 
+def get_plant_name(plant):
+    plant_num = {
+            'violet cactus': '00',
+            'prickly pear': 0,
+            'common white mushroom': 1,
+            'pawn-shaped mushroom': 2,
+            'red toadstool': 3,
+            'pearl-blue shelf fungus': 4,
+            'yellow mushrooms': 5,
+            'grey shelf fungus': 6,
+            'brown shelf fungus': 7,
+            'sponge-like fungus': 8,
+            'wood gill fungus': 9,
+            'trumpet mushroom': 10,
+            'white spiked prairie flower': 11,
+            'pink-white prairie flower': 12,
+            'orange prairie flower': 13,
+            'white bundle prairie flower': 14,
+            'sunflower': 15,
+            'indigo asteraceae': 16,
+            'red and yellow hibiscus': 17,
+            'white/pink viola': 18,
+            'blue-capped toadstool': 19,
+            'red-green tree fungus': 20,
+            'fleshy rooted plant': 21,
+            'pink spotted lily': 22,
+            'rainbow orchid': 23,
+            'titan plant': 24,
+            'giant bloom': 25,
+            'bulbous, fruit plant': 26,
+            'carnivorous pitcher plant': 27,
+            'carnivorous trap plant': 28,
+            'fabaceae': 29,
+            'bio-luminescent algae': 30,
+            'blue scaly tree fungus': 31,
+            'large jungle flower': 32,
+            'tropical buttercup': 33,
+            'fleshy purple fruit': 34,
+
+
+    }
+    return read_text('../plants/Plant_%s.txt' % str(plant_num[plant])).split('\n')[0]
+
 def add_text(image, txt, font, colour = (0, 0, 0)):
     layer = add_text_layer(image, txt, font.font, font.size, font.line_spacing, colour, letter_spacing=font.letter_spacing)
     if layer is None:
