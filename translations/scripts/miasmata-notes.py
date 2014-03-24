@@ -24,8 +24,10 @@ wiki = Font('Wiki', 40.0, True, 5.0)
 
 # -- UNTESTED FONTS --
 worstveld = Font('Worstveld Sting', 40.0)
-newspaper_big_heading = Font('MiasmataNewspaperTitle', 125.0, True)
-newspaper_headline = Font('MiasmataNewspaperTitle', 40.0, False, -7.0)
+# Some of the tops of the letters are slightly cut off - not very noticeable,
+# will have to check if that's in the font or if it's a bug in The GIMP:
+newspaper_big_heading = Font('New Yorker', 106.0, True)
+newspaper_headline = Font('New Yorker', 52.0, True, -1.0)
 # Not sure about this one:
 # newspaper_body = Font('FG Norah', 29.0)
 newspaper_body = Font('Eutheric', 25.0, letter_spacing=-1.0)
