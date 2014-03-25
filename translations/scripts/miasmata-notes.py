@@ -8,6 +8,7 @@ neu_phollick_alpha = Font('Neu Phollick Alpha', 40.0, True, 5.0)
 neu_phollick_alpha_c = Font('Neu Phollick Alpha', 40.0, True, 0.0)
 neu_phollick_alpha_l = Font('Neu Phollick Alpha', 45.0, True)
 neu_phollick_alpha_lc = Font('Neu Phollick Alpha', 45.0, True, -7.0)
+neu_phollick_alpha_lc2 = Font('Neu Phollick Alpha', 45.0, True, -10.0)
 neu_phollick_alpha_t = Font('Neu Phollick Alpha', 55.0, True)
 neu_phollick_alpha_s = Font('Neu Phollick Alpha', 30.0, True)
 fnt_23rd_street = Font('23rd Street', 40.0, False, 15.0)
@@ -420,25 +421,25 @@ def compose_note_hh(image, note_name):
     layer = add_text(image, get_plant_name('violet cactus'), font)
     place_text(layer, 1430, 920, yalign=CENTER)
 
-# -- UNTESTED FROM HERE --
 def compose_note_ii(image, note_name):
-    font = neu_phollick_alpha_l
+    font = neu_phollick_alpha_lc2
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
-    place_text(layer, 230, 535, 940)
+    place_text(layer, 230, 535, 892)
 
     layer = add_text_layer_from_file(image, '%s_rh.txt' % note_name, font)
     place_text(layer, 1140, 595, 1825)
 
 def compose_note_jj(image, note_name):
-    font = neu_phollick_alpha_l
+    font = neu_phollick_alpha_lc2
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 230, 545, 915)
 
     layer = add_text_layer_from_file(image, '%s_rh.txt' % note_name, font)
     place_text(layer, 1150, 540, 1830)
 
+# -- UNTESTED FROM HERE --
 def compose_note_kk(image, note_name):
-    font = neu_phollick_alpha_l
+    font = neu_phollick_alpha_lc2
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 1155, 555, 1840)
 
@@ -459,7 +460,7 @@ def compose_note_kk(image, note_name):
     place_text(layer, x1, header.offsets[1]+header.height, x2)
 
 def compose_note_ll(image, note_name):
-    font = neu_phollick_alpha_l
+    font = neu_phollick_alpha_lc2
     txt = read_text('%s.txt' % note_name)
 
     x1, x2 = 208, 965
@@ -479,7 +480,7 @@ def compose_note_ll(image, note_name):
     place_text(layer, 2705, 495, xalign=CENTER, yalign=CENTER)
 
 def compose_note_mm(image, note_name):
-    font = neu_phollick_alpha_l
+    font = neu_phollick_alpha_lc2
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 256, 600, 935)
 
@@ -492,7 +493,7 @@ def compose_note_nn(image, note_name):
     place_text(layer, 1470, 510, xalign=CENTER, yalign=CENTER)
 
 def compose_note_oo(image, note_name):
-    font = neu_phollick_alpha_l
+    font = neu_phollick_alpha_lc2
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 208, 45, 900)
 
@@ -502,7 +503,7 @@ def compose_note_oo(image, note_name):
     place_text(layer, 1550, 155, xalign=CENTER, yalign=CENTER)
 
 def compose_note_pp(image, note_name):
-    font = neu_phollick_alpha_l
+    font = neu_phollick_alpha_lc2
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 1155, 570, 1815)
 
@@ -515,7 +516,7 @@ def compose_note_pp(image, note_name):
     place_text(layer, x1, 690, x2)
 
 def compose_note_qq(image, note_name):
-    font = neu_phollick_alpha_l
+    font = neu_phollick_alpha_lc2
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 1155, 570, 1815)
 
