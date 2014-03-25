@@ -4,18 +4,7 @@ from gimpfu import *
 
 from miasmata_gimp import *
 
-# font = Font('Blound', 12.0)
-# font = Font('MathJax_SansSerif', 12.0) # ok
-# font = Font('Sakkal Majalla', 15.0) # Nah
-# font = Font('Pill Gothic 600mg Light', 12.0) # Not right, but reasonable
-# font = Font('MoolBoran', 16.0) # Ok w/o hinting
-# font = Font('Gill Sans MT', 14.0) # ok
-# font = Font('FreesiaUPC', 20.0) # ok
-# font = Font('Franklin Gothic Book', 12.0) # Nah
-# font = Font('Calibri', 12.0) # kinda ok with full hinting
-# font = Font('Britannic', 12.0) # Reasonable
-
-font = Font('EstragonFree', 14.0) # Unless the actual font is identified, I think this is close enough
+font = Font('Candara', 12.0, line_spacing=2.0)
 
 width = 512
 height = 64
@@ -35,7 +24,6 @@ def render_intro_slide(source_txt_file, output_basename):
     image = gimp.Image(width, height, RGB)
     background = add_background(image, 0.0)
     layer = add_text(image, txt, font, colour = (255, 255, 255))
-    pdb.gimp_text_layer_set_hint_style(layer, TEXT_HINT_STYLE_FULL)
     pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_CENTER)
     center_layer(layer)
 
