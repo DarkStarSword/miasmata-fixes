@@ -1,7 +1,5 @@
 Excipient Amplificateur
+
 Nous avons rencontré plusieurs plantes sur l'île qui peuvent servir d'Excipient Amplificateur.
+
 L'excipient pourra être combiné avec une plante médicinale durant la synthèse pour produire un Médicament Avancé.
-Astéracée Indigo
-Renoncule Tropicale
-Fleur des Prés Blanche-Pourpre
-Cactus Violet

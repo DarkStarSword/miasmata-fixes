@@ -20,6 +20,7 @@ flute = Font('Flute', 40.0, True, -5.0)
 flute_s = Font('Flute', 35.0, True, -5.0)
 flute_ex_s = Font('Flute Expanded', 30.0, True, -5.0)
 flute_l = Font('Flute', 43.0, True, -5.0)
+flute_xl = Font('Flute', 45.0, True, -8.0)
 wiki = Font('Wiki', 40.0, True, 5.0)
 worstveld = Font('Worstveld Sling Bold', 60.0)
 
@@ -404,9 +405,8 @@ def compose_note_gg(image, note_name):
     layer = add_text(image, get_plant_name('red and yellow hibiscus'), font)
     place_text(layer, 640, 885, xalign=RIGHT, yalign=CENTER)
 
-# -- UNTESTED FROM HERE --
 def compose_note_hh(image, note_name):
-    font = flute
+    font = flute_xl
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 210, 85, 950)
 
@@ -415,10 +415,12 @@ def compose_note_hh(image, note_name):
     layer = add_text(image, get_plant_name('tropical buttercup'), font)
     place_text(layer, 1395, 95, yalign=CENTER)
     layer = add_text(image, get_plant_name('pink-white prairie flower'), font)
-    place_text(layer, 1555, 520, xalign=RIGHT, yalign=CENTER)
+    pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_RIGHT)
+    place_text(layer, 1230, 540, 1600, xalign=RIGHT)
     layer = add_text(image, get_plant_name('violet cactus'), font)
     place_text(layer, 1430, 920, yalign=CENTER)
 
+# -- UNTESTED FROM HERE --
 def compose_note_ii(image, note_name):
     font = neu_phollick_alpha_l
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
