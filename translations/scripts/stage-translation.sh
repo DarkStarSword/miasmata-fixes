@@ -38,3 +38,4 @@ done
 link_dds_files "$translation/notes" "TEX/J2" "N*_*.dds"
 link_dds_files "$translation/notes" "TEX" "InWorldNotesz_Set*.dds"
 link_dds_files "$translation/notes" "TEX" "Notes.dds"
+link_dds_files "$translation/" "TEX/MENU" "copyright.dds"
