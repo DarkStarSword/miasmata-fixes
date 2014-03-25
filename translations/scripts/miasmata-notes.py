@@ -390,31 +390,33 @@ def compose_note_ff(image, note_name):
     layer = add_text(image, get_plant_name('red toadstool'), font)
     place_text(layer, 660, 940, xalign=CENTER, yalign=CENTER)
 
-# -- UNTESTED FROM HERE --
 def compose_note_gg(image, note_name):
     font = neu_phollick_alpha_l
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
-    place_text(layer, 1105, 90, 1865)
+    place_text(layer, 1105, 50, 1865)
 
-    layer = add_text_layer_from_file(image, '%s_sunflower.txt' % note_name, font)
-    place_text(layer, 1430, 715, xalign=RIGHT, yalign=CENTER)
-    layer = add_text_layer_from_file(image, '%s_orange_prairie.txt' % note_name, font)
+    layer = add_text(image, get_plant_name('sunflower'), font)
+    # place_text(layer, 1430, 715, xalign=RIGHT, yalign=CENTER)
+    place_text(layer, 1662, 910, yalign=CENTER)
+    layer = add_text(image, get_plant_name('orange prairie flower'), font)
     place_text(layer, 545, 320, yalign=CENTER)
-    layer = add_text_layer_from_file(image, '%s_red_yellow_hibiscus.txt' % note_name, font)
+    # TODO - MASK WORD WRAP
+    layer = add_text(image, get_plant_name('red and yellow hibiscus'), font)
     place_text(layer, 640, 885, xalign=RIGHT, yalign=CENTER)
 
+# -- UNTESTED FROM HERE --
 def compose_note_hh(image, note_name):
     font = flute
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 210, 85, 950)
 
-    layer = add_text_layer_from_file(image, '%s_indigo_asteraceae.txt' % note_name, font)
+    layer = add_text(image, get_plant_name('indigo asteraceae'), font)
     place_text(layer, 730, 880, xalign=RIGHT, yalign=CENTER)
-    layer = add_text_layer_from_file(image, '%s_tropical_buttercup.txt' % note_name, font)
+    layer = add_text(image, get_plant_name('tropical buttercup'), font)
     place_text(layer, 1395, 95, yalign=CENTER)
-    layer = add_text_layer_from_file(image, '%s_purple_prairie.txt' % note_name, font)
+    layer = add_text(image, get_plant_name('pink-white prairie flower'), font)
     place_text(layer, 1555, 520, xalign=RIGHT, yalign=CENTER)
-    layer = add_text_layer_from_file(image, '%s_violet_cactus.txt' % note_name, font)
+    layer = add_text(image, get_plant_name('violet cactus'), font)
     place_text(layer, 1430, 920, yalign=CENTER)
 
 def compose_note_ii(image, note_name):
@@ -598,9 +600,9 @@ def compose_note_uu(image, note_name):
     layer = add_text_layer_from_file(image, 'primary_materials.txt', font)
     place_text(layer, 1336, 73, xalign=CENTER, yalign=CENTER)
     x = 1217
-    layer = add_text_layer_from_file(image, '%s_sponge_mushroom.txt' % note_name, font)
+    layer = add_text(image, get_plant_name('sponge-like fungus'), font)
     place_text(layer, x, 495)
-    layer = add_text_layer_from_file(image, '%s_trumpet_mushroom.txt' % note_name, font)
+    layer = add_text(image, get_plant_name('trumpet mushroom'), font)
     place_text(layer, x, 900)
 
 def compose_note_vv(image, note_name):
