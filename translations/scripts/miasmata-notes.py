@@ -42,7 +42,6 @@ arch_daughter_s = Font("Architects Daughter Bold", 30.0, False, -13)
 # will have to check if that's in the font or if it's a bug in The GIMP:
 newspaper_big_heading = Font('New Yorker Accented', 106.0, True)
 newspaper_headline = Font('New Yorker Accented', 52.0, True, -1.0)
-# newspaper_headline = Font('New Yorker Accented', 52.0, True, -1.0)
 
 newspaper_body = Font('OldNewspaperTypes Medium', 24.0, True, -1.0)
 
@@ -548,13 +547,29 @@ def compose_note_pp(image, note_name):
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 1155, 570, 1815)
 
-    x1, x2 = 273, 710
+    clip_mask = get_layer_by_name(image, 'mask')
+    clip_mask.visible = False
+    gap = 18
+
+    x1, x2 = 270, 707
     header = add_text_layer_from_file(image, '%s_clip_heading.txt' % note_name, newspaper_headline)
     pdb.gimp_text_layer_set_justification(header, TEXT_JUSTIFY_CENTER)
-    place_text(header, x1, 370, x2)
+    word_wrap(header, None, x2-x1)
+    place_text(header, x1 + (x2-x1)/2, 375, xalign=CENTER)
+    y = header.offsets[1] + header.height
+
     layer = add_text_layer_from_file(image, '%s_clip.txt' % note_name, newspaper_body)
     pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_FILL)
-    place_text(layer, x1, 690, x2)
+    place_text(layer, x1, y  + gap, x2)
+    add_layer_mask_from_other_layer_alpha(layer, clip_mask)
+
+    w = 330
+    layer = gimp.Layer(image, 'line', w, 1, RGB_IMAGE, 100.0, NORMAL_MODE)
+    image.add_layer(layer, 0)
+    gimp.set_background(0, 0, 0)
+    layer.fill(BACKGROUND_FILL)
+    layer.set_offsets(x1 + (x2-x1-w)/2, y + gap/3)
+
 
 def compose_note_qq(image, note_name):
     font = neu_phollick_alpha_lc2
