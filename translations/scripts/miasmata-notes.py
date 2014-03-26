@@ -670,15 +670,13 @@ def compose_note_xx(image, note_name):
 
 def compose_note_yy(image, note_name):
     font = flute_ex_s2
-    txt = read_text('%s.txt' % note_name)
 
     x1, x2 = 240, 960
     y1, y2 = 45, 1000
-    layer = add_text(image, txt, font)
-    place_text(layer, x1, y1)
-    txt = bold_word_wrap(layer, txt, x2-x1, y2-y1)
+    layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
+    place_text(layer, x1, y1, x2)
 
-    layer = add_text(image, txt, font)
+    layer = add_text_layer_from_file(image, '%s_rh.txt' % note_name, font)
     place_text(layer, 1120, y1, 1850)
 
 def compose_note_zz(image, note_name):
