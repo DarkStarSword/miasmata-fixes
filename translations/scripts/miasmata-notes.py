@@ -7,6 +7,7 @@ from copy import copy
 neu_phollick_alpha = Font('Neu Phollick Alpha', 40.0, True, 5.0)
 neu_phollick_alpha_c = Font('Neu Phollick Alpha', 40.0, True, 0.0)
 neu_phollick_alpha_c2 = Font('Neu Phollick Alpha', 40.0, True, -4.0)
+neu_phollick_alpha_c3 = Font('Neu Phollick Alpha', 40.0, True, -7.0)
 neu_phollick_alpha_l = Font('Neu Phollick Alpha', 45.0, True)
 neu_phollick_alpha_lc = Font('Neu Phollick Alpha Bold', 45.0, False, -7.0)
 neu_phollick_alpha_lc2 = Font('Neu Phollick Alpha Bold', 45.0, False, -10.0)
@@ -22,7 +23,7 @@ fg_norah = Font('FG Norah', 40.0, False, -8.0)
 fg_norah_b = Font('FG Norah', 40.0, True, -10.0)
 flute = Font('Flute', 40.0, True, -5.0)
 flute_s = Font('Flute', 35.0, True, -5.0)
-flute_ex_s = Font('Flute Expanded', 30.0, True, -5.0)
+flute_ex_s = Font('Flute Expanded', 31.0, True, -5.0)
 flute_l = Font('Flute', 43.0, True, -5.0)
 flute_xl = Font('Flute', 45.0, True, -8.0)
 wiki = Font('Wiki', 40.0, True, 5.0)
@@ -240,11 +241,12 @@ def compose_note_a4(image, note_name):
 
 def compose_note_a5(image, note_name):
     font = neu_phollick_alpha_c
+    font_t = neu_phollick_alpha_lc
     font2 = neu_phollick_alpha_s
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 195, 175, 973)
 
-    layer = add_text_layer_from_file(image, '%s_title.txt' % note_name, neu_phollick_alpha_lc)
+    layer = add_text_layer_from_file(image, '%s_title.txt' % note_name, font_t)
     pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_CENTER)
     word_wrap(layer, None, 920 - 260)
     place_text(layer, 575, 140, xalign=CENTER, yalign=BOTTOM)
@@ -431,7 +433,7 @@ def compose_note_hh(image, note_name):
 def compose_note_ii(image, note_name):
     font = neu_phollick_alpha_lc2
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
-    place_text(layer, 230, 535, 892)
+    place_text(layer, 230, 530, 892)
 
     layer = add_text_layer_from_file(image, '%s_rh.txt' % note_name, font)
     place_text(layer, 1140, 595, 1825)
@@ -439,7 +441,7 @@ def compose_note_ii(image, note_name):
 def compose_note_jj(image, note_name):
     font = neu_phollick_alpha_lc2
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
-    place_text(layer, 230, 545, 915)
+    place_text(layer, 230, 540, 915)
 
     layer = add_text_layer_from_file(image, '%s_rh.txt' % note_name, font)
     place_text(layer, 1150, 540, 1830)
@@ -500,12 +502,12 @@ def compose_note_ll(image, note_name):
     place_text(layer, 1700, 500, xalign=CENTER, yalign=CENTER)
 
 def compose_note_mm(image, note_name):
-    font = neu_phollick_alpha_lc2
+    font = neu_phollick_alpha_lc
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
-    place_text(layer, 256, 600, 935)
+    place_text(layer, 256, 595, 935)
 
     layer = add_text_layer_from_file(image, '%s_rh.txt' % note_name, font)
-    place_text(layer, 1158, 573, 1815)
+    place_text(layer, 1158, 570, 1815)
 
 def compose_note_nn(image, note_name):
     font = neu_phollick_alpha_l
@@ -514,12 +516,15 @@ def compose_note_nn(image, note_name):
 
 def compose_note_oo(image, note_name):
     font = neu_phollick_alpha_lc3
+    font2 = neu_phollick_alpha_c2
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
-    place_text(layer, 208, 45, 900)
+    place_text(layer, 208, 45, 930)
 
-    layer = add_text_layer_from_file(image, '%s_step1.txt' % note_name, font)
+    layer = add_text_layer_from_file(image, '%s_step1.txt' % note_name, font2)
+    pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_CENTER)
     place_text(layer, 1300, 285, xalign=CENTER, yalign=CENTER)
-    layer = add_text_layer_from_file(image, '%s_step2.txt' % note_name, font)
+    layer = add_text_layer_from_file(image, '%s_step2.txt' % note_name, font2)
+    pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_CENTER)
     place_text(layer, 1550, 155, xalign=CENTER, yalign=CENTER)
 
 def compose_note_pp(image, note_name):
@@ -558,11 +563,11 @@ def compose_note_rr(image, note_name):
     font = neu_phollick_alpha_l
     layer = add_text_layer_from_file(image, '%s_boat.txt' % note_name, font)
     pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_CENTER)
-    place_text(layer, 465, 245, xalign=CENTER, yalign=CENTER)
+    place_text(layer, 465, 195, xalign=CENTER)
 
     layer = add_text_layer_from_file(image, '%s_causeway.txt' % note_name, font)
     pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_CENTER)
-    place_text(layer, 1280, 375, xalign=CENTER, yalign=CENTER)
+    place_text(layer, 1280, 390, xalign=CENTER, yalign=BOTTOM)
 
 def compose_note_ss(image, note_name):
     font = worstveld
@@ -570,10 +575,11 @@ def compose_note_ss(image, note_name):
     place_text(layer, 1115, 70, 1830)
 
 def compose_note_tt(image, note_name):
-    font = neu_phollick_alpha_c
+    font = neu_phollick_alpha_c3
     font2 = neu_phollick_alpha_s
+    font_t = neu_phollick_alpha_lc
 
-    layer = add_text_layer_from_file(image, '%s_title.txt' % note_name, neu_phollick_alpha_lc)
+    layer = add_text_layer_from_file(image, '%s_title.txt' % note_name, font_t)
     pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_CENTER)
     word_wrap(layer, None, 950 - 225)
     place_text(layer, 575, 140, xalign=CENTER, yalign=BOTTOM)
@@ -585,10 +591,10 @@ def compose_note_tt(image, note_name):
     place_text(layer, x1, 505, x2)
 
     layer = add_text_layer_from_file(image, '%s_rh.txt' % note_name, font)
-    place_text(layer, 1108, 670, 1835)
+    place_text(layer, 1108, 630, 1835)
 
     layer = add_text_layer_from_file(image, '%s_you_are_here.txt' % note_name, font2)
-    place_text(layer, 1605, 535, yalign=CENTER)
+    place_text(layer, 1610, 540, yalign=CENTER)
 
     txt = read_text('%s_statue.txt' % note_name)
     layer = add_text(image, txt, font2)
@@ -612,22 +618,22 @@ def compose_note_uu(image, note_name):
     font = arch_daughter
     font_t = arch_daughter_t2
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
-    place_text(layer, 215, 435, 970)
+    place_text(layer, 215, 390, 970)
 
-    x = 600
+    x = 585
     layer = add_text_layer_from_file(image, 'synthesis_of.txt', font)
     place_text(layer, x, 220, xalign=CENTER, yalign=CENTER)
     layer = add_text_layer_from_file(image, '%s_title.txt' % note_name, font_t)
     underline_text(layer)
-    place_text(layer, x, 313, xalign=CENTER, yalign=CENTER)
+    place_text(layer, x, 316, xalign=CENTER, yalign=CENTER)
 
     layer = add_text_layer_from_file(image, 'primary_materials.txt', font)
     place_text(layer, 1336, 73, xalign=CENTER, yalign=CENTER)
-    x = 1217
+    x = 1470
     layer = add_text(image, '1. %s' % get_plant_name('sponge-like fungus'), font)
-    place_text(layer, x, 495)
+    place_text(layer, x, 480, xalign=CENTER)
     layer = add_text(image, '2. %s' % get_plant_name('trumpet mushroom'), font)
-    place_text(layer, x, 900)
+    place_text(layer, x, 900, xalign=CENTER)
 
 def compose_note_vv(image, note_name):
     font = flute_ex_s
@@ -636,7 +642,7 @@ def compose_note_vv(image, note_name):
     place_text(layer, 240, 40, 980)
 
     layer = add_text_layer_from_file(image, '%s_rh.txt' % note_name, font)
-    place_text(layer, 1125, 640, 1835)
+    place_text(layer, 1120, 640, 1835)
 
 def compose_note_ww(image, note_name):
     font = flute_ex_s
