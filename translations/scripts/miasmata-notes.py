@@ -34,10 +34,13 @@ arch_daughter_t2 = Font("Architects Daughter Bold", 40.0)
 arch_daughter_s = Font("Architects Daughter Bold", 30.0, False, -13)
 
 # -- UNTESTED FONTS --
+
+# I modified this font from the original to add accented characters.
 # Some of the tops of the letters are slightly cut off - not very noticeable,
 # will have to check if that's in the font or if it's a bug in The GIMP:
-newspaper_big_heading = Font('New Yorker', 106.0, True)
-newspaper_headline = Font('New Yorker', 52.0, True, -1.0)
+newspaper_big_heading = Font('New Yorker Accented', 106.0, True)
+newspaper_headline = Font('New Yorker Accented', 52.0, True, -1.0)
+
 # Not sure about this one:
 # newspaper_body = Font('FG Norah', 29.0)
 newspaper_body = Font('Eutheric', 25.0, letter_spacing=-1.0)
