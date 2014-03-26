@@ -40,7 +40,7 @@ arch_daughter_s = Font("Architects Daughter Bold", 30.0, False, -13)
 # I modified this font from the original to add accented characters.
 # Some of the tops of the letters are slightly cut off - not very noticeable,
 # will have to check if that's in the font or if it's a bug in The GIMP:
-newspaper_big_heading = Font('New Yorker Accented', 106.0, True)
+newspaper_big_heading = Font('New Yorker Accented', 105.0, True)
 newspaper_headline = Font('New Yorker Accented', 52.0, True, -1.0)
 
 newspaper_body = Font('OldNewspaperTypes Medium', 24.0, True, -1.0)
@@ -576,19 +576,25 @@ def compose_note_qq(image, note_name):
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 1155, 570, 1815)
 
+    clip_mask = get_layer_by_name(image, 'mask')
+    clip_mask.visible = False
+
     x1, x2 = 226, 972
     layer = add_text_layer_from_file(image, '%s_newspaper_name.txt' % note_name, newspaper_big_heading)
     pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_CENTER)
-    place_text(layer, x1+x2/2, 75, xalign=CENTER)
-    pdb.gimp_layer_resize(layer, x2-x1, layer.height, -(x1-layer.offsets[0]), 0)
+    place_text(layer, 645, 82, xalign=CENTER)
+    # pdb.gimp_layer_resize(layer, x2-x1, layer.height, -(x1-layer.offsets[0]), 0)
+    add_layer_mask_from_other_layer_alpha(layer, clip_mask)
 
     x1, x2 = 271, 928
     header = add_text_layer_from_file(image, '%s_clip_heading.txt' % note_name, newspaper_headline)
     pdb.gimp_text_layer_set_justification(header, TEXT_JUSTIFY_CENTER)
-    place_text(header, x1, 250, x2)
+    reduce_text_to_fit(header, x1, x2)
+    place_text(header, x1 + (x2-x1)/2, 305, xalign=CENTER, yalign=CENTER)
     layer = add_text_layer_from_file(image, '%s_clip.txt' % note_name, newspaper_body)
     pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_FILL)
     place_text(layer, x1, 875, x2)
+    add_layer_mask_from_other_layer_alpha(layer, clip_mask)
 
 def compose_note_rr(image, note_name):
     font = neu_phollick_alpha_l
