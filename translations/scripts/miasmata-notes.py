@@ -44,9 +44,7 @@ arch_daughter_s = Font("Architects Daughter Bold", 30.0, False, -13)
 newspaper_big_heading = Font('New Yorker Accented', 106.0, True)
 newspaper_headline = Font('New Yorker Accented', 52.0, True, -1.0)
 
-# Not sure about this one:
-# newspaper_body = Font('FG Norah', 29.0)
-newspaper_body = Font('Eutheric', 25.0, True, letter_spacing=-1.0)
+newspaper_body = Font('OldNewspaperTypes Medium', 24.0, True, -1.0)
 
 def compose_note_0(image, note_name):
     body = add_text_layer_from_file(image, '%s.txt' % note_name, neu_phollick_alpha)
@@ -457,14 +455,16 @@ def compose_note_kk(image, note_name):
     pdb.gimp_text_layer_set_justification(header, TEXT_JUSTIFY_CENTER)
     word_wrap(header, None, x2-x1)
     place_text(header, x1 + (x2-x1)/2, 388, xalign=CENTER)
-    layer = add_text_layer_from_file(image, '%s_clip1.txt' % note_name, newspaper_body)
+    txt = read_text('%s_clip1.txt' % note_name)
+    layer = add_text(image, '%s %s' % (txt, '.'*20), newspaper_body)
     pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_FILL)
     place_text(layer, x1, header.offsets[1]+header.height, x2)
 
     x1, x2 = 607, 935
     header = add_text_layer_from_file(image, '%s_clip2_heading.txt' % note_name, newspaper_headline)
     pdb.gimp_text_layer_set_justification(header, TEXT_JUSTIFY_CENTER)
-    place_text(header, x1, 56, x2)
+    word_wrap(header, None, x2-x1)
+    place_text(header, x1, 56)
     layer = add_text_layer_from_file(image, '%s_clip2.txt' % note_name, newspaper_body)
     pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_FILL)
     place_text(layer, x1, header.offsets[1]+header.height, x2)
