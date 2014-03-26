@@ -1,10 +1,3 @@
-Cartographie Document A:
-Comment localiser votre position à travers la Triangulation
-Étape 1: Sortez votre carte et votre compas.
-Étape 2: Observez vos environs. Cherchez un point de repère tel qu'une statue, un bâtiment, une ruine, etc.
-A. Statue
-B. Tente
-C. Cabanon
-Vous êtes ici
 Si un point de repère est représenté par un icône sur la carte, alors il est considéré comme connu. Dans le diagramme ci-dessus, le point de repère A et C sont connus, mais pas le point de repère B.
+
 Étape 3: Dessinez des lignes de visibilité vers 2 points de repère connus en pressant [Activer] lorsque vous les observez. Votre position sur la carte se trouve à l'intersection de ces deux lignes de visibilité.
