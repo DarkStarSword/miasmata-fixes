@@ -661,11 +661,11 @@ def compose_note_xx(image, note_name):
     font = flute_ex_s
 
     y = 45
-    layer = add_text_layer_from_file(image, '%s.txt', font)
-    place_text(layer, 240, y, 980)
+    layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
+    place_text(layer, 240, y, 965)
 
-    layer = add_text_layer_from_file(image, '%s_rh.txt', font)
-    place_text(layer, 1125, y, 1845)
+    layer = add_text_layer_from_file(image, '%s_rh.txt' % note_name, font)
+    place_text(layer, 1100, y, 1845)
 
 def compose_note_yy(image, note_name):
     font = flute_ex_s
