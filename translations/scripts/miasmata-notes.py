@@ -37,13 +37,12 @@ arch_daughter_t = Font("Architects Daughter", 45.0, True, -13)
 arch_daughter_t2 = Font("Architects Daughter Bold", 40.0)
 arch_daughter_s = Font("Architects Daughter Bold", 30.0, False, -13)
 
-# -- UNTESTED FONTS --
-
 # I modified this font from the original to add accented characters.
 # Some of the tops of the letters are slightly cut off - not very noticeable,
 # will have to check if that's in the font or if it's a bug in The GIMP:
 newspaper_big_heading = Font('New Yorker Accented', 106.0, True)
 newspaper_headline = Font('New Yorker Accented', 52.0, True, -1.0)
+# newspaper_headline = Font('New Yorker Accented', 52.0, True, -1.0)
 
 newspaper_body = Font('OldNewspaperTypes Medium', 24.0, True, -1.0)
 
@@ -446,29 +445,45 @@ def compose_note_jj(image, note_name):
     place_text(layer, 1150, 540, 1830)
 
 def compose_note_kk(image, note_name):
-    # -- NEEDS WORK --
     font = neu_phollick_alpha_lc2
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 1155, 555, 1840)
+
+    clip_1_mask = get_layer_by_name(image, 'clip1_mask')
+    clip_2_mask = get_layer_by_name(image, 'clip2_mask')
+    clip_2_tape = get_layer_by_name(image, 'clip2_tape')
+    clip_1_mask.visible = False
+    clip_2_mask.visible = False
+
+    gap = 18
 
     x1, x2 = 226, 585
     header = add_text_layer_from_file(image, '%s_clip1_heading.txt' % note_name, newspaper_headline)
     pdb.gimp_text_layer_set_justification(header, TEXT_JUSTIFY_CENTER)
     word_wrap(header, None, x2-x1)
-    place_text(header, x1 + (x2-x1)/2, 388, xalign=CENTER)
+    place_text(header, x1 + (x2-x1)/2, 390, xalign=CENTER)
+    add_layer_mask_from_other_layer_alpha(header, clip_1_mask)
     txt = read_text('%s_clip1.txt' % note_name)
     layer = add_text(image, '%s %s' % (txt, '.'*20), newspaper_body)
     pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_FILL)
-    place_text(layer, x1, header.offsets[1]+header.height, x2)
+    place_text(layer, x1, header.offsets[1]+header.height + gap, x2)
+    add_layer_mask_from_other_layer_alpha(layer, clip_1_mask)
+
+    layer = add_text_layer_from_file(image, '%s_under.txt' % note_name, newspaper_body)
+    place_text(layer, 604, 558)
+    add_layer_mask_from_other_layer_alpha(layer, clip_1_mask)
 
     x1, x2 = 607, 935
+    y2 = 572
     header = add_text_layer_from_file(image, '%s_clip2_heading.txt' % note_name, newspaper_headline)
     pdb.gimp_text_layer_set_justification(header, TEXT_JUSTIFY_CENTER)
     word_wrap(header, None, x2-x1)
-    place_text(header, x1, 56)
+    place_text(header, x1 + (x2-x1)/2, 56, xalign=CENTER)
     layer = add_text_layer_from_file(image, '%s_clip2.txt' % note_name, newspaper_body)
     pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_FILL)
-    place_text(layer, x1, header.offsets[1]+header.height, x2)
+    place_text(layer, x1, header.offsets[1]+header.height + gap, x2)
+    add_layer_mask_from_other_layer_alpha(layer, clip_2_mask)
+    pdb.gimp_image_reorder_item(image, clip_2_tape, None, 0)
 
 def compose_note_ll(image, note_name):
     font = neu_phollick_alpha_lc3

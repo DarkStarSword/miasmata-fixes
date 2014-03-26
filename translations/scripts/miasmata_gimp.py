@@ -12,6 +12,19 @@ class Font(object):
         self.font, self.size, self.bold, self.line_spacing, self.letter_spacing = \
                 font, size, bold, line_spacing, letter_spacing
 
+def get_layer_by_name(image, name):
+    for l in image.layers:
+        if l.name == name:
+            return l
+    raise KeyError(name)
+
+def add_layer_mask_from_other_layer_alpha(dest, source):
+    image = dest.image
+    pdb.gimp_image_select_item(image, CHANNEL_OP_REPLACE, source)
+    mask = pdb.gimp_layer_create_mask(dest, ADD_SELECTION_MASK)
+    pdb.gimp_layer_add_mask(dest, mask)
+    pdb.gimp_selection_none(image)
+
 def add_text_layer(image, txt, font, font_size, line_spacing = None, colour = (0, 0, 0), name = 'Text', pos = (0, 0), letter_spacing=None):
     gimp.set_foreground(*colour)
     pdb.gimp_image_set_active_layer(image, image.layers[0])
