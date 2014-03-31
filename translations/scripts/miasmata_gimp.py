@@ -194,7 +194,7 @@ def word_wrap(layer, text, width, max_height = None, start_tag='', end_tag=''):
             if max_height is not None and layer.height > max_height:
                 markup = '%s%s%s' % (start_tag, txt, end_tag) # FIXME: Will break if splitting markup!
                 pdb.gimp_text_layer_set_markup(layer, markup)
-                return ' '.join([word] + words[1+i:])
+                return ' '.join([word] + words[1+i:]).strip()
             width = max(width, layer.width)
         txt = txt1
     return ''

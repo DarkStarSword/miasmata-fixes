@@ -25,6 +25,7 @@ flute = Font('Flute', 40.0, True, -5.0)
 flute_s = Font('Flute', 35.0, True, -5.0)
 flute_ex_s = Font('Flute Expanded', 31.0, True, -5.0)
 flute_ex_s2 = Font('Flute Expanded', 31.0, True, -1.0)
+flute_ex_xs = Font('Flute Expanded', 30.0, True, -5.0)
 flute_l = Font('Flute', 43.0, True, -5.0)
 flute_xl = Font('Flute', 45.0, True, -8.0)
 wiki = Font('Wiki', 40.0, True, 5.0)
@@ -682,17 +683,17 @@ def compose_note_vv(image, note_name):
     place_text(layer, 1120, 640, 1835)
 
 def compose_note_ww(image, note_name):
-    font = flute_ex_s
+    font = flute_ex_xs
     txt = read_text('%s.txt' % note_name)
 
-    x1, x2 = 240, 980
+    x1, x2 = 220, 970
     y1, y2 = 35, 1000
     layer = add_text(image, txt, font)
     place_text(layer, x1, y1)
     txt = bold_word_wrap(layer, txt, x2-x1, y2-y1)
 
     layer = add_text(image, txt, font)
-    place_text(layer, 1110, 55, 1850)
+    place_text(layer, 1110, y1, 1850)
 
 def compose_note_xx(image, note_name):
     font = flute_ex_s
