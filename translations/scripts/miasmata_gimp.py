@@ -239,8 +239,11 @@ def word_wrap(layer, text, width, max_height = None, start_tag='', end_tag=''):
     words = text.split(' ')
     if not len(words):
         return ''
-    txt = words[0]
-    for (i, word) in enumerate(words[1:], 1):
+    txt = words.pop(0)
+    while len(words):
+        word = words.pop(0)
+        if word.lower() == '<span':
+            word = '%s %s' % (word, words.pop(0))
         txt1 = '%s %s' % (txt, word)
         missing_tags = ''
         fail = False
@@ -267,7 +270,7 @@ def word_wrap(layer, text, width, max_height = None, start_tag='', end_tag=''):
             if max_height is not None and layer.height > max_height:
                 markup = '%s%s%s' % (start_tag, txt, end_tag) # FIXME: Will break if splitting markup!
                 pdb.gimp_text_layer_set_markup(layer, markup)
-                return ' '.join([word] + words[1+i:]).strip()
+                return ' '.join([word] + words).strip()
             width = max(width, layer.width)
         txt = txt1
     return ''
