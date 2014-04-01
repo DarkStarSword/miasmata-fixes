@@ -41,6 +41,11 @@ def desc_y(plant):
             'Plant_J': 50,
     }.get(plant, 62)
 
+research_coords = {
+    'RESEARCH_0': (rh_x + rh_w/2, 380, None, CENTER),
+    'Research_K': (90, 730, 825, LEFT),
+}
+
 
 def add_header(image, header_txt, rh=False):
     layer = add_text(image, header_txt, header_font)
@@ -148,6 +153,19 @@ def compose_research_image(template_txt_file, source_txt_file, source_conclusion
 
     save(image, output_basename)
 
+def compose_research2_image(template_txt_file, source_txt_file, source_blank_image, output_basename):
+    template = read_text(template_txt_file)
+    (header_txt, conclusion_templ_txt) = template.split('\n')
+
+    image = pdb.gimp_file_load(source_blank_image, source_blank_image)
+    add_header(image, header_txt, True)
+
+    (x1, y, x2, xalign) = research_coords[output_basename]
+    layer = add_text_layer_from_file(image, source_txt_file, research_font)
+    place_text(layer, x1, y, x2, xalign=xalign)
+
+    save(image, output_basename)
+
 register(
     "miasmata_drug",
     "Compose an image for Miasmata's Journal drug synthesis pages",
@@ -204,6 +222,25 @@ register(
     ],
     [],
     compose_research_image,
+)
+
+register(
+    "miasmata_research2",
+    "Compose an image for Miasmata's Journal plant research pages 0 and K - without conclusion)",
+    "Compose an image for Miasmata's Journal plant research pages (0 and K - without conclusion)",
+    "Ian Munsie",
+    "Ian Munsie",
+    "2014",
+    "<Toolbox>/_Miasmata/_Research2",
+    None,
+    [
+        (PF_FILE, "template_txt_file", "utf-8 encoded file with the translations of 'Laboratory Research' and 'My Conclusion:', one per line", None),
+        (PF_FILE, "source_txt_file", "utf-8 encoded file with the text to place on the image", None),
+        (PF_FILE, "source_blank_image", "Background image to use that should have previously had the text removed", None),
+        (PF_STRING, "output_basename", "Base output filename", None),
+    ],
+    [],
+    compose_research2_image,
 )
 
 main()
