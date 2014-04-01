@@ -1,1 +1,1 @@
-Si je le combine avec une plante capable d'inhiber la croissance de la moisissure, je serais capable de créer l'Antibiotique: <span color="#ff0000">l'Agent X</span>.
+Si je le <span color="#ff0000">combine avec une plante capable d'inhiber la croissance de la moisissure</span>, je serais capable de créer l'Antibiotique: <span color="#ff0000">l'Agent X</span>.

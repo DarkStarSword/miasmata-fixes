@@ -1,1 +1,1 @@
-Ce champignon peut être combiné à une autre plante durant sa synthèse pour contrer les effets du Poison de Type-C.
+Ce champignon peut être combiné à une autre plante durant sa synthèse pour <span color="#ff0000">contrer les effets du Poison de Type-C</span>.

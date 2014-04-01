@@ -1,1 +1,1 @@
-Si je combine ce champignon avec un Inhibiteur de Poison de Type-A, je serais capable de synthétiser ce champignon en un <span color="#ff0000">Stimulant d'Endurance Permanent</span>.
+Si je <span color="#ff0000">combine ce champignon avec un Inhibiteur de Poison de Type-A</span>, je serais capable de synthétiser ce champignon en un <span color="#ff0000">Stimulant d'Endurance Permanent</span>.

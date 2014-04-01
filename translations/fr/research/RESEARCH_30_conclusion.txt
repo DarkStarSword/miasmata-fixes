@@ -1,1 +1,1 @@
-Si cette algue est combinée avec un Stabilisateur Chimique durant la synthèse, je serais capable de créer <span color="#ff0000">l'Agent Y</span>.
+Si cette algue est <span color="#ff0000">combinée avec un Stabilisateur Chimique durant la synthèse</span>, je serais capable de créer <span color="#ff0000">l'Agent Y</span>.

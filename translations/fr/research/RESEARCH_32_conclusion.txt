@@ -1,1 +1,1 @@
-Lorsque combiné avec une autre plante, cette fleur va servir d'Agent d'Absorption. Elle sera utile à la création d'un <span color="#ff0000">Stimulant Musculaire Permanent</span>.
+Lorsque <span color="#ff0000">combiné avec une autre plante</span>, cette fleur va servir d'Agent d'Absorption. Elle sera utile à la création d'un <span color="#ff0000">Stimulant Musculaire Permanent</span>.
