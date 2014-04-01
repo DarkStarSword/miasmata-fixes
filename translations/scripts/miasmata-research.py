@@ -144,9 +144,17 @@ def compose_research_image(template_txt_file, source_txt_file, source_conclusion
     add_header(image, header_txt, True)
 
     # TODO: Wrap around images, manual placement, or whatever solution I end up doing
+    y = 85
     text = add_text_layer_from_file(image, source_txt_file, research_font, colour=(105, 105, 105))
-    place_text(text, x1, 85, x2)
-    masked_word_wrap(text, layer, x2-x1)
+    place_text(text, x1, y, x2)
+    line_spacing = pdb.gimp_text_layer_get_line_spacing(text)
+    while True:
+        group = masked_word_wrap(text, layer, x2-x1)
+        if y + group.height < lines[1]:
+            break
+        pdb.gimp_image_remove_layer(image, group)
+        line_spacing -= 1
+        pdb.gimp_text_layer_set_line_spacing(text, line_spacing)
 
     y = lines[1] + 10
     conclusion = read_text(source_conclusion_txt_file)

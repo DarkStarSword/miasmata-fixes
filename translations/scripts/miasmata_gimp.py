@@ -231,6 +231,8 @@ def masked_word_wrap(layer, mask, max_width, threshold = 128, hpad = 5, vpad = -
         pdb.gimp_text_layer_set_letter_spacing(text, letter_spacing)
     pdb.gimp_text_layer_set_hint_style(text, TEXT_HINT_STYLE_NONE)
 
+    return group
+
 word_wrap_fail_re = re.compile(r"""Element 'markup' was closed, but the currently open element is '(?P<elem>[^']+)'""")
 
 def word_wrap(layer, text, width, max_height = None, start_tag='', end_tag=''):
