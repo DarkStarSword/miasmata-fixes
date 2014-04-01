@@ -203,10 +203,10 @@ def masked_word_wrap(layer, mask, max_width, threshold = 128, hpad = 5, vpad = -
     group = pdb.gimp_layer_group_new(image)
     group.name = '%s_wrapped' % layer.name
     image.add_layer(group, 0)
+    paragraph_spacing = 0
 
-    # FIXME: Probe for these:
+    # FIXME: Probe for this:
     word_spacing = 10
-    paragraph_spacing = 30
 
     for paragraph in text.split('\n'):
         words = paragraph.split(' ')
@@ -217,6 +217,7 @@ def masked_word_wrap(layer, mask, max_width, threshold = 128, hpad = 5, vpad = -
                 continue
 
             text = pdb.gimp_text_fontname(image, None, x, y, word, 0, True, font_size, font_units, font)
+            paragraph_spacing = paragraph_spacing or text.height
             pdb.gimp_image_reorder_item(image, text, group, 0)
 
             (x, y) = find_room_in_mask(min_x, y, min_x + max_width, x, text.width, text.height)
@@ -224,7 +225,7 @@ def masked_word_wrap(layer, mask, max_width, threshold = 128, hpad = 5, vpad = -
             text.set_offsets(x, y)
 
             x += text.width + word_spacing
-        y += paragraph_spacing
+        y += paragraph_spacing + int(line_spacing)
 
     if letter_spacing is not None:
         pdb.gimp_text_layer_set_letter_spacing(text, letter_spacing)
