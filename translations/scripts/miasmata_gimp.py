@@ -136,6 +136,12 @@ def reduce_text_to_fit(layer, x1, x2):
         font_size -= 1
         pdb.gimp_text_layer_set_font_size(layer, font_size, units)
 
+def reduce_text_line_spacing_to_fit(layer, height):
+    line_spacing = pdb.gimp_text_layer_get_line_spacing(layer)
+    while layer.height > height:
+        line_spacing -= 1
+        pdb.gimp_text_layer_set_line_spacing(layer, line_spacing)
+
 def bold_text(layer, txt=None):
     # XXX: Requires a patched GIMP to set text markup
     # See https://bugzilla.gnome.org/show_bug.cgi?id=724101

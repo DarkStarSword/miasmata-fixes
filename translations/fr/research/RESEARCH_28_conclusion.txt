@@ -1,1 +1,3 @@
-Cette plante peut être synthétisée en un <span color="#ff0000">Stimulant Énergétique</span>.
+Cette plante peut être
+synthétisée en un <span color="#ff0000">Stimulant
+Énergétique</span>.

@@ -151,7 +151,9 @@ def compose_research_image(template_txt_file, source_txt_file, source_conclusion
     y = lines[1] + 10
     conclusion = read_text(source_conclusion_txt_file)
     layer = add_text(image, '%s\n\n%s' % (conclusion_templ_txt, conclusion), research_font)
-    place_text(layer, x1, y, x2)
+    word_wrap(layer, None, x2-x1)
+    place_text(layer, x1, y)
+    reduce_text_line_spacing_to_fit(layer, lines[0] - y - 10)
 
     save(image, output_basename)
 
