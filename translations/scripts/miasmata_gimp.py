@@ -151,15 +151,15 @@ def underline_text(layer):
     markup = '<u>%s</u>' % markup
     pdb.gimp_text_layer_set_markup(layer, markup)
 
-def masked_word_wrap(layer, mask, max_width, threshold = 128, padding = 5):
+def masked_word_wrap(layer, mask, max_width, threshold = 128, hpad = 5, vpad = -2):
     import struct
 
     def find_room_in_mask(min_x, min_y, max_x, start_x, required_w, required_h):
-        gimp.tile_cache_ntiles((required_h + 2*padding + 63) / 64)
+        gimp.tile_cache_ntiles((required_h + 2 * vpad + 63) / 64)
         (x, y) = (start_x, min_y)
-        xt = x - padding
+        xt = x - hpad
         while True:
-            for yt in range(y - padding, y + required_h + padding):
+            for yt in range(y - vpad, y + required_h + vpad):
                 tile = mask.get_tile2(False, xt, yt)
                 if tile is None:
                     print 'WARNING find_room_in_mask: No tile for %i x %i!' % (xt, yt)
@@ -169,15 +169,15 @@ def masked_word_wrap(layer, mask, max_width, threshold = 128, padding = 5):
                 v = (r + g + b) / 3
                 if v < threshold:
                     # print "mask intersected at %i x %i" % (x, y)
-                    x = xt + padding
+                    x = xt + hpad
                     break
-            if xt - x >= required_w + padding:
+            if xt - x >= required_w + hpad:
                 return (x, y)
             xt += 1
-            if xt - padding > max_x:
+            if xt - hpad > max_x:
                 y += required_h + int(line_spacing)
                 x = min_x
-                xt = x - padding
+                xt = x - hpad
 
     image = layer.image
     text = pdb.gimp_text_layer_get_text(layer)
