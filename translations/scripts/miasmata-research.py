@@ -110,8 +110,21 @@ def compose_research_image(template_txt_file, source_txt_file, source_conclusion
     (header_txt, conclusion_templ_txt) = template.split('\n')
 
     image = pdb.gimp_file_load(source_blank_image, source_blank_image)
+
+    try:
+        mask = get_layer_by_name(image, 'mask')
+        mask.visible = False
+        channel = ALPHA_CHANNEL
+        test = 1
+    except KeyError:
+        mask = None
+        channel = VALUE_MODE
+        test = -1
+
     image.merge_visible_layers(CLIP_TO_IMAGE)
     layer = image.active_layer
+    if mask is None:
+        mask = layer
 
     # Find lines around conclusion text
     x = 250
@@ -149,7 +162,7 @@ def compose_research_image(template_txt_file, source_txt_file, source_conclusion
     place_text(text, x1, y, x2)
     line_spacing = pdb.gimp_text_layer_get_line_spacing(text)
     while True:
-        group = masked_word_wrap(text, layer, x2-x1)
+        group = masked_word_wrap(text, mask, x2-x1, channel=channel, test=test)
         if y + group.height < lines[1]:
             break
         pdb.gimp_image_remove_layer(image, group)
