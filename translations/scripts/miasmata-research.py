@@ -45,21 +45,26 @@ def desc_y(plant):
 research_x1, research_x2, research_y = 110, 825, 85
 
 def research_2(txt, x1, y1, x2, y2):
-    yield (txt, x1, 195, x2, y2)
+    yield (txt, x1, 195, x2, y2, TEXT_JUSTIFY_LEFT)
 
 def research_9(txt, x1, y1, x2, y2):
-    yield (txt, x1, 120, x2, y2)
+    yield (txt, x1, 120, x2, y2, TEXT_JUSTIFY_LEFT)
 
 def research_18(txt, x1, y1, x2, y2):
-    yield (txt, x1, 125, x2, y2)
+    yield (txt, x1, 125, x2, y2, TEXT_JUSTIFY_LEFT)
 
 def research_20(txt, x1, y1, x2, y2):
     txt = txt.split('\n', 1)
-    yield (txt[0], x1, y1, x2, 195)
-    yield (txt[1].strip(), x1, 450, x2, y2)
+    yield (txt[0], x1, y1, x2, 195, TEXT_JUSTIFY_LEFT)
+    yield (txt[1].strip(), x1, 450, x2, y2, TEXT_JUSTIFY_LEFT)
+
+def research_25(txt, x1, y1, x2, y2):
+    txt = txt.split('\n', 1)
+    yield (txt[0], x1, y1, x2, y2, TEXT_JUSTIFY_LEFT)
+    yield (txt[1].strip(), x1, 215, x2, y2, TEXT_JUSTIFY_RIGHT)
 
 def research_def(txt, x1, y1, x2, y2):
-    yield (txt, x1, y1, x2, y2)
+    yield (txt, x1, y1, x2, y2, TEXT_JUSTIFY_LEFT)
 
 def research_coords(research, file, y2):
     txt = read_text(file)
@@ -68,6 +73,7 @@ def research_coords(research, file, y2):
         'RESEARCH_9': research_9,
         'RESEARCH_18': research_18,
         'RESEARCH_20': research_20,
+        'RESEARCH_25': research_25,
     }.get(research, research_def)(txt, research_x1, research_y, research_x2, y2)
 
 research2_coords = {
@@ -183,8 +189,9 @@ def compose_research_image(template_txt_file, source_txt_file, source_conclusion
 
     add_header(image, header_txt, True)
 
-    for (txt, x1, y1, x2, y2) in research_coords(output_basename, source_txt_file, lines[1]):
+    for (txt, x1, y1, x2, y2, justify) in research_coords(output_basename, source_txt_file, lines[1]):
         text = add_text(image, txt, research_font, colour=(105, 105, 105))
+        pdb.gimp_text_layer_set_justification(text, justify)
         place_text(text, x1, y1, x2)
         line_spacing = pdb.gimp_text_layer_get_line_spacing(text)
         while True:

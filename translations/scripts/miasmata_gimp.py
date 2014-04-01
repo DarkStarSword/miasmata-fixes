@@ -160,10 +160,13 @@ def underline_text(layer):
 def masked_word_wrap(layer, mask, max_width, channel = VALUE_MODE, threshold = 128, test = -1, hpad = 5, vpad = -2):
     import struct
 
-    def find_room_in_mask(min_x, min_y, max_x, start_x, required_w, required_h):
+    def find_room_in_mask(min_x, min_y, max_x, start_x, required_w, required_h, right_justify = False):
         gimp.tile_cache_ntiles((required_h + 2 * vpad + 63) / 64)
+        direction = 1
+        if right_justify:
+            direction = -1
         (x, y) = (start_x, min_y)
-        xt = x - hpad
+        xt = x - hpad*direction
         while True:
             for yt in range(y - vpad, y + required_h + vpad):
                 tile = mask.get_tile2(False, xt, yt)
@@ -180,15 +183,19 @@ def masked_word_wrap(layer, mask, max_width, channel = VALUE_MODE, threshold = 1
                     v = channels[channel]
                 if cmp(v, threshold) == test:
                     # print "mask intersected at %i x %i" % (x, y)
-                    x = xt + hpad
+                    x = xt + hpad*direction
                     break
-            if xt - x >= required_w + hpad:
+            if not right_justify and xt - x >= required_w + hpad:
                 return (x, y)
-            xt += 1
-            if xt - hpad > max_x:
+            elif right_justify and x - xt >= required_w + hpad:
+                return (x, y)
+            xt += direction
+            if (not right_justify and xt - hpad > max_x) or (right_justify and xt - hpad < min_x):
+                if right_justify:
+                    raise IndexError("not enough room")
                 y += required_h + int(line_spacing)
                 x = min_x
-                xt = x - hpad
+                xt = x - hpad*direction
 
     image = layer.image
     text = pdb.gimp_text_layer_get_text(layer)
@@ -210,26 +217,65 @@ def masked_word_wrap(layer, mask, max_width, channel = VALUE_MODE, threshold = 1
     image.add_layer(group, 0)
     paragraph_spacing = 0
 
+    justification = pdb.gimp_text_layer_get_justification(layer)
+    if justification not in [TEXT_JUSTIFY_LEFT, TEXT_JUSTIFY_RIGHT]:
+        raise ValueError('Unsupported text justification')
+    direction = 1
+    if justification == TEXT_JUSTIFY_RIGHT:
+        direction = -1
+
     # FIXME: Probe for this:
     word_spacing = 10
 
+    def place_line(line, x): # Not used for left justification
+        # XXX: This is actually a stripped down version of this very outer
+        # routine to place the text left justified starting at the calculated x
+        # position - I could potentially refactor this code and call it
+        # recursively
+        while len(line):
+            text = line.pop(0)
+            if not text:
+                x += word_spacing
+                continue
+            (x, _) = find_room_in_mask(min_x, y, min_x + max_width, x, text.width, text.height)
+            text.set_offsets(x, y)
+            x += text.width + word_spacing
+
     for paragraph in text.split('\n'):
         words = paragraph.split(' ')
-        x = min_x
+        if justification == TEXT_JUSTIFY_RIGHT:
+            x = min_x + max_width
+        else:
+            x = min_x
+        line = [] # Not used for left justification
         for word in words:
             if not word:
                 x += word_spacing
+                line.append(None)
                 continue
 
             text = pdb.gimp_text_fontname(image, None, x, y, word, 0, True, font_size, font_units, font)
             paragraph_spacing = paragraph_spacing or text.height
             pdb.gimp_image_reorder_item(image, text, group, 0)
 
-            (x, y) = find_room_in_mask(min_x, y, min_x + max_width, x, text.width, text.height)
-            # print 'Placing %s at %i x %i' % (word, x, y)
-            text.set_offsets(x, y)
+            if justification == TEXT_JUSTIFY_RIGHT:
+                while True:
+                    try:
+                        (x, _) = find_room_in_mask(min_x, y, min_x + max_width, x, text.width, text.height, True)
+                        line.append(text)
+                        break
+                    except IndexError:
+                        place_line(line, x)
+                        y += text.height + int(line_spacing)
+                        x = min_x + max_width
+            else:
+                (x, y) = find_room_in_mask(min_x, y, min_x + max_width, x, text.width, text.height)
+                # print 'Placing %s at %i x %i' % (word, x, y)
+                text.set_offsets(x, y)
 
-            x += text.width + word_spacing
+            x += (text.width + word_spacing) * direction
+        if justification != TEXT_JUSTIFY_LEFT:
+            place_line(line, x)
         y += paragraph_spacing + int(line_spacing)
 
     if letter_spacing is not None:
