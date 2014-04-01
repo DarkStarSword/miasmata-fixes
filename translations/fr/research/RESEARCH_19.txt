@@ -1,0 +1,3 @@
+En réalisant des tests, je suis parvenu à extraire les composants actifs de ce champignon. Mes analyses révèlent qu'ils pourraient être utilisés pour restaurer l'endurance.
+
+Cependant, ces composants contiennent un paralytique pulmonaire mortel qui doit être neutralisé pour pouvoir en faire usage.

@@ -1,0 +1,3 @@
+J'ai extrait les composants actifs du fruit de ce champignon en utilisant une méthode d'extraction à l'hexane.
+
+En exécutant de nombreux tests sur ces composants actifs, j'ai découvert qu'ils avaient la propriété de neutraliser les effets paralytiques de certains poisons.
