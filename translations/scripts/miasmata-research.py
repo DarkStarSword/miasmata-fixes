@@ -41,9 +41,38 @@ def desc_y(plant):
             'Plant_J': 50,
     }.get(plant, 62)
 
-research_coords = {
-    'RESEARCH_0': (rh_x + rh_w/2, 380, None, CENTER),
-    'Research_K': (90, 730, 825, LEFT),
+
+research_x1, research_x2, research_y = 110, 825, 85
+
+def research_2(txt, x1, y1, x2, y2):
+    yield (txt, x1, 195, x2, y2)
+
+def research_9(txt, x1, y1, x2, y2):
+    yield (txt, x1, 120, x2, y2)
+
+def research_18(txt, x1, y1, x2, y2):
+    yield (txt, x1, 125, x2, y2)
+
+def research_20(txt, x1, y1, x2, y2):
+    txt = txt.split('\n', 1)
+    yield (txt[0], x1, y1, x2, 195)
+    yield (txt[1].strip(), x1, 450, x2, y2)
+
+def research_def(txt, x1, y1, x2, y2):
+    yield (txt, x1, y1, x2, y2)
+
+def research_coords(research, file, y2):
+    txt = read_text(file)
+    return {
+        'RESEARCH_2': research_2,
+        'RESEARCH_9': research_9,
+        'RESEARCH_18': research_18,
+        'RESEARCH_20': research_20,
+    }.get(research, research_def)(txt, research_x1, research_y, research_x2, y2)
+
+research2_coords = {
+    'RESEARCH_0': (rh_x + rh_w/2 + 40, 380, None, CENTER, header_font),
+    'Research_K': (90, 730, 825, LEFT, research_font),
 }
 
 
@@ -152,28 +181,25 @@ def compose_research_image(template_txt_file, source_txt_file, source_conclusion
         if y % tile.eheight == tile.eheight - 1:
             tile = layer.get_tile2(False, x, y)
 
-    x1, x2 = 110, 825
-
     add_header(image, header_txt, True)
 
-    # TODO: Wrap around images, manual placement, or whatever solution I end up doing
-    y = 85
-    text = add_text_layer_from_file(image, source_txt_file, research_font, colour=(105, 105, 105))
-    place_text(text, x1, y, x2)
-    line_spacing = pdb.gimp_text_layer_get_line_spacing(text)
-    while True:
-        group = masked_word_wrap(text, mask, x2-x1, channel=channel, test=test)
-        if y + group.height < lines[1]:
-            break
-        pdb.gimp_image_remove_layer(image, group)
-        line_spacing -= 1
-        pdb.gimp_text_layer_set_line_spacing(text, line_spacing)
+    for (txt, x1, y1, x2, y2) in research_coords(output_basename, source_txt_file, lines[1]):
+        text = add_text(image, txt, research_font, colour=(105, 105, 105))
+        place_text(text, x1, y1, x2)
+        line_spacing = pdb.gimp_text_layer_get_line_spacing(text)
+        while True:
+            group = masked_word_wrap(text, mask, x2-x1, channel=channel, test=test)
+            if y1 + group.height < y2:
+                break
+            pdb.gimp_image_remove_layer(image, group)
+            line_spacing -= 1
+            pdb.gimp_text_layer_set_line_spacing(text, line_spacing)
 
     y = lines[1] + 10
     conclusion = read_text(source_conclusion_txt_file)
     layer = add_text(image, '%s\n\n%s' % (conclusion_templ_txt, conclusion), research_font)
-    word_wrap(layer, None, x2-x1)
-    place_text(layer, x1, y)
+    word_wrap(layer, None, research_x2 - research_x1)
+    place_text(layer, research_x1, y)
     reduce_text_line_spacing_to_fit(layer, lines[0] - y - 10)
 
     save(image, output_basename)
@@ -185,8 +211,8 @@ def compose_research2_image(template_txt_file, source_txt_file, source_blank_ima
     image = pdb.gimp_file_load(source_blank_image, source_blank_image)
     add_header(image, header_txt, True)
 
-    (x1, y, x2, xalign) = research_coords[output_basename]
-    layer = add_text_layer_from_file(image, source_txt_file, research_font)
+    (x1, y, x2, xalign, font) = research2_coords[output_basename]
+    layer = add_text_layer_from_file(image, source_txt_file, font)
     place_text(layer, x1, y, x2, xalign=xalign)
 
     save(image, output_basename)
