@@ -1,1 +1,1 @@
-Si je combine ceci avec une plante médicinale durant la synthèse, je pourrais créer un Médicament Avancé.
+Si je combine ceci avec une plante médicinale durant la synthèse, je pourrais créer un <span color="#ff0000">Médicament Avancé</span>.

@@ -1,1 +1,1 @@
-Si combiné avec un Agent d'Absorption, je pourrais synthétiser ce fruit en Stimulant Musculaire Permanent.
+Si combiné avec un Agent d'Absorption, je pourrais synthétiser ce fruit en <span color="#ff0000">Stimulant Musculaire Permanent</span>.

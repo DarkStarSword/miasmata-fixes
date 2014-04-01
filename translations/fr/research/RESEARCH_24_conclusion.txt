@@ -1,1 +1,1 @@
-Si je la combine avec une plante faisant office d'Inhibiteur d'Oxydation durant la synthèse, je serais capable de créer l'Agent Z.
+Si je la combine avec une plante faisant office d'Inhibiteur d'Oxydation durant la synthèse, je serais capable de créer <span color="#ff0000">l'Agent Z</span>.

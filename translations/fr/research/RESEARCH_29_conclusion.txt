@@ -1,1 +1,1 @@
-Cette plante peut être synthétisée en un Tonique de Clarté.
+Cette plante peut être synthétisée en un <span color="#ff0000">Tonique de Clarté</span>.

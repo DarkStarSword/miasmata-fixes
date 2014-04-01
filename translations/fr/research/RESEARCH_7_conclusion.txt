@@ -1,1 +1,1 @@
-Ce champignon peut être synthétisé en Médicament Basique.
+Ce champignon peut être synthétisé en <span color="#ff0000">Médicament Basique</span>.

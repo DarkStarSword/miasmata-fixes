@@ -1,1 +1,1 @@
-Cette fleur peut être synthétisée en un Médicament Basique.
+Cette fleur peut être synthétisée en un <span color="#ff0000">Médicament Basique</span>.

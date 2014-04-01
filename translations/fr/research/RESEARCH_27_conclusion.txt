@@ -1,1 +1,1 @@
-Cette plante sera fondamentale à la synthèse de l'Agent Z.
+Cette plante sera fondamentale à la synthèse de <span color="#ff0000">l'Agent Z</span>.

@@ -1,1 +1,1 @@
-Je devrais être capable de synthétiser cette plante en un Stimulant Intellectuel.
+Je devrais être capable de synthétiser cette plante en un <span color="#ff0000">Stimulant Intellectuel</span>.

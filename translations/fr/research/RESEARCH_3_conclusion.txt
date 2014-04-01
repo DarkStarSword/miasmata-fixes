@@ -1,1 +1,1 @@
-Ce champignon peut être synthétisé en un Tonique de Clarté.
+Ce champignon peut être synthétisé en un <span color="#ff0000">Tonique de Clarté</span>.

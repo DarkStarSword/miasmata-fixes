@@ -1,1 +1,1 @@
-En combinant cette Orchidée avec une plante faisant office d'Anti-Toxine durant la synthèse, je serais capable de créer l'Agent Y.
+En combinant cette Orchidée avec une plante faisant office d'Anti-Toxine durant la synthèse, je serais capable de créer <span color="#ff0000">l'Agent Y</span>.

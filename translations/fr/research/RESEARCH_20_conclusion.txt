@@ -1,1 +1,1 @@
-Ce champignon peut être synthétisé en un Stimulant Énergétique.
+Ce champignon peut être synthétisé en un <span color="#ff0000">Stimulant Énergétique</span>.
