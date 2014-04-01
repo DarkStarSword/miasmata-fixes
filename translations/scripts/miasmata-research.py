@@ -139,17 +139,19 @@ def compose_research_image(template_txt_file, source_txt_file, source_conclusion
         if y % tile.eheight == tile.eheight - 1:
             tile = layer.get_tile2(False, x, y)
 
+    x1, x2 = 110, 825
+
     add_header(image, header_txt, True)
 
+    # TODO: Wrap around images, manual placement, or whatever solution I end up doing
+    text = add_text_layer_from_file(image, source_txt_file, research_font, colour=(105, 105, 105))
+    place_text(text, x1, 85, x2)
+    masked_word_wrap(text, layer, x2-x1)
+
     y = lines[1] + 10
-    x1, x2 = 110, 825
     conclusion = read_text(source_conclusion_txt_file)
     layer = add_text(image, '%s\n\n%s' % (conclusion_templ_txt, conclusion), research_font)
     place_text(layer, x1, y, x2)
-
-    # TODO: Wrap around images, manual placement, or whatever solution I end up doing
-    layer = add_text_layer_from_file(image, source_txt_file, research_font, colour=(105, 105, 105))
-    place_text(layer, x1, 85, x2)
 
     save(image, output_basename)
 

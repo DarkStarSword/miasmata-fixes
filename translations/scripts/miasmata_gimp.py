@@ -151,6 +151,79 @@ def underline_text(layer):
     markup = '<u>%s</u>' % markup
     pdb.gimp_text_layer_set_markup(layer, markup)
 
+def masked_word_wrap(layer, mask, max_width):
+    import struct
+    threshold = 128
+
+    def find_room_in_mask(min_x, min_y, max_x, start_x, required_w, required_h):
+        gimp.tile_cache_ntiles((required_h + 63) / 64)
+        (x, y) = (start_x, min_y)
+        xt = x
+        while True:
+            for yt in range(y, y+required_h):
+                tile = mask.get_tile2(False, xt, yt)
+                if tile is None:
+                    # print '!!!! WARNING: No tile for %i x %i!' % (xt, yt)
+                    return (x, y)
+                # FIXME: Assumes 32bpp 8bit channel and ignores alpha
+                (r, g, b, a) = struct.unpack('4B', tile[xt % tile.ewidth, yt % tile.eheight])
+                v = (r + g + b) / 3
+                if v < threshold:
+                    # print "mask intersected at %i x %i" % (x, y)
+                    x = xt + 1
+                    break
+            if xt - x >= required_w:
+                return (x, y)
+            xt += 1
+            if xt > max_x:
+                y += required_h + int(line_spacing)
+                x = xt = min_x
+
+    image = layer.image
+    text = pdb.gimp_text_layer_get_text(layer)
+    if not text:
+        text = pdb.gimp_text_layer_get_markup(layer)
+        if text.lower().startswith('<markup>') and text.lower().endswith('</markup>'):
+            text = text[8:-9]
+    if not text:
+        return
+    font = pdb.gimp_text_layer_get_font(layer)
+    (font_size, font_units) = pdb.gimp_text_layer_get_font_size(layer)
+    line_spacing = pdb.gimp_text_layer_get_line_spacing(layer)
+    letter_spacing = pdb.gimp_text_layer_get_letter_spacing(layer)
+    (min_x, y) = layer.offsets
+    name = layer.name
+    layer.visible = False
+    group = pdb.gimp_layer_group_new(image)
+    group.name = '%s_wrapped' % layer.name
+    image.add_layer(group, 0)
+
+    # FIXME: Probe for these:
+    word_spacing = 10
+    paragraph_spacing = 30
+
+    for paragraph in text.split('\n'):
+        words = paragraph.split(' ')
+        x = min_x
+        for word in words:
+            if not word:
+                x += word_spacing
+                continue
+
+            text = pdb.gimp_text_fontname(image, None, x, y, word, 0, True, font_size, font_units, font)
+            pdb.gimp_image_reorder_item(image, text, group, 0)
+
+            (x, y) = find_room_in_mask(min_x, y, min_x + max_width, x, text.width, text.height)
+            # print 'Placing %s at %i x %i' % (word, x, y)
+            text.set_offsets(x, y)
+
+            x += text.width + word_spacing
+        y += paragraph_spacing
+
+    if letter_spacing is not None:
+        pdb.gimp_text_layer_set_letter_spacing(text, letter_spacing)
+    pdb.gimp_text_layer_set_hint_style(text, TEXT_HINT_STYLE_NONE)
+
 word_wrap_fail_re = re.compile(r"""Element 'markup' was closed, but the currently open element is '(?P<elem>[^']+)'""")
 
 def word_wrap(layer, text, width, max_height = None, start_tag='', end_tag=''):
