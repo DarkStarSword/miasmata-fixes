@@ -6,6 +6,7 @@ from miasmata_gimp import *
 header_font = Font('Neu Phollick Alpha', 45.0, True)
 font = Font('Neu Phollick Alpha', 40.0, True, -5.0)
 font_small = Font('Neu Phollick Alpha', 32.0, True, -5.0)
+research_font = Font('Neu Phollick Alpha Bold', 40.0, False)
 
 def desc_font(plant):
     return {
@@ -15,8 +16,9 @@ def desc_font(plant):
 
 w = h = 1024
 
+rh_x = 0
 lh_x = 148
-lh_w = w - lh_x
+rh_w = lh_w = w - lh_x
 
 header_h = 64
 
@@ -40,9 +42,12 @@ def desc_y(plant):
     }.get(plant, 62)
 
 
-def add_header(image, header_txt):
+def add_header(image, header_txt, rh=False):
     layer = add_text(image, header_txt, header_font)
-    place_text(layer, lh_x + lh_w / 2, header_h / 2, xalign=CENTER, yalign=CENTER)
+    if rh:
+        place_text(layer, rh_x + rh_w / 2, header_h / 2, xalign=CENTER, yalign=CENTER)
+    else:
+        place_text(layer, lh_x + lh_w / 2, header_h / 2, xalign=CENTER, yalign=CENTER)
 
 def add_subheader(image, left_txt, right_txt, y2):
     layer = add_text(image, left_txt, font)
@@ -93,6 +98,56 @@ def compose_plant_image(template_txt_file, source_txt_file, source_blank_image, 
 
     save(image, output_basename)
 
+def compose_research_image(template_txt_file, source_txt_file, source_conclusion_txt_file, source_blank_image, output_basename):
+    import struct
+
+    template = read_text(template_txt_file)
+    (header_txt, conclusion_templ_txt) = template.split('\n')
+
+    image = pdb.gimp_file_load(source_blank_image, source_blank_image)
+    image.merge_visible_layers(CLIP_TO_IMAGE)
+    layer = image.active_layer
+
+    # Find lines around conclusion text
+    x = 250
+    y = image.height - 1
+    tile = layer.get_tile2(False, x, y)
+    lines = []
+    at_line = False
+    threshold = 64
+    while True:
+        # XXX: Assumes 32bpp image, ignores alpha
+        (r, g, b, a) = struct.unpack("4B", tile[x % tile.ewidth, y % tile.eheight])
+        v = (r + g + b) / 3
+
+        if at_line and v > threshold:
+            at_line = False
+        elif not at_line and v <= threshold:
+            print "Found line at %i" % y
+            at_line = True
+            lines.append(y)
+            if len(lines) == 2:
+                break
+        y -= 1
+        if y < 0:
+            raise Exception()
+        if y % tile.eheight == tile.eheight - 1:
+            tile = layer.get_tile2(False, x, y)
+
+    add_header(image, header_txt, True)
+
+    y = lines[1] + 10
+    x1, x2 = 110, 825
+    conclusion = read_text(source_conclusion_txt_file)
+    layer = add_text(image, '%s\n\n%s' % (conclusion_templ_txt, conclusion), research_font)
+    place_text(layer, x1, y, x2)
+
+    # TODO: Wrap around images, manual placement, or whatever solution I end up doing
+    layer = add_text_layer_from_file(image, source_txt_file, research_font, colour=(105, 105, 105))
+    place_text(layer, x1, 85, x2)
+
+    save(image, output_basename)
+
 register(
     "miasmata_drug",
     "Compose an image for Miasmata's Journal drug synthesis pages",
@@ -129,6 +184,26 @@ register(
     ],
     [],
     compose_plant_image,
+)
+
+register(
+    "miasmata_research",
+    "Compose an image for Miasmata's Journal plant research pages",
+    "Compose an image for Miasmata's Journal plant research pages",
+    "Ian Munsie",
+    "Ian Munsie",
+    "2014",
+    "<Toolbox>/_Miasmata/_Research",
+    None,
+    [
+        (PF_FILE, "template_txt_file", "utf-8 encoded file with the translations of 'Laboratory Research' and 'My Conclusion:', one per line", None),
+        (PF_FILE, "source_txt_file", "utf-8 encoded file with the method text to place on the image", None),
+        (PF_FILE, "source_conclusion_txt_file", "utf-8 encoded file with the conclusion text to place on the image", None),
+        (PF_FILE, "source_blank_image", "Background image to use that should have previously had the text removed", None),
+        (PF_STRING, "output_basename", "Base output filename", None),
+    ],
+    [],
+    compose_research_image,
 )
 
 main()
