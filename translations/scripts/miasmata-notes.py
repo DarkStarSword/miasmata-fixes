@@ -8,6 +8,7 @@ neu_phollick_alpha = Font('Neu Phollick Alpha', 40.0, True, 5.0)
 neu_phollick_alpha_c = Font('Neu Phollick Alpha', 40.0, True, 0.0)
 neu_phollick_alpha_c2 = Font('Neu Phollick Alpha', 40.0, True, -4.0)
 neu_phollick_alpha_c3 = Font('Neu Phollick Alpha', 40.0, True, -7.0)
+neu_phollick_alpha_c4 = Font('Neu Phollick Alpha', 40.0, True, -8.0)
 neu_phollick_alpha_l = Font('Neu Phollick Alpha', 45.0, True)
 neu_phollick_alpha_lc = Font('Neu Phollick Alpha Bold', 45.0, False, -7.0)
 neu_phollick_alpha_lc2 = Font('Neu Phollick Alpha Bold', 45.0, False, -10.0)
@@ -615,6 +616,7 @@ def compose_note_ss(image, note_name):
 def compose_note_tt(image, note_name):
     font = neu_phollick_alpha_c3
     font2 = neu_phollick_alpha_s
+    font3 = neu_phollick_alpha_c4
     font_t = neu_phollick_alpha_lc
 
     layer = add_text_layer_from_file(image, '%s_title.txt' % note_name, font_t)
@@ -628,7 +630,7 @@ def compose_note_tt(image, note_name):
     layer = add_text_layer_from_file(image, '%s_step2.txt' % note_name, font)
     place_text(layer, x1, 505, x2)
 
-    layer = add_text_layer_from_file(image, '%s_rh.txt' % note_name, font)
+    layer = add_text_layer_from_file(image, '%s_rh.txt' % note_name, font3)
     place_text(layer, 1108, 630, 1835)
 
     layer = add_text_layer_from_file(image, '%s_you_are_here.txt' % note_name, font2)
