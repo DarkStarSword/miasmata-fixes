@@ -201,7 +201,7 @@ def generate_in_world_notes(input_dir):
         image2 = pdb.gimp_image_duplicate(image)
         image2.merge_visible_layers(CLIP_TO_IMAGE)
         pdb.gimp_layer_resize_to_image_size(image2.active_layer)
-        save_dds(image2, '%s.dds' % name, True)
+        save_dds(image2, '%s.dds' % name, True, mipmaps=True)
         save_png(image2, '%s.png' % name)
 
 register(

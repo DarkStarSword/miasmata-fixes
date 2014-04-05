@@ -361,7 +361,7 @@ def bold_word_wrap(layer, text, width, max_height = None):
 def blur_layer(image, layer, radius = 1.5):
     pdb.plug_in_gauss_rle2(image, layer, radius, radius)
 
-def save_dds(image, filename, alpha):
+def save_dds(image, filename, alpha, mipmaps=False):
     alpha = alpha and 3 or 1
     try:
         pdb.file_dds_save(
@@ -370,7 +370,7 @@ def save_dds(image, filename, alpha):
                 filename, # filename
                 filename, # raw_filename
                 alpha, # 1 = DXT1 (no alpha), 3 = DXT5 (alpha)
-                0, # 1 = generate mipmaps <--- XXX Set this for in-game objects
+                mipmaps, # 1 = generate mipmaps <--- XXX Set this for in-game objects
                 0, # 0 = save current layer
                 0, # format
                 -1, # transparent-index
@@ -432,11 +432,11 @@ def save_xcf(image, filename):
     pdb.gimp_xcf_save(0, image, image.active_layer, filename, filename)
     image.clean_all()
 
-def save(image, output_basename, alpha=False, png=False):
+def save(image, output_basename, alpha=False, png=False, mipmaps=False):
     save_xcf(image, '%s.xcf' % output_basename)
     image2 = pdb.gimp_image_duplicate(image)
     image2.merge_visible_layers(CLIP_TO_IMAGE)
-    save_dds(image2, '%s.dds' % output_basename, alpha)
+    save_dds(image2, '%s.dds' % output_basename, alpha, mipmaps)
     if alpha or png:
         save_png(image2, '%s.png' % output_basename)
     else:

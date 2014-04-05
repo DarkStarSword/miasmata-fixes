@@ -37,7 +37,7 @@ def compose_overlay_map(source_blank_image, output_basename, include_text):
         add_map_text(image, 'outpost_tau.txt', 1517, 517, xalign=RIGHT)
         add_map_text(image, 'boat_landing.txt', 92, 65)
 
-    save(image, output_basename)
+    save(image, output_basename, mipmaps=True)
 
 register(
     "miasmata_map",

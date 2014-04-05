@@ -43,7 +43,7 @@ def compose_lab_sampletrays(image, item_name, output_basename):
             word_wrap(layer, None, 450)
             place_text(layer, label_x[x], label_y[y], xalign=CENTER, yalign=CENTER)
 
-    save(image, output_basename, False)
+    save(image, output_basename, False, mipmaps=True)
 
 def compose_lab_darkbottle(image, item_name, output_basename):
     labels = map(unicode.strip, read_text('%s.txt' % item_name).split('\n'))
@@ -58,7 +58,7 @@ def compose_lab_darkbottle(image, item_name, output_basename):
         reduce_text_to_fit(layer, 0, 124)
         place_text(layer, label_x, label_y[y], xalign=CENTER, yalign=CENTER)
 
-    save(image, output_basename, False)
+    save(image, output_basename, False, mipmaps=True)
 
 def compose_item_image(item_name, source_blank_image, output_basename):
     image = pdb.gimp_file_load(source_blank_image, source_blank_image)

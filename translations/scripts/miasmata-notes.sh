@@ -7,7 +7,7 @@ for note in "$@"
 do
 	if [ -f "${note}_tweaked.xcf" ]; then
 		echo "OVERRIDING ${note} with ${note}_tweaked.xcf!"
-		${GIMP} --no-interface --batch '(python-fu-miasmata-to-dds-jpg RUN-NONINTERACTIVE "'${note}_tweaked.xcf'" "'${note}'")' --batch '(gimp-quit 1)'
+		${GIMP} --no-interface --batch '(python-fu-miasmata-to-dds-jpg RUN-NONINTERACTIVE "'${note}_tweaked.xcf'" "'${note}'" 0)' --batch '(gimp-quit 1)'
 	else
 		blank=../../blanks/notes/${note}_blank.xcf
 		${GIMP} --no-interface --batch '(python-fu-miasmata-note RUN-NONINTERACTIVE "'${note}'" "'${blank}'" "'${note}'")' --batch '(gimp-quit 1)'

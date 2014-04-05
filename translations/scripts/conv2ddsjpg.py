@@ -3,10 +3,10 @@
 from gimpfu import *
 from miasmata_gimp import *
 
-def convert_image(source_image, output_basename):
+def convert_image(source_image, output_basename, mipmaps):
     image = pdb.gimp_file_load(source_image, source_image)
     image.merge_visible_layers(CLIP_TO_IMAGE)
-    save_dds(image, '%s.dds' % output_basename, False)
+    save_dds(image, '%s.dds' % output_basename, False, mipmaps=mipmaps)
     save_jpg(image, '%s.jpg' % output_basename)
 
 register(
@@ -21,6 +21,7 @@ register(
     [
         (PF_FILE, "source_image", "Input blackboard image", None),
         (PF_STRING, "output_basename", "Base output filename", None),
+        (PF_BOOL, "mipmaps", "Generate Mipmaps in DDS file", None),
     ],
     [],
     convert_image,
