@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys
-import Image, ImageFile
+from PIL import Image, ImageFile
 import struct
 import multiprocessing
 from StringIO import StringIO

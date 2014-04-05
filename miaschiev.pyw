@@ -13,7 +13,7 @@ import PySide
 from PySide import QtCore, QtGui
 sys.modules['PyQt4'] = PySide # ImageQt is hardcoded to use PyQt4
 
-import Image, ImageDraw, ImageQt
+from PIL import Image, ImageDraw, ImageQt
 from miaschiev_ui import Ui_Miaschiev
 
 import miasutil

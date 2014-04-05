@@ -2,8 +2,8 @@
 
 import sys
 import os
-import Image
-import ImageDraw
+from PIL import Image
+from PIL import ImageDraw
 
 size = 1024
 

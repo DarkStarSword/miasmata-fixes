@@ -3,7 +3,7 @@
 import os
 import sys
 import struct
-import Image
+from PIL import Image
 
 import rs5file
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import struct
-import Image
+from PIL import Image
 
 import rs5file
 import miasmap

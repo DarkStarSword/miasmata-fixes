@@ -3,7 +3,7 @@
 import sys
 import struct
 import math
-import Image
+from PIL import Image
 
 import rs5file
 
