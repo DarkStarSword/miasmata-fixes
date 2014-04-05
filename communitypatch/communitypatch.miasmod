@@ -131,6 +131,13 @@
         ], 
         [
             [
+                "marker_types", 
+                "modelsets\\XL_LanmarkBox47"
+            ], 
+            "[\"T\",{\"s:t_symbol\": \"TEX\\\\Map_PencilLocator_Ruins\",\"s:type\": \"LANDMARK\"}]"
+        ], 
+        [
+            [
                 "achievements", 
                 "map"
             ], 
