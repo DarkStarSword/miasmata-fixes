@@ -142,18 +142,24 @@ def reduce_text_line_spacing_to_fit(layer, height):
         line_spacing -= 1
         pdb.gimp_text_layer_set_line_spacing(layer, line_spacing)
 
+def get_markup(layer):
+    markup = pdb.gimp_text_layer_get_markup(layer)
+    if markup.lower().startswith('<markup>') and markup.lower().endswith('</markup>'):
+        return markup[8:-9]
+    return markup
+
 def bold_text(layer, txt=None):
     # XXX: Requires a patched GIMP to set text markup
     # See https://bugzilla.gnome.org/show_bug.cgi?id=724101
     if txt is None:
-        txt = pdb.gimp_text_layer_get_markup(layer)
+        txt = get_markup(layer)
     markup = '<b>%s</b>' % txt
     pdb.gimp_text_layer_set_markup(layer, markup)
 
 def underline_text(layer):
     # XXX: Requires a patched GIMP to set text markup
     # See https://bugzilla.gnome.org/show_bug.cgi?id=724101
-    markup = pdb.gimp_text_layer_get_markup(layer)
+    markup = get_markup(layer)
     markup = '<u>%s</u>' % markup
     pdb.gimp_text_layer_set_markup(layer, markup)
 
@@ -200,9 +206,7 @@ def masked_word_wrap(layer, mask, max_width, channel = VALUE_MODE, threshold = 1
     image = layer.image
     text = pdb.gimp_text_layer_get_text(layer)
     if not text:
-        text = pdb.gimp_text_layer_get_markup(layer)
-        if text.lower().startswith('<markup>') and text.lower().endswith('</markup>'):
-            text = text[8:-9]
+        text = get_markup(layer)
     if not text:
         return
     font = pdb.gimp_text_layer_get_font(layer)
@@ -286,6 +290,71 @@ def masked_word_wrap(layer, mask, max_width, channel = VALUE_MODE, threshold = 1
 
 word_wrap_fail_re = re.compile(r"""Element 'markup' was closed, but the currently open element is '(?P<elem>[^']+)'""")
 
+def balance_newlines(layer):
+    import sys
+
+    # You can find a generic version of this algorithm in my junk code
+    text = pdb.gimp_text_layer_get_text(layer)
+    if not text:
+        text = get_markup(layer)
+
+    def width(lines):
+        missing_tags = ''
+        while True: # Hack to avoid splitting up <span> tags
+            text = '\n'.join([' '.join(l) for l in lines])
+            markup = '%s%s' % (text, missing_tags)
+            try:
+                pdb.gimp_text_layer_set_markup(layer, markup)
+            except RuntimeError as e:
+                match = word_wrap_fail_re.search(e.args[0])
+                if not match:
+                    raise
+                missing_tags += '</%s>' % match.group('elem')
+                continue
+            break
+        return layer.width
+
+    lines = [x.split(' ') for x in text.split('\n')]
+    for line in lines:
+        while True:
+            try:
+                i = line.index('<span')
+            except ValueError:
+                break
+            else:
+                print 'Joining split span tag'
+                line[i] = '%s %s' % (line[i], line[i+1])
+                del line[i+1]
+
+    print >>sys.stderr, 'Before - max width:',  width(lines)
+
+    making_progress = True
+    while making_progress:
+        making_progress = False
+        for i, l in enumerate(lines):
+            if not len(l):
+                continue
+            if i > 0:
+                ow = width(lines[i-1:i+1])
+                lines[i-1].append(l.pop(0))
+                nw = width(lines[i-1:i+1])
+                if nw < ow:
+                    making_progress = True
+                    break
+                l.insert(0, lines[i-1].pop(-1))
+            if i < len(lines) - 1:
+                ow = width(lines[i:i+2])
+                lines[i+1].insert(0, l.pop(-1))
+                nw = width(lines[i:i+2])
+                if nw < ow:
+                    making_progress = True
+                    break
+                l.append(lines[i+1].pop(0))
+
+    print >>sys.stderr, 'After - max width:', width(lines)
+    for l in lines:
+        print ' '.join(l)
+
 def word_wrap(layer, text, width, max_height = None, start_tag='', end_tag=''):
     # This is a workaround for the lack of a fixed-width + dynamic-height
     # setting for text boxes in the GIMP - otherwise there is no easy way to
@@ -293,9 +362,7 @@ def word_wrap(layer, text, width, max_height = None, start_tag='', end_tag=''):
     if not text:
         text = pdb.gimp_text_layer_get_text(layer)
     if not text:
-        text = pdb.gimp_text_layer_get_markup(layer)
-        if text.lower().startswith('<markup>') and text.lower().endswith('</markup>'):
-            text = text[8:-9]
+        text = get_markup(layer)
     words = text.split(' ')
     if not len(words):
         return ''
@@ -335,12 +402,28 @@ def word_wrap(layer, text, width, max_height = None, start_tag='', end_tag=''):
         txt = txt1
     return ''
 
+def word_wrap_balanced(layer,  width):
+    text = pdb.gimp_text_layer_get_text(layer)
+    if not text:
+        text = get_markup(layer)
+    lines = text.split('\n')
+    # print lines
+    out = []
+    while len(lines):
+        line = lines.pop(0)
+        if len(line) == 0:
+            out.append('')
+            continue
+        word_wrap(layer, line, width)
+        balance_newlines(layer)
+        out.append(get_markup(layer))
+    # print out
+    pdb.gimp_text_layer_set_markup(layer, '\n'.join(out))
+
 def word_wrap_reverse(layer, width):
     text = pdb.gimp_text_layer_get_text(layer)
     if not text:
-        text = pdb.gimp_text_layer_get_markup(layer)
-        if text.lower().startswith('<markup>') and text.lower().endswith('</markup>'):
-            text = text[8:-9]
+        text = get_markup(layer)
     words = text.split(' ')
     if not len(words):
         return ''

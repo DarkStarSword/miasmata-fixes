@@ -23,7 +23,7 @@ def compose_index_image(source_txt_file, source_blank_image, output_basename):
 
     text = add_text_layer_from_file(image, source_txt_file, font(output_basename))
     pdb.gimp_text_layer_set_justification(text, TEXT_JUSTIFY_CENTER)
-    word_wrap(text, None, w)
+    word_wrap_balanced(text, w)
 
     pdb.gimp_layer_translate(text, x + (w - text.width) / 2, (image.height - text.height) / 2)
 
