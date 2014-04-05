@@ -471,7 +471,7 @@ def save_dds(image, filename, alpha, mipmaps=False):
                 filename, # filename
                 filename, # raw_filename
                 alpha, # 1 = DXT1 (no alpha), 3 = DXT5 (alpha)
-                0, # 1 = generate mipmaps <--- XXX Set this for in-game objects
+                mipmaps, # 1 = generate mipmaps <--- XXX Set this for in-game objects
                 0, # 0 = save current layer
                 0, # format
                 -1, # transparent-index
