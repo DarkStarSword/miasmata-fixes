@@ -161,32 +161,35 @@ class Rs5CompressedFileRepacker(Rs5CompressedFile):
 		newfp.write(oldfile._read())
 
 
+class Rs5Archive(collections.OrderedDict):
+	pass
 
-class Rs5ArchiveDecoder(collections.OrderedDict):
+class Rs5ArchiveDecoder(Rs5Archive):
 	def __init__(self, f):
+		self.fp = f
 		magic = f.read(8)
 		if magic != 'CFILEHDR':
 			raise ValueError('Invalid file header')
 
-		(d_off, ent_len, u1) = struct.unpack('<QII', f.read(16))
+		(self.d_off, self.ent_len, u1) = struct.unpack('<QII', f.read(16))
 
-		f.seek(d_off)
-		data = f.read(ent_len)
-		(d_off1, d_len, flags) = struct.unpack('<QII', data[:16])
-		assert(d_off == d_off1)
+		f.seek(self.d_off)
+		data = f.read(self.ent_len)
+		(d_off1, self.d_len, flags) = struct.unpack('<QII', data[:16])
+		assert(self.d_off == d_off1)
 
 		collections.OrderedDict.__init__(self)
 
-		for f_off in range(d_off + ent_len, d_off + d_len, ent_len):
+		for f_off in range(self.d_off + self.ent_len, self.d_off + self.d_len, self.ent_len):
 			try:
-				entry = Rs5CompressedFileDecoder(f, f.read(ent_len))
+				entry = Rs5CompressedFileDecoder(f, f.read(self.ent_len))
 				self[entry.filename] = entry
 			except NotAFile:
 				# XXX: Figure out what these are.
 				# I think they are just deleted files
 				continue
 
-class Rs5ArchiveEncoder(collections.OrderedDict):
+class Rs5ArchiveEncoder(Rs5Archive):
 	header_len = 24
 	ent_len = 168
 	u1 = 0
@@ -241,20 +244,19 @@ class Rs5ArchiveEncoder(collections.OrderedDict):
 			pad = '\0' * (self.ent_len - len(ent)) # XXX: Not sure if any data here is important
 			self.fp.write(ent + pad)
 
-	def _write_header(self):
+	def write_header(self):
 		print "Writing RS5 header..."
 		self.fp.seek(0)
 		self.fp.write(struct.pack('<8sQII', 'CFILEHDR', self.d_off, self.ent_len, self.u1))
 
 	def save(self):
 		self._write_directory()
-		self._write_header()
+		self.write_header()
 		self.fp.flush()
 		print "Done."
 
 class Rs5ArchiveUpdater(Rs5ArchiveEncoder, Rs5ArchiveDecoder):
 	def __init__(self, fp):
-		self.fp = fp
 		return Rs5ArchiveDecoder.__init__(self, fp)
 
 	def add(self, filename):
@@ -271,6 +273,13 @@ class Rs5ArchiveUpdater(Rs5ArchiveEncoder, Rs5ArchiveDecoder):
 
 	def save(self):
 		self.fp.seek(0, 2)
-		return Rs5ArchiveEncoder.save(self)
+		self._write_directory()
+		# When updating an existing archive we use an extra flush
+		# before writing the header to reduce the risk of writing a bad
+		# header in case of an IO error, power failure, etc:
+		self.fp.flush()
+		self.write_header()
+		self.fp.flush()
+		print "Done."
 
 # vi:noexpandtab:sw=8:ts=8

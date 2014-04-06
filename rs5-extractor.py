@@ -6,6 +6,8 @@ import os
 import rs5archive
 import rs5file
 
+undo_file = r'MIASMOD\UNDO'
+
 def list_files(archive, file_list, list_chunks=False):
 	rs5 = rs5archive.Rs5ArchiveDecoder(open(archive, 'rb'))
 	if not file_list:
@@ -93,6 +95,65 @@ def repack_rs5(old_archive, new_archive):
 		new_rs5[new_entry.filename] = new_entry
 	new_rs5.save()
 
+def validate_undo(rs5):
+	print 'STUB: validate_undo()'
+	# TODO: Make sure the values in the undo file look sane - that there is
+	# a central directory archive where it points and that there is no file
+	# listed in that directory past the truncation point.
+	return True
+
+class UndoMeta(dict):
+	import json
+
+	def revert_rs5(self, rs5):
+		# TODO: Validate undo
+		rs5.d_off = self['directory_offset']
+		rs5.ent_len = self['entry_size']
+		rs5.write_header()
+		rs5.fp.flush()
+		rs5.fp.truncate(self['filesize'])
+
+class UndoMetaEncoder(UndoMeta, rs5file.Rs5FileEncoder):
+	def __init__(self, rs5):
+		self['filesize'] = os.fstat(rs5.fp.fileno()).st_size
+		self['directory_offset'] = rs5.d_off
+		self['entry_size'] = rs5.ent_len
+		self['directory_size'] = rs5.d_len
+		rs5file.Rs5FileEncoder.__init__(self, 'META', undo_file, self.json.dumps(self), 0)
+
+class UndoMetaDecoder(UndoMeta, rs5file.Rs5FileDecoder):
+	def __init__(self, rs5):
+		rs5file.Rs5FileDecoder.__init__(self, rs5[undo_file].decompress())
+		self.update(self.json.loads(self.data))
+
+def add_undo(archive, overwrite):
+	rs5 = rs5archive.Rs5ArchiveUpdater(open(archive, 'rb+'))
+	if undo_file in rs5 and not overwrite:
+		print '%s already contains undo metadata' % archive
+		if validate_undo(rs5):
+			return 1
+		print 'Undo metadata appears to be invalid, updating'
+	undo = UndoMetaEncoder(rs5)
+	try:
+		rs5.add_from_buf(undo.encode())
+		rs5.save()
+	except Exception as e:
+		print>>sys.stderr, 'ERROR: %s occured while adding undo metadata: %s' % (e.__class__.__name__, str(e))
+		print>>sys.stderr, 'REVERTING CHANGES...'
+		undo.revert_rs5(rs5)
+		print>>sys.stderr, '\nFILE RESTORED'
+		return 1
+
+def revert(archive):
+	rs5 = rs5archive.Rs5ArchiveUpdater(open(archive, 'rb+'))
+	if undo_file not in rs5:
+		print '%s does not contain undo metadata!' % archive
+		return 1
+	if not validate_undo(rs5):
+		print 'Undo metadata appears to be invalid, aborting!'
+		return 1
+	undo = UndoMetaDecoder(rs5)
+	undo.revert_rs5(rs5)
 
 def analyse(filename):
 	rs5 = rs5archive.Rs5ArchiveDecoder(open(filename, 'rb'))
@@ -156,8 +217,13 @@ def parse_args():
 			help='Create a new RS5 file')
 	group.add_argument('-a', '--add', action='store_true',
 			help='Add/update FILEs in ARCHIVE')
-	group.add_argument('--repack', metavar='NEW_ARCHIVE',
+	group.add_argument('--repack', metavar='NEW_ARCHIVE', # TODO: Discard UNDO metadata
 			help='Decode ARCHIVE and pack into NEW_ARCHIVE, for testing')
+
+	group.add_argument('--add-undo', action='store_true',
+			help='Add undo metadata to an rs5 archive (WARNING: Not all actions can be undone)')
+	group.add_argument('--revert', action='store_true',
+			help='Use undo metadata in an rs5 archive to restore it to a previous state')
 
 	parser.add_argument('-f', '--file', metavar='ARCHIVE', required=True,
 			help='Specify the rs5 ARCHIVE to work on')
@@ -208,6 +274,12 @@ def main():
 
 	if args.analyse:
 		return analyse(args.file)
+
+	if args.add_undo:
+		return add_undo(args.file, args.overwrite)
+
+	if args.revert:
+		return revert(args.file)
 
 if __name__ == '__main__':
 	sys.exit(main())
