@@ -8,6 +8,12 @@ import rs5file
 
 undo_file = r'MIASMOD\UNDO'
 
+def file_blacklisted(name):
+	'''Files not permitted to be manually added to an archive'''
+	if name.upper() == undo_file:
+		return True
+	return False
+
 def list_files(archive, file_list, list_chunks=False):
 	rs5 = rs5archive.Rs5ArchiveDecoder(open(archive, 'rb'))
 	if not file_list:
@@ -55,6 +61,9 @@ def is_chunk_dir(path):
 
 def add_files(rs5, file_list):
 	for filename in file_list:
+		if file_blacklisted(filename):
+			print 'Skipping %s' % filename
+			continue
 		if os.path.isdir(filename):
 			if is_chunk_dir(filename):
 				rs5.add_chunk_dir(filename)
@@ -90,6 +99,9 @@ def repack_rs5(old_archive, new_archive):
 	old_rs5 = rs5archive.Rs5ArchiveDecoder(open(old_archive, 'rb'))
 	new_rs5 = rs5archive.Rs5ArchiveEncoder(new_archive)
 	for old_file in old_rs5.itervalues():
+		if file_blacklisted(old_file.filename):
+			print 'Discarding %s' % old_file.filename
+			continue
 		print 'Repacking %s...' % old_file.filename
 		new_entry = rs5archive.Rs5CompressedFileRepacker(new_rs5.fp, old_file)
 		new_rs5[new_entry.filename] = new_entry
