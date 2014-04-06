@@ -161,10 +161,39 @@ class Rs5CompressedFileRepacker(Rs5CompressedFile):
 		newfp.write(oldfile._read())
 
 
-class Rs5Archive(collections.OrderedDict):
-	pass
+class Rs5CentralDirectoryDecoder(collections.OrderedDict):
+	def __init__(self):
+		self.fp.seek(self.d_off)
+		data = self.fp.read(self.ent_len)
+		(d_off1, self.d_len, flags) = struct.unpack('<QII', data[:16])
+		assert(self.d_off == d_off1)
 
-class Rs5ArchiveDecoder(Rs5Archive):
+		collections.OrderedDict.__init__(self)
+
+		for f_off in range(self.d_off + self.ent_len, self.d_off + self.d_len, self.ent_len):
+			try:
+				entry = Rs5CompressedFileDecoder(self.fp, self.fp.read(self.ent_len))
+				self[entry.filename] = entry
+			except NotAFile:
+				# XXX: Figure out what these are.
+				# I think they are just deleted files
+				continue
+
+class Rs5CentralDirectoryEncoder(collections.OrderedDict):
+	def write_directory(self):
+		print "Writing central directory..."
+		self.d_off = self.fp.tell()
+
+		dir_hdr = struct.pack('<QII', self.d_off, self.ent_len * (1 + len(self)), self.flags)
+		pad = '\0' * (self.ent_len - len(dir_hdr)) # XXX: Not sure if any data here is important
+		self.fp.write(dir_hdr + pad)
+
+		for file in self.itervalues():
+			ent = file.gen_dir_ent()
+			pad = '\0' * (self.ent_len - len(ent)) # XXX: Not sure if any data here is important
+			self.fp.write(ent + pad)
+
+class Rs5ArchiveDecoder(Rs5CentralDirectoryDecoder):
 	def __init__(self, f):
 		self.fp = f
 		magic = f.read(8)
@@ -173,30 +202,16 @@ class Rs5ArchiveDecoder(Rs5Archive):
 
 		(self.d_off, self.ent_len, u1) = struct.unpack('<QII', f.read(16))
 
-		f.seek(self.d_off)
-		data = f.read(self.ent_len)
-		(d_off1, self.d_len, flags) = struct.unpack('<QII', data[:16])
-		assert(self.d_off == d_off1)
+		Rs5CentralDirectoryDecoder.__init__(self)
 
-		collections.OrderedDict.__init__(self)
-
-		for f_off in range(self.d_off + self.ent_len, self.d_off + self.d_len, self.ent_len):
-			try:
-				entry = Rs5CompressedFileDecoder(f, f.read(self.ent_len))
-				self[entry.filename] = entry
-			except NotAFile:
-				# XXX: Figure out what these are.
-				# I think they are just deleted files
-				continue
-
-class Rs5ArchiveEncoder(Rs5Archive):
+class Rs5ArchiveEncoder(Rs5CentralDirectoryEncoder):
 	header_len = 24
 	ent_len = 168
 	u1 = 0
 	flags = 0x80000000
 
 	def __init__(self, filename):
-		collections.OrderedDict.__init__(self)
+		Rs5CentralDirectoryEncoder.__init__(self)
 		self.fp = open(filename, 'wb')
 		self.fp.seek(self.header_len)
 
@@ -231,26 +246,13 @@ class Rs5ArchiveEncoder(Rs5Archive):
 		entry = Rs5CompressedFileEncoder(self.fp, buf=chunks.encode())
 		self[entry.filename] = entry
 
-	def _write_directory(self):
-		print "Writing central directory..."
-		self.d_off = self.fp.tell()
-
-		dir_hdr = struct.pack('<QII', self.d_off, self.ent_len * (1 + len(self)), self.flags)
-		pad = '\0' * (self.ent_len - len(dir_hdr)) # XXX: Not sure if any data here is important
-		self.fp.write(dir_hdr + pad)
-
-		for file in self.itervalues():
-			ent = file.gen_dir_ent()
-			pad = '\0' * (self.ent_len - len(ent)) # XXX: Not sure if any data here is important
-			self.fp.write(ent + pad)
-
 	def write_header(self):
 		print "Writing RS5 header..."
 		self.fp.seek(0)
 		self.fp.write(struct.pack('<8sQII', 'CFILEHDR', self.d_off, self.ent_len, self.u1))
 
 	def save(self):
-		self._write_directory()
+		self.write_directory()
 		self.write_header()
 		self.fp.flush()
 		print "Done."
@@ -273,7 +275,7 @@ class Rs5ArchiveUpdater(Rs5ArchiveEncoder, Rs5ArchiveDecoder):
 
 	def save(self):
 		self.fp.seek(0, 2)
-		self._write_directory()
+		self.write_directory()
 		# When updating an existing archive we use an extra flush
 		# before writing the header to reduce the risk of writing a bad
 		# header in case of an IO error, power failure, etc:

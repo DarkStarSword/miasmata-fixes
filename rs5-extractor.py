@@ -7,10 +7,13 @@ import rs5archive
 import rs5file
 
 undo_file = r'MIASMOD\UNDO'
+mod_manifests = r'MIASMOD\MODS'
 
 def file_blacklisted(name):
 	'''Files not permitted to be manually added to an archive'''
 	if name.upper() == undo_file:
+		return True
+	if name.upper().startswith('%s\\' % mod_manifests):
 		return True
 	return False
 
@@ -106,6 +109,37 @@ def repack_rs5(old_archive, new_archive):
 		new_entry = rs5archive.Rs5CompressedFileRepacker(new_rs5.fp, old_file)
 		new_rs5[new_entry.filename] = new_entry
 	new_rs5.save()
+
+class ModCentralDirectoryEncoder(rs5archive.Rs5CentralDirectoryEncoder, rs5file.Rs5FileEncoder):
+	def __init__(self, name, ent_len):
+		self.ent_len = ent_len
+		self.flags = 0
+		rs5archive.Rs5CentralDirectoryEncoder.__init__(self)
+		self.filename = '%s\%s.manifest' % (mod_manifests, name)
+
+	def encode(self):
+		from StringIO import StringIO
+		self.fp = StringIO()
+		self.write_directory()
+		rs5file.Rs5FileEncoder.__init__(self, 'META', self.filename, self.fp.getvalue(), 0)
+		return rs5file.Rs5FileEncoder.encode(self)
+
+def merge_archives(dest_archive, source_archives):
+	rs5 = rs5archive.Rs5ArchiveUpdater(open(dest_archive, 'rb+'))
+	for source_archive in source_archives:
+		source_rs5 = rs5archive.Rs5ArchiveDecoder(open(source_archive, 'rb'))
+		mod_name = os.path.splitext(os.path.basename(source_archive))[0]
+		mod_entries = ModCentralDirectoryEncoder(mod_name, rs5.ent_len)
+		for source_file in source_rs5.itervalues():
+			if file_blacklisted(source_file.filename):
+				print 'Skipping %s' % source_file.filename
+				continue
+			print 'Adding %s %s...' % (source_archive, source_file.filename)
+			entry = rs5archive.Rs5CompressedFileRepacker(rs5.fp, source_file)
+			rs5[entry.filename] = entry
+			mod_entries[entry.filename] = entry
+		rs5.add_from_buf(mod_entries.encode())
+	rs5.save()
 
 def validate_undo(rs5):
 	print 'STUB: validate_undo()'
@@ -229,6 +263,8 @@ def parse_args():
 			help='Create a new RS5 file')
 	group.add_argument('-a', '--add', action='store_true',
 			help='Add/update FILEs in ARCHIVE')
+	group.add_argument('--cat', '--concatenate', action='store_true',
+			help='Merge FILEs into ARCHIVE with undo metadata')
 	group.add_argument('--repack', metavar='NEW_ARCHIVE', # TODO: Discard UNDO metadata
 			help='Decode ARCHIVE and pack into NEW_ARCHIVE, for testing')
 
@@ -292,6 +328,9 @@ def main():
 
 	if args.revert:
 		return revert(args.file)
+
+	if args.cat:
+		return merge_archives(args.file, args.files)
 
 if __name__ == '__main__':
 	sys.exit(main())
