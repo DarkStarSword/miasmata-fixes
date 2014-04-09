@@ -65,9 +65,6 @@ def is_chunk_dir(path):
 
 def add_files(rs5, file_list):
 	for filename in file_list:
-		if file_blacklisted(filename):
-			print 'Skipping %s' % filename
-			continue
 		if os.path.isdir(filename):
 			if is_chunk_dir(filename):
 				rs5.add_chunk_dir(filename)
@@ -79,7 +76,11 @@ def add_files(rs5, file_list):
 						rs5.add_chunk_dir(path)
 						dirs.remove(dir)
 				for file in files:
-					rs5.add(os.path.join(root, file))
+					path = os.path.join(root, file)
+					if file_blacklisted(os.path.relpath(path, filename).replace(os.path.sep, '\\')):
+						print 'Skipping %s' % path
+						continue
+					rs5.add(path)
 		else:
 			rs5.add(filename)
 
