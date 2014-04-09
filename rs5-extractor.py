@@ -7,11 +7,12 @@ import rs5archive
 import rs5file
 
 undo_file = r'MIASMOD\UNDO'
+undo_dir_placeholder = r'MIASMOD\ORIGDIR'
 mod_manifests = r'MIASMOD\MODS'
 
 def file_blacklisted(name):
 	'''Files not permitted to be manually added to an archive'''
-	if name.upper() == undo_file:
+	if name.upper() in (undo_file, undo_dir_placeholder):
 		return True
 	if name.upper().startswith('%s\\' % mod_manifests):
 		return True
@@ -110,37 +111,6 @@ def repack_rs5(old_archive, new_archive):
 		new_rs5[new_entry.filename] = new_entry
 	new_rs5.save()
 
-class ModCentralDirectoryEncoder(rs5archive.Rs5CentralDirectoryEncoder, rs5file.Rs5FileEncoder):
-	def __init__(self, name, ent_len):
-		self.ent_len = ent_len
-		self.flags = 0
-		rs5archive.Rs5CentralDirectoryEncoder.__init__(self)
-		self.filename = '%s\%s.manifest' % (mod_manifests, name)
-
-	def encode(self):
-		from StringIO import StringIO
-		self.fp = StringIO()
-		self.write_directory()
-		rs5file.Rs5FileEncoder.__init__(self, 'META', self.filename, self.fp.getvalue(), 0)
-		return rs5file.Rs5FileEncoder.encode(self)
-
-def merge_archives(dest_archive, source_archives):
-	rs5 = rs5archive.Rs5ArchiveUpdater(open(dest_archive, 'rb+'))
-	for source_archive in source_archives:
-		source_rs5 = rs5archive.Rs5ArchiveDecoder(open(source_archive, 'rb'))
-		mod_name = os.path.splitext(os.path.basename(source_archive))[0]
-		mod_entries = ModCentralDirectoryEncoder(mod_name, rs5.ent_len)
-		for source_file in source_rs5.itervalues():
-			if file_blacklisted(source_file.filename):
-				print 'Skipping %s' % source_file.filename
-				continue
-			print 'Adding %s %s...' % (source_archive, source_file.filename)
-			entry = rs5archive.Rs5CompressedFileRepacker(rs5.fp, source_file)
-			rs5[entry.filename] = entry
-			mod_entries[entry.filename] = entry
-		rs5.add_from_buf(mod_entries.encode())
-	rs5.save()
-
 def validate_undo(rs5):
 	print 'STUB: validate_undo()'
 	# TODO: Make sure the values in the undo file look sane - that there is
@@ -159,12 +129,39 @@ class UndoMeta(dict):
 		rs5.fp.flush()
 		rs5.fp.truncate(self['filesize'])
 
+	class Placeholder(rs5archive.Rs5CompressedFile):
+		def __init__(self, undo_file):
+			self.undo_file = undo_file
+
+		@property
+		def data_off(self):
+			return self.undo_file['directory_offset']
+		@property
+		def compressed_size(self):
+			return self.undo_file['directory_size']
+		@property
+		def uncompressed_size(self):
+			return self.undo_file['directory_size']
+		@property
+		def modtime(self):
+			import time
+			return time.time()
+		@property
+		def filename(self):
+			return undo_dir_placeholder
+		type = 'META'
+		u1 = 0x30080000000
+		u2 = 1
+	@property
+	def placeholder(self):
+		return self.Placeholder(self)
+
 class UndoMetaEncoder(UndoMeta, rs5file.Rs5FileEncoder):
 	def __init__(self, rs5):
 		self['filesize'] = os.fstat(rs5.fp.fileno()).st_size
 		self['directory_offset'] = rs5.d_off
 		self['entry_size'] = rs5.ent_len
-		self['directory_size'] = rs5.d_len
+		self['directory_size'] = rs5.d_orig_len
 		rs5file.Rs5FileEncoder.__init__(self, 'META', undo_file, self.json.dumps(self), 0)
 
 class UndoMetaDecoder(UndoMeta, rs5file.Rs5FileDecoder):
@@ -172,22 +169,29 @@ class UndoMetaDecoder(UndoMeta, rs5file.Rs5FileDecoder):
 		rs5file.Rs5FileDecoder.__init__(self, rs5[undo_file].decompress())
 		self.update(self.json.loads(self.data))
 
-def add_undo(archive, overwrite):
-	rs5 = rs5archive.Rs5ArchiveUpdater(open(archive, 'rb+'))
+def do_add_undo(rs5, overwrite=False):
 	if undo_file in rs5 and not overwrite:
-		print '%s already contains undo metadata' % archive
+		print 'Previously added undo metadata found'
 		if validate_undo(rs5):
 			return 1
 		print 'Undo metadata appears to be invalid, updating'
 	undo = UndoMetaEncoder(rs5)
 	try:
 		rs5.add_from_buf(undo.encode())
+		rs5[undo_dir_placeholder] = undo.placeholder
 		rs5.save()
 	except Exception as e:
 		print>>sys.stderr, 'ERROR: %s occured while adding undo metadata: %s' % (e.__class__.__name__, str(e))
 		print>>sys.stderr, 'REVERTING CHANGES...'
 		undo.revert_rs5(rs5)
 		print>>sys.stderr, '\nFILE RESTORED'
+		raise
+
+def add_undo(archive, overwrite):
+	rs5 = rs5archive.Rs5ArchiveUpdater(open(archive, 'rb+'))
+	try:
+		return do_add_undo(rs5, overwrite)
+	except Exception as e:
 		return 1
 
 def revert(archive):
@@ -200,6 +204,141 @@ def revert(archive):
 		return 1
 	undo = UndoMetaDecoder(rs5)
 	undo.revert_rs5(rs5)
+
+class ModCentralDirectoryEncoder(rs5archive.Rs5CentralDirectoryEncoder, rs5file.Rs5FileEncoder):
+	def __init__(self, name, ent_len):
+		self.ent_len = ent_len
+		self.flags = 0
+		rs5archive.Rs5CentralDirectoryEncoder.__init__(self)
+		self.filename = '%s\%s.manifest' % (mod_manifests, name)
+
+	def encode(self):
+		from StringIO import StringIO
+		self.fp = StringIO()
+		self.write_directory()
+		rs5file.Rs5FileEncoder.__init__(self, 'META', self.filename, self.fp.getvalue(), 0)
+		return rs5file.Rs5FileEncoder.encode(self)
+
+class UndoMetaCentralDirectory(rs5archive.Rs5CentralDirectoryDecoder):
+	def __init__(self, rs5):
+		undo = UndoMetaDecoder(rs5)
+		self.fp = rs5.fp
+		self.d_off = undo['directory_offset']
+		self.ent_len = undo['entry_size']
+		rs5archive.Rs5CentralDirectoryDecoder.__init__(self)
+
+class ModCentralDirectoryDecoder(rs5archive.Rs5CentralDirectoryDecoder):
+	def __init__(self, rs5, manifest):
+		from StringIO import StringIO
+		decoder = rs5file.Rs5FileDecoder(manifest.decompress())
+		self.fp = StringIO(decoder.data)
+		self.d_off = 0
+		self.ent_len = rs5.ent_len
+		rs5archive.Rs5CentralDirectoryDecoder.__init__(self)
+
+def rs5_mods(rs5):
+	mods = filter(lambda x: x.startswith('%s\\' % mod_manifests), rs5)
+	# TODO: Sort mods somehow... communitypatch should come always come
+	# first, and everything else should at least be predictable.
+	# I could either add metadata into the mods to facilitate this, or
+	# hardcode the sorting here.
+	# Maybe allow Miasmod to override any sorting done here
+	return mods
+
+def iter_all_file_versions(rs5):
+	'''
+	Iterates over every file in the archive, including multiple versions of
+	the same file where a mod has overridden them.
+	'''
+	done = set()
+	def process(file):
+		done.add((file.filename, file.data_off))
+		return file
+
+	yield process(rs5[undo_file])
+	for file in UndoMetaCentralDirectory(rs5).itervalues():
+		yield process(file)
+	for mod in rs5_mods(rs5):
+		yield process(rs5[mod])
+		for file in ModCentralDirectoryDecoder(rs5, rs5[mod]).itervalues():
+			yield process(file)
+
+	for (filename, off) in set([(x.filename, x.data_off) for x in rs5.values()]).difference(done):
+		yield rs5[filename]
+
+def iter_used_sections(rs5):
+	yield (0, 24, '__header__') # Header
+	yield (rs5.d_off, rs5.d_off + rs5.d_orig_len, '__directory__') # Central Directory
+	for file in iter_all_file_versions(rs5):
+		yield (file.data_off, file.data_off + file.compressed_size, file.filename)
+
+def find_eof(rs5):
+	'''
+	Finds the end of the rs5 archive, ensuring that it is past the undo
+	metadata, central directory and any installed mods. The archive should
+	be safe to truncate at this point.
+	'''
+	return max([x[1] for x in iter_used_sections(rs5)])
+
+def find_hole(rs5, size):
+	'''
+	Finds a hole in the rs5 archive large enough to fit some data.
+	Guaranteed not to return a position before the end of the undo
+	metadata.
+	'''
+	undo = rs5[undo_file]
+	undo_pos = undo.data_off + undo.compressed_size
+	regions = sorted(iter_used_sections(rs5))
+	for (i, (start, fin, name)) in enumerate(regions):
+		space = 0
+		if i:
+			space = start - regions[i-1][1]
+		# print '%.8x:%.8x %+8i %s' % (start, fin, space, name)
+		if fin < undo_pos:
+			continue
+		if i == len(regions) - 1 or regions[i+1][0] - fin >= size:
+			return fin
+	raise Exception()
+
+class Rs5ModArchiveUpdater(rs5archive.Rs5ArchiveUpdater):
+	def seek_find_hole(self, size):
+		if undo_file not in self:
+			return self.seek_eof()
+		hole = find_hole(self, size)
+		# print 'Hole found at 0x%x large enough to fit %i bytes' % (hole, size)
+		self.fp.seek(hole)
+
+def apply_mod_order(rs5):
+	'''
+	Rebuild the central directory from the original and any contained mod
+	manifests to ensure that files touched by multiple mods use the correct
+	one.
+	'''
+	directory = UndoMetaCentralDirectory(rs5)
+	for mod in rs5_mods(rs5):
+		directory.update(ModCentralDirectoryDecoder(rs5, rs5[mod]))
+
+	rs5.update(directory)
+
+def merge_archives(dest_archive, source_archives):
+	rs5 = Rs5ModArchiveUpdater(open(dest_archive, 'rb+'))
+	do_add_undo(rs5)
+	for source_archive in source_archives:
+		source_rs5 = rs5archive.Rs5ArchiveDecoder(open(source_archive, 'rb'))
+		mod_name = os.path.splitext(os.path.basename(source_archive))[0]
+		mod_entries = ModCentralDirectoryEncoder(mod_name, rs5.ent_len)
+		for source_file in source_rs5.itervalues():
+			if file_blacklisted(source_file.filename):
+				print 'Skipping %s' % source_file.filename
+				continue
+			print 'Adding %s->%s...' % (source_archive, source_file.filename)
+			entry = rs5archive.Rs5CompressedFileRepacker(rs5.fp, source_file, seek_cb=rs5.seek_find_hole)
+			rs5[entry.filename] = entry
+			mod_entries[entry.filename] = entry
+		rs5.add_from_buf(mod_entries.encode())
+	apply_mod_order(rs5)
+	rs5.save()
+	rs5.fp.truncate(find_eof(rs5))
 
 def analyse(filename):
 	rs5 = rs5archive.Rs5ArchiveDecoder(open(filename, 'rb'))

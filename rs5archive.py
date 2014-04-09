@@ -47,6 +47,14 @@ class Rs5CompressedFile(object):
 				self.type, self.uncompressed_size << 1 | self.u2,
 				to_win_time(self.modtime)) + self.filename + '\0'
 
+	def read(self):
+		self.fp.seek(self.data_off)
+		return self.fp.read(self.compressed_size)
+
+	def decompress(self):
+		return zlib.decompress(self.read())
+
+
 class Rs5CompressedFileDecoder(Rs5CompressedFile):
 	def __init__(self, f, data):
 		self.fp = f
@@ -62,13 +70,6 @@ class Rs5CompressedFileDecoder(Rs5CompressedFile):
 		filename_len = data[40:].find('\0')
 		self.filename = data[40:40 + filename_len]
 		self.modtime = from_win_time(modtime)
-
-	def _read(self):
-		self.fp.seek(self.data_off)
-		return self.fp.read(self.compressed_size)
-
-	def decompress(self):
-		return zlib.decompress(self._read())
 
 	def extract(self, base_path, strip, overwrite):
 		dest = os.path.join(base_path, self.filename.replace('\\', os.path.sep))
@@ -90,7 +91,7 @@ class Rs5CompressedFileDecoder(Rs5CompressedFile):
 				f.write(data)
 		except zlib.error as e:
 			print>>sys.stderr, 'ERROR EXTRACTING %s: %s. Skipping decompression!' % (dest, str(e))
-			f.write(self._read())
+			f.write(self.read())
 		f.close()
 		os.utime(dest, (self.modtime, self.modtime))
 
@@ -128,7 +129,7 @@ class Rs5CompressedFileDecoder(Rs5CompressedFile):
 			f.close()
 
 class Rs5CompressedFileEncoder(Rs5CompressedFile):
-	def __init__(self, fp, filename = None, buf = None):
+	def __init__(self, fp, filename = None, buf = None, seek_cb = None):
 		if filename is not None:
 			self.modtime = os.stat(filename).st_mtime
 			uncompressed = open(filename, 'rb').read()
@@ -143,12 +144,15 @@ class Rs5CompressedFileEncoder(Rs5CompressedFile):
 		self.compressed_size = len(compressed)
 		self.u1 = 0x30080000000
 		self.u2 = 1
+		self.fp = fp
 
+		if seek_cb is not None:
+			seek_cb(self.compressed_size)
 		self.data_off = fp.tell()
 		fp.write(compressed)
 
 class Rs5CompressedFileRepacker(Rs5CompressedFile):
-	def __init__(self, newfp, oldfile):
+	def __init__(self, newfp, oldfile, seek_cb=None):
 		self.compressed_size = oldfile.compressed_size
 		self.u1 = oldfile.u1
 		self.type = oldfile.type
@@ -157,20 +161,26 @@ class Rs5CompressedFileRepacker(Rs5CompressedFile):
 		self.modtime = oldfile.modtime
 		self.filename = oldfile.filename
 
+		if seek_cb is not None:
+			seek_cb(self.compressed_size)
 		self.data_off = newfp.tell()
-		newfp.write(oldfile._read())
+		newfp.write(oldfile.read())
 
+class Rs5CentralDirectory(collections.OrderedDict):
+	@property
+	def d_size(self):
+		return self.ent_len * (1 + len(self))
 
-class Rs5CentralDirectoryDecoder(collections.OrderedDict):
+class Rs5CentralDirectoryDecoder(Rs5CentralDirectory):
 	def __init__(self):
 		self.fp.seek(self.d_off)
 		data = self.fp.read(self.ent_len)
-		(d_off1, self.d_len, flags) = struct.unpack('<QII', data[:16])
+		(d_off1, self.d_orig_len, flags) = struct.unpack('<QII', data[:16])
 		assert(self.d_off == d_off1)
 
 		collections.OrderedDict.__init__(self)
 
-		for f_off in range(self.d_off + self.ent_len, self.d_off + self.d_len, self.ent_len):
+		for f_off in range(self.d_off + self.ent_len, self.d_off + self.d_orig_len, self.ent_len):
 			try:
 				entry = Rs5CompressedFileDecoder(self.fp, self.fp.read(self.ent_len))
 				self[entry.filename] = entry
@@ -179,12 +189,12 @@ class Rs5CentralDirectoryDecoder(collections.OrderedDict):
 				# I think they are just deleted files
 				continue
 
-class Rs5CentralDirectoryEncoder(collections.OrderedDict):
+class Rs5CentralDirectoryEncoder(Rs5CentralDirectory):
 	def write_directory(self):
-		print "Writing central directory..."
 		self.d_off = self.fp.tell()
+		self.d_orig_len = self.d_size
 
-		dir_hdr = struct.pack('<QII', self.d_off, self.ent_len * (1 + len(self)), self.flags)
+		dir_hdr = struct.pack('<QII', self.d_off, self.d_size, self.flags)
 		pad = '\0' * (self.ent_len - len(dir_hdr)) # XXX: Not sure if any data here is important
 		self.fp.write(dir_hdr + pad)
 
@@ -215,17 +225,17 @@ class Rs5ArchiveEncoder(Rs5CentralDirectoryEncoder):
 		self.fp = open(filename, 'wb')
 		self.fp.seek(self.header_len)
 
-	def add(self, filename):
+	def add(self, filename, seek_cb=None):
 		print "Adding %s..." % filename
-		entry = Rs5CompressedFileEncoder(self.fp, filename)
+		entry = Rs5CompressedFileEncoder(self.fp, filename, seek_cb=seek_cb)
 		self[entry.filename] = entry
 
-	def add_from_buf(self, buf):
-		entry = Rs5CompressedFileEncoder(self.fp, buf=buf)
+	def add_from_buf(self, buf, seek_cb=None):
+		entry = Rs5CompressedFileEncoder(self.fp, buf=buf, seek_cb=seek_cb)
 		print "Adding %s..." % entry.filename
 		self[entry.filename] = entry
 
-	def add_chunk_dir(self, path):
+	def add_chunk_dir(self, path, seek_cb=None):
 		print "Adding chunks from %s..." % path
 		files = sorted(os.listdir(path))
 		files.remove('00-HEADER')
@@ -243,7 +253,7 @@ class Rs5ArchiveEncoder(Rs5CentralDirectoryEncoder):
 			chunk = rs5file.Rs5ChunkEncoder(chunk_name, chunk.read())
 			chunks[chunk.name] = chunk
 		chunks = rs5file.Rs5ChunkedFileEncoder(header.magic, header.filename, header.u2, chunks)
-		entry = Rs5CompressedFileEncoder(self.fp, buf=chunks.encode())
+		entry = Rs5CompressedFileEncoder(self.fp, buf=chunks.encode(), seek_cb=seek_cb)
 		self[entry.filename] = entry
 
 	def write_header(self):
@@ -252,6 +262,7 @@ class Rs5ArchiveEncoder(Rs5CentralDirectoryEncoder):
 		self.fp.write(struct.pack('<8sQII', 'CFILEHDR', self.d_off, self.ent_len, self.u1))
 
 	def save(self):
+		print "Writing central directory..."
 		self.write_directory()
 		self.write_header()
 		self.fp.flush()
@@ -261,20 +272,25 @@ class Rs5ArchiveUpdater(Rs5ArchiveEncoder, Rs5ArchiveDecoder):
 	def __init__(self, fp):
 		return Rs5ArchiveDecoder.__init__(self, fp)
 
-	def add(self, filename):
+	def seek_eof(self):
 		self.fp.seek(0, 2)
-		return Rs5ArchiveEncoder.add(self, filename)
+
+	def seek_find_hole(self, size):
+		'''Safe fallback version - always seeks to the end of file'''
+		return self.seek_eof()
+
+	def add(self, filename):
+		return Rs5ArchiveEncoder.add(self, filename, seek_cb = self.seek_find_hole)
 
 	def add_chunk_dir(self, path):
-		self.fp.seek(0, 2)
-		return Rs5ArchiveEncoder.add_chunk_dir(self, path)
+		return Rs5ArchiveEncoder.add_chunk_dir(self, path, seek_cb = self.seek_find_hole)
 
 	def add_from_buf(self, buf):
-		self.fp.seek(0, 2)
-		return Rs5ArchiveEncoder.add_from_buf(self, buf)
+		return Rs5ArchiveEncoder.add_from_buf(self, buf, seek_cb = self.seek_find_hole)
 
 	def save(self):
-		self.fp.seek(0, 2)
+		self.seek_find_hole(self.d_size)
+		print "Writing central directory..."
 		self.write_directory()
 		# When updating an existing archive we use an extra flush
 		# before writing the header to reduce the risk of writing a bad
