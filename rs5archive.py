@@ -210,7 +210,7 @@ class Rs5ArchiveDecoder(Rs5CentralDirectoryDecoder):
 		if magic != 'CFILEHDR':
 			raise ValueError('Invalid file header')
 
-		(self.d_off, self.ent_len, u1) = struct.unpack('<QII', f.read(16))
+		(self.d_off, self.ent_len, self.u1) = struct.unpack('<QII', f.read(16))
 
 		Rs5CentralDirectoryDecoder.__init__(self)
 
