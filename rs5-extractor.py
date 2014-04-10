@@ -329,7 +329,7 @@ def apply_mod_order(rs5):
 
 	rs5.update(directory)
 
-def merge_archives(dest_archive, source_archives):
+def add_mod(dest_archive, source_archives):
 	rs5 = Rs5ModArchiveUpdater(open(dest_archive, 'rb+'))
 	do_add_undo(rs5)
 	for source_archive in source_archives:
@@ -413,8 +413,8 @@ def parse_args():
 			help='Create a new RS5 file')
 	group.add_argument('-a', '--add', action='store_true',
 			help='Add/update FILEs in ARCHIVE')
-	group.add_argument('--cat', '--concatenate', action='store_true',
-			help='Merge FILEs into ARCHIVE with undo metadata')
+	group.add_argument('--add-mod', action='store_true',
+			help='Merge mods specified by FILEs into ARCHIVE with undo metadata')
 	group.add_argument('--repack', metavar='NEW_ARCHIVE', # TODO: Discard UNDO metadata
 			help='Decode ARCHIVE and pack into NEW_ARCHIVE, for testing')
 
@@ -482,8 +482,8 @@ def main():
 	if args.revert:
 		return revert(args.file)
 
-	if args.cat:
-		return merge_archives(args.file, args.files)
+	if args.add_mod:
+		return add_mod(args.file, args.files)
 
 if __name__ == '__main__':
 	sys.exit(main())
