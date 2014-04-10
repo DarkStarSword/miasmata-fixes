@@ -9,10 +9,11 @@ import rs5file
 undo_file = r'MIASMOD\UNDO'
 undo_dir_placeholder = r'MIASMOD\ORIGDIR'
 mod_manifests = r'MIASMOD\MODS'
+mod_order_file = r'MIASMOD\ORDER'
 
 def file_blacklisted(name):
 	'''Files not permitted to be manually added to an archive'''
-	if name.upper() in (undo_file, undo_dir_placeholder):
+	if name.upper() in (undo_file, undo_dir_placeholder, mod_order_file):
 		return True
 	if name.upper().startswith('%s\\' % mod_manifests):
 		return True
@@ -245,40 +246,94 @@ class ModCentralDirectoryDecoder(rs5archive.Rs5CentralDirectoryDecoder):
 		self.ent_len = rs5.ent_len
 		rs5archive.Rs5CentralDirectoryDecoder.__init__(self)
 
+class ModOrder(list):
+	import json
+
+class ModOrderEncoder(ModOrder, rs5file.Rs5FileEncoder):
+	def __init__(self, rs5, order):
+		list.__init__(self, order)
+		rs5file.Rs5FileEncoder.__init__(self, 'META', mod_order_file, self.json.dumps(self), 0)
+
+class ModOrderDecoder(ModOrder, rs5file.Rs5FileDecoder):
+	def __init__(self, rs5):
+		rs5file.Rs5FileDecoder.__init__(self, rs5[mod_order_file].decompress())
+		list.__init__(self, self.json.loads(self.data))
+
 def rs5_mods(rs5):
 	mods = filter(lambda x: x.startswith('%s\\' % mod_manifests), rs5)
-	# TODO: Sort mods somehow... communitypatch should come always come
-	# first, and everything else should at least be predictable.
-	# I could either add metadata into the mods to facilitate this, or
-	# hardcode the sorting here.
-	# Maybe allow Miasmod to override any sorting done here
-	return mods
+	if mod_order_file in rs5:
+		order = ModOrderDecoder(rs5)
+		for mod in order:
+			manifest = '%s\\%s.manifest' % (mod_manifests, mod)
+			if manifest in rs5:
+				# print 'Processing %s (ordered)' % mod
+				yield mods.pop(mods.index(manifest))
+			else:
+				print 'WARNING: mod listed in %s not found in archive!' % (manifest, mod_order_file)
+	for mod in mods:
+		# print 'Processing %s (UNORDERED)' % mod
+		yield mod
 
-def iter_all_file_versions(rs5):
+# Too slow when dealing with a large number of files, could still be useful for
+# another list command though...
+# def iter_all_file_versions(rs5):
+# 	'''
+# 	Iterates over every file in the archive, including multiple versions of
+# 	the same file where a mod has overridden them.
+# 	'''
+# 	done = set()
+# 	def process(file):
+# 		done.add((file.filename, file.data_off))
+# 		return file
+#
+# 	yield process(rs5[undo_file])
+# 	for file in UndoMetaCentralDirectory(rs5).itervalues():
+# 		yield process(file)
+# 	for mod in rs5_mods(rs5):
+# 		yield process(rs5[mod])
+# 		for file in ModCentralDirectoryDecoder(rs5, rs5[mod]).itervalues():
+# 			yield process(file)
+#
+# 	for (filename, off) in set([(x.filename, x.data_off) for x in rs5.values()]).difference(done):
+# 		yield rs5[filename]
+
+def iter_mod_file_versions(rs5, undo_pos):
 	'''
-	Iterates over every file in the archive, including multiple versions of
-	the same file where a mod has overridden them.
+	Iterates over every file in the archive that has been added via a mod
+	or manually since undo information was added, including multiple
+	versions of the same file where multiple mods have touched the same file.
 	'''
 	done = set()
 	def process(file):
+		assert(file.data_off >= undo_pos)
 		done.add((file.filename, file.data_off))
 		return file
 
-	yield process(rs5[undo_file])
-	for file in UndoMetaCentralDirectory(rs5).itervalues():
-		yield process(file)
 	for mod in rs5_mods(rs5):
 		yield process(rs5[mod])
 		for file in ModCentralDirectoryDecoder(rs5, rs5[mod]).itervalues():
 			yield process(file)
 
-	for (filename, off) in set([(x.filename, x.data_off) for x in rs5.values()]).difference(done):
+	remaining = set([(x.filename, x.data_off) for x in rs5.values()]).difference(done)
+	remaining = filter(lambda (filename, off): off >= undo_pos, remaining)
+	for (filename, off) in remaining:
 		yield rs5[filename]
 
+# Too slow when dealing with a large number of files
+# def iter_all_used_sections(rs5):
+# 	yield (0, 24, '__header__') # Header
+# 	yield (rs5.d_off, rs5.d_off + rs5.d_orig_len, '__directory__') # Central Directory
+# 	for file in iter_all_file_versions(rs5):
+# 		yield (file.data_off, file.data_off + file.compressed_size, file.filename)
+
 def iter_used_sections(rs5):
-	yield (0, 24, '__header__') # Header
-	yield (rs5.d_off, rs5.d_off + rs5.d_orig_len, '__directory__') # Central Directory
-	for file in iter_all_file_versions(rs5):
+	undo = rs5[undo_file]
+	undo_pos = undo.data_off + undo.compressed_size
+
+	yield (0, undo_pos, '__original__')
+	if rs5.d_off >= undo_pos:
+		yield (rs5.d_off, rs5.d_off + rs5.d_orig_len, '__directory__') # Central Directory
+	for file in iter_mod_file_versions(rs5, undo_pos):
 		yield (file.data_off, file.data_off + file.compressed_size, file.filename)
 
 def find_eof(rs5):
@@ -289,33 +344,65 @@ def find_eof(rs5):
 	'''
 	return max([x[1] for x in iter_used_sections(rs5)])
 
-def find_hole(rs5, size):
-	'''
-	Finds a hole in the rs5 archive large enough to fit some data.
-	Guaranteed not to return a position before the end of the undo
-	metadata.
-	'''
+# A bit slow for what I wanted, but may still be useful for printing out the
+# used regions
+# def find_hole(rs5, size):
+# 	'''
+# 	Finds a hole in the rs5 archive large enough to fit some data.
+# 	Guaranteed not to return a position before the end of the undo
+# 	metadata.
+# 	'''
+# 	undo = rs5[undo_file]
+# 	undo_pos = undo.data_off + undo.compressed_size
+# 	regions = sorted(iter_all_used_sections(rs5))
+# 	for (i, (start, fin, name)) in enumerate(regions):
+# 		space = 0
+# 		if i:
+# 			space = start - regions[i-1][1]
+# 		print '%.8x:%.8x %+8i %s' % (start, fin, space, name)
+# 		if fin < undo_pos:
+# 			continue
+# 		if i == len(regions) - 1 or regions[i+1][0] - fin >= size:
+# 			return fin
+# 	raise Exception()
+
+def find_largest_hole(rs5):
 	undo = rs5[undo_file]
 	undo_pos = undo.data_off + undo.compressed_size
 	regions = sorted(iter_used_sections(rs5))
-	for (i, (start, fin, name)) in enumerate(regions):
-		space = 0
-		if i:
-			space = start - regions[i-1][1]
-		# print '%.8x:%.8x %+8i %s' % (start, fin, space, name)
-		if fin < undo_pos:
-			continue
-		if i == len(regions) - 1 or regions[i+1][0] - fin >= size:
-			return fin
-	raise Exception()
+	hole = (0, None)
+	for (i, (start, fin, name)) in enumerate(regions[:-1]):
+		assert (fin >= undo_pos)
+		space = regions[i+1][0] - fin
+		if space > hole[0]:
+			hole = (space, fin)
+	return hole
 
 class Rs5ModArchiveUpdater(rs5archive.Rs5ArchiveUpdater):
+	def __init__(self, fp):
+		rs5archive.Rs5ArchiveUpdater.__init__(self, fp)
+		self.clear_largest_hole()
+
+	def clear_largest_hole(self):
+		self.largest_hole_size = self.largest_hole_pos = None
+
+	def update_largest_hole(self):
+		print 'Searching for holes...'
+		self.largest_hole_size, self.largest_hole_pos = find_largest_hole(self)
+		if self.largest_hole_pos is not None:
+			print 'Largest hole is %i bytes at 0x%x' % (self.largest_hole_size, self.largest_hole_pos)
+		else:
+			print 'No holes found'
+
 	def seek_find_hole(self, size):
 		if undo_file not in self:
 			return self.seek_eof()
-		hole = find_hole(self, size)
-		# print 'Hole found at 0x%x large enough to fit %i bytes' % (hole, size)
-		self.fp.seek(hole)
+		if self.largest_hole_size is None:
+			self.update_largest_hole()
+		if self.largest_hole_size < size:
+			return self.seek_eof()
+		self.fp.seek(self.largest_hole_pos)
+		self.clear_largest_hole()
 
 def apply_mod_order(rs5):
 	'''
@@ -328,6 +415,15 @@ def apply_mod_order(rs5):
 		directory.update(ModCentralDirectoryDecoder(rs5, rs5[mod]))
 
 	rs5.update(directory)
+
+def order_mods(archive, mod_list):
+	rs5 = Rs5ModArchiveUpdater(open(archive, 'rb+'))
+	do_add_undo(rs5)
+	file = ModOrderEncoder(rs5, mod_list)
+	rs5.add_from_buf(file.encode())
+	apply_mod_order(rs5)
+	rs5.save()
+	rs5.fp.truncate(find_eof(rs5))
 
 def add_mod(dest_archive, source_archives):
 	rs5 = Rs5ModArchiveUpdater(open(dest_archive, 'rb+'))
@@ -415,6 +511,8 @@ def parse_args():
 			help='Add/update FILEs in ARCHIVE')
 	group.add_argument('--add-mod', action='store_true',
 			help='Merge mods specified by FILEs into ARCHIVE with undo metadata')
+	group.add_argument('--order', '--mod-order', '--set-mod-order', action='store_true',
+			help='Change the order of mods added with --add-mod within the archive')
 	group.add_argument('--repack', metavar='NEW_ARCHIVE', # TODO: Discard UNDO metadata
 			help='Decode ARCHIVE and pack into NEW_ARCHIVE, for testing')
 
@@ -484,6 +582,9 @@ def main():
 
 	if args.add_mod:
 		return add_mod(args.file, args.files)
+
+	if args.order:
+		return order_mods(args.file, args.files)
 
 if __name__ == '__main__':
 	sys.exit(main())
