@@ -18,7 +18,9 @@ def file_blacklisted(name):
 		return True
 	return False
 
-def list_files(archive, file_list, list_chunks=False):
+def list_files(archive, file_list, list_chunks=False, sha=False):
+	import hashlib
+
 	rs5 = rs5archive.Rs5ArchiveDecoder(open(archive, 'rb'))
 	if not file_list:
 		file_list = rs5
@@ -29,6 +31,8 @@ def list_files(archive, file_list, list_chunks=False):
 		except KeyError:
 			print '%s not found in %s~' % (filename, archive)
 			continue
+		if sha:
+			print '%s -' % hashlib.sha1(file.read()).hexdigest(),
 		print '%4s %8i %s' % (file.type, file.uncompressed_size, file.filename)
 		if list_chunks and file.type not in ('PROF', 'INOD', 'FOGN'):
 			chunks = rs5file.rs5_file_decoder_factory(file.decompress())
@@ -397,6 +401,8 @@ def parse_args():
 			help='List all files in the rs5 archive')
 	group.add_argument('-L', '--list-chunks', action='store_true',
 			help='List all files and contained chunks in the rs5 archive')
+	group.add_argument('--sha1', action='store_true',
+			help='Calculate the sha1sum of the zlib compressed version of all files within the archive')
 	group.add_argument('-x', '--extract', action='store_true',
 			help='Extract files from the archive')
 	group.add_argument('-c', '--create', action='store_true',
@@ -441,6 +447,9 @@ def main():
 
 	if args.list_chunks:
 		return list_files(args.file, args.files, list_chunks=True)
+
+	if args.sha1:
+		return list_files(args.file, args.files, sha=True)
 
 	if args.extract:
 		directory = args.directory
