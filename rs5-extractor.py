@@ -35,11 +35,15 @@ def list_files(archive, file_list, list_chunks=False, sha=False):
 			print '%s -' % hashlib.sha1(file.read()).hexdigest(),
 		print '%4s %8i %s' % (file.type, file.uncompressed_size, file.filename)
 		if list_chunks and file.type not in ('PROF', 'INOD', 'FOGN'):
-			chunks = rs5file.rs5_file_decoder_factory(file.decompress())
-			if not hasattr(chunks, 'itervalues'):
-				continue
-			for chunk in chunks.itervalues():
-				print '%4s %8s - %4s %8i' % ('', '', chunk.name, chunk.size)
+			try:
+				chunks = rs5file.rs5_file_decoder_factory(file.decompress())
+			except zlib.error as e:
+				print '%4s %8s zlib: %s' % ('', '', str(e))
+			else:
+				if not hasattr(chunks, 'itervalues'):
+					continue
+				for chunk in chunks.itervalues():
+					print '%4s %8s - %4s %8i' % ('', '', chunk.name, chunk.size)
 			print
 
 def extract(archive, dest, file_list, strip, chunks, overwrite, filter):
