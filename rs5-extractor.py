@@ -366,43 +366,52 @@ def find_eof(rs5):
 # 			return fin
 # 	raise Exception()
 
-def find_largest_hole(rs5):
+def find_holes(rs5):
 	undo = rs5[undo_file]
 	undo_pos = undo.data_off + undo.compressed_size
 	regions = sorted(iter_used_sections(rs5))
-	hole = (0, None)
+	holes = []
 	for (i, (start, fin, name)) in enumerate(regions[:-1]):
 		assert (fin >= undo_pos)
 		space = regions[i+1][0] - fin
-		if space > hole[0]:
-			hole = (space, fin)
-	return hole
+		assert(space >= 0)
+		if space > 0:
+			holes.append((space, fin))
+	return holes
 
 class Rs5ModArchiveUpdater(rs5archive.Rs5ArchiveUpdater):
 	def __init__(self, fp):
 		rs5archive.Rs5ArchiveUpdater.__init__(self, fp)
-		self.clear_largest_hole()
+		self.holes = None
 
-	def clear_largest_hole(self):
-		self.largest_hole_size = self.largest_hole_pos = None
+	def __delitem__(self, item):
+		rs5archive.Rs5ArchiveUpdater.__delitem__(self, item)
+		self.holes = None
 
-	def update_largest_hole(self):
+	def find_holes(self):
 		print 'Searching for holes...'
-		self.largest_hole_size, self.largest_hole_pos = find_largest_hole(self)
-		if self.largest_hole_pos is not None:
-			print 'Largest hole is %i bytes at 0x%x' % (self.largest_hole_size, self.largest_hole_pos)
+		self.holes = sorted(find_holes(self))
+		if len(self.holes):
+			print '\n'.join('Hole found: %i bytes at 0x%x' % x for x in self.holes)
 		else:
 			print 'No holes found'
 
 	def seek_find_hole(self, size):
 		if undo_file not in self:
 			return self.seek_eof()
-		if self.largest_hole_size is None:
-			self.update_largest_hole()
-		if self.largest_hole_size < size:
-			return self.seek_eof()
-		self.fp.seek(self.largest_hole_pos)
-		self.clear_largest_hole()
+		if self.holes is None:
+			self.find_holes()
+		for (i, (hole_size, hole)) in enumerate(self.holes):
+			if hole_size >= size:
+				print 'Filling hole at 0x%x of size %i with %i bytes' % (hole, hole_size, size)
+				if hole_size == size:
+					del self.holes[i]
+				else:
+					self.holes[i] = (hole_size - size, hole + size)
+					self.holes.sort() # Insertion sort would be more efficient here
+				return self.fp.seek(hole)
+
+		return self.seek_eof()
 
 def apply_mod_order(rs5):
 	'''
@@ -463,6 +472,11 @@ def add_mod(dest_archive, source_archives):
 	for source_archive in source_archives:
 		source_rs5 = rs5archive.Rs5ArchiveDecoder(open(source_archive, 'rb'))
 		mod_name = os.path.splitext(os.path.basename(source_archive))[0]
+
+		manifest_name = '%s\\%s.manifest' % (mod_manifests, mod_name)
+		if manifest_name in rs5:
+			do_rm_mod(rs5, mod_name)
+
 		mod_entries = ModCentralDirectoryEncoder(mod_name, rs5.ent_len)
 		for source_file in source_rs5.itervalues():
 			if file_blacklisted(source_file.filename):
