@@ -269,7 +269,7 @@ def rs5_mods(rs5):
 				# print 'Processing %s (ordered)' % mod
 				yield mods.pop(mods.index(manifest))
 			else:
-				print 'WARNING: mod listed in %s not found in archive!' % (manifest, mod_order_file)
+				print 'WARNING: %s listed in %s not found in archive!' % (mod, mod_order_file)
 	for mod in mods:
 		# print 'Processing %s (UNORDERED)' % mod
 		yield mod
