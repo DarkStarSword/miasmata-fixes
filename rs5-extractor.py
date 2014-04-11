@@ -335,13 +335,16 @@ def list_holes(archive):
 	rs5 = rs5archive.Rs5ArchiveDecoder(open(archive, 'rb'))
 	regions = sorted(iter_all_used_sections(rs5))
 	wasted = 0
+	bad = False
 	for (i, (start, fin, name, mod, masked)) in enumerate(regions):
 		if i:
 			space = start - regions[i-1][1]
 			if space:
 				print '<-- HOLE: %i bytes -->' % space
 				wasted += space
-			assert(space >= 0)
+			if space < 0:
+				print ' !!! WARNING: %i BYTES OF OVERLAPPING DATA DETECTED !!!' % -space
+				bad = True
 		mask_str = mod_str = ''
 		if mod is not None:
 			mod_str = '(%s) ' % mod
@@ -350,6 +353,7 @@ def list_holes(archive):
 		print '%.8x:%.8x %s%s%s' % (start, fin, mod_str, name, mask_str)
 	print
 	print 'Total space wasted by holes: %i bytes' % wasted
+	assert (not bad)
 
 def find_holes(rs5):
 	undo = rs5[undo_file]
