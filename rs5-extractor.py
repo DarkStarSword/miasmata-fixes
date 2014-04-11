@@ -425,6 +425,38 @@ def order_mods(archive, mod_list):
 	rs5.save()
 	rs5.fp.truncate(find_eof(rs5))
 
+class ModNotFound(Exception): pass
+
+def do_rm_mod(rs5, mod):
+	manifest_name = '%s\\%s.manifest' % (mod_manifests, mod)
+	try:
+		manifest = rs5[manifest_name]
+	except:
+		print 'ERROR: %s not found in archive!' % manifest_name
+		raise ModNotFound()
+	for (filename, mod_f) in ModCentralDirectoryDecoder(rs5, manifest).iteritems():
+		cur_f = rs5[filename]
+		if cur_f.data_off == mod_f.data_off:
+			print 'Removing %s...' % filename
+			del rs5[filename]
+		else:
+			print 'Skipping %s - offsets do not match' % filename
+	print 'Removing %s...' % manifest_name
+	del rs5[manifest_name]
+	print 'Rebuilding directory from mod order...'
+	apply_mod_order(rs5)
+	rs5.save()
+	rs5.fp.truncate(find_eof(rs5))
+
+def rm_mod(archive, mods):
+	rs5 = Rs5ModArchiveUpdater(open(archive, 'rb+'))
+	do_add_undo(rs5)
+	for mod in mods:
+		try:
+			do_rm_mod(rs5, mod)
+		except ModNotFound:
+			return 1
+
 def add_mod(dest_archive, source_archives):
 	rs5 = Rs5ModArchiveUpdater(open(dest_archive, 'rb+'))
 	do_add_undo(rs5)
@@ -511,6 +543,8 @@ def parse_args():
 			help='Add/update FILEs in ARCHIVE')
 	group.add_argument('--add-mod', action='store_true',
 			help='Merge mods specified by FILEs into ARCHIVE with undo metadata')
+	group.add_argument('--rm-mod', '--remove-mod', action='store_true',
+			help='Remove a mod previously added with --add-mod')
 	group.add_argument('--order', '--mod-order', '--set-mod-order', action='store_true',
 			help='Change the order of mods added with --add-mod within the archive')
 	group.add_argument('--repack', metavar='NEW_ARCHIVE', # TODO: Discard UNDO metadata
@@ -582,6 +616,9 @@ def main():
 
 	if args.add_mod:
 		return add_mod(args.file, args.files)
+
+	if args.rm_mod:
+		return rm_mod(args.file, args.files)
 
 	if args.order:
 		return order_mods(args.file, args.files)
