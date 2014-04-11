@@ -402,6 +402,10 @@ class Rs5ModArchiveUpdater(rs5archive.Rs5ArchiveUpdater):
 
 		return self.seek_eof()
 
+	def truncate_eof(self):
+		self.holes = None
+		self.fp.truncate(find_eof(self))
+
 def apply_mod_order(rs5):
 	'''
 	Rebuild the central directory from the original and any contained mod
@@ -421,7 +425,7 @@ def order_mods(archive, mod_list):
 	rs5.add_from_buf(file.encode())
 	apply_mod_order(rs5)
 	rs5.save()
-	rs5.fp.truncate(find_eof(rs5))
+	rs5.truncate_eof()
 
 class ModNotFound(Exception): pass
 
@@ -444,7 +448,7 @@ def do_rm_mod(rs5, mod):
 	print 'Rebuilding directory from mod order...'
 	apply_mod_order(rs5)
 	rs5.save()
-	rs5.fp.truncate(find_eof(rs5))
+	rs5.truncate_eof()
 
 def rm_mod(archive, mods):
 	rs5 = Rs5ModArchiveUpdater(open(archive, 'rb+'))
@@ -478,7 +482,7 @@ def add_mod(dest_archive, source_archives):
 		rs5.add_from_buf(mod_entries.encode())
 	apply_mod_order(rs5)
 	rs5.save()
-	rs5.fp.truncate(find_eof(rs5))
+	rs5.truncate_eof()
 
 def analyse(filename):
 	rs5 = rs5archive.Rs5ArchiveDecoder(open(filename, 'rb'))
