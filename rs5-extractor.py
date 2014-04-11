@@ -7,13 +7,12 @@ import rs5archive
 import rs5file
 
 undo_file = r'MIASMOD\UNDO'
-undo_dir_placeholder = r'MIASMOD\ORIGDIR'
 mod_manifests = r'MIASMOD\MODS'
 mod_order_file = r'MIASMOD\ORDER'
 
 def file_blacklisted(name):
 	'''Files not permitted to be manually added to an archive'''
-	if name.upper() in (undo_file, undo_dir_placeholder, mod_order_file):
+	if name.upper() in (undo_file, mod_order_file):
 		return True
 	if name.upper().startswith('%s\\' % mod_manifests):
 		return True
@@ -139,33 +138,6 @@ class UndoMeta(dict):
 		rs5.fp.flush()
 		rs5.fp.truncate(self['filesize'])
 
-	class Placeholder(rs5archive.Rs5CompressedFile):
-		def __init__(self, undo_file):
-			self.undo_file = undo_file
-
-		@property
-		def data_off(self):
-			return self.undo_file['directory_offset']
-		@property
-		def compressed_size(self):
-			return self.undo_file['directory_size']
-		@property
-		def uncompressed_size(self):
-			return self.undo_file['directory_size']
-		@property
-		def modtime(self):
-			import time
-			return time.time()
-		@property
-		def filename(self):
-			return undo_dir_placeholder
-		type = 'META'
-		u1 = 0x30080000000
-		u2 = 1
-	@property
-	def placeholder(self):
-		return self.Placeholder(self)
-
 class UndoMetaEncoder(UndoMeta, rs5file.Rs5FileEncoder):
 	def __init__(self, rs5):
 		self['filesize'] = os.fstat(rs5.fp.fileno()).st_size
@@ -188,7 +160,6 @@ def do_add_undo(rs5, overwrite=False):
 	undo = UndoMetaEncoder(rs5)
 	try:
 		rs5.add_from_buf(undo.encode())
-		rs5[undo_dir_placeholder] = undo.placeholder
 		rs5.save()
 	except Exception as e:
 		print>>sys.stderr, 'ERROR: %s occured while adding undo metadata: %s' % (e.__class__.__name__, str(e))
@@ -274,28 +245,39 @@ def rs5_mods(rs5):
 		# print 'Processing %s (UNORDERED)' % mod
 		yield mod
 
-# Too slow when dealing with a large number of files, could still be useful for
-# another list command though...
-# def iter_all_file_versions(rs5):
-# 	'''
-# 	Iterates over every file in the archive, including multiple versions of
-# 	the same file where a mod has overridden them.
-# 	'''
-# 	done = set()
-# 	def process(file):
-# 		done.add((file.filename, file.data_off))
-# 		return file
-#
-# 	yield process(rs5[undo_file])
-# 	for file in UndoMetaCentralDirectory(rs5).itervalues():
-# 		yield process(file)
-# 	for mod in rs5_mods(rs5):
-# 		yield process(rs5[mod])
-# 		for file in ModCentralDirectoryDecoder(rs5, rs5[mod]).itervalues():
-# 			yield process(file)
-#
-# 	for (filename, off) in set([(x.filename, x.data_off) for x in rs5.values()]).difference(done):
-# 		yield rs5[filename]
+def iter_all_file_versions(rs5, undo):
+	'''
+	Iterates over every file in the archive, including multiple versions of
+	the same file where a mod has overridden them.
+	'''
+	done = set()
+
+	if undo is not None:
+		mods = list(rs5_mods(rs5))
+		masked = {}
+		for mod_name in mods:
+			mod = ModCentralDirectoryDecoder(rs5, rs5[mod_name])
+			masked.update(zip(mod, [mod_name] * len(mod)))
+
+		def process(file, mod=None):
+			done.add((file.filename, file.data_off))
+			mask = None
+			if file.filename in masked:
+				mask = masked[file.filename]
+				if mask == mod:
+					mask = None
+			return (file, mod, mask)
+
+		yield process(rs5[undo_file])
+		for file in UndoMetaCentralDirectory(rs5).itervalues():
+			yield process(file)
+		for mod in mods:
+			yield process(rs5[mod], mod)
+			for file in ModCentralDirectoryDecoder(rs5, rs5[mod]).itervalues():
+				yield process(file, mod)
+
+	for (filename, off) in set([(x.filename, x.data_off) for x in rs5.values()]).difference(done):
+		yield (rs5[filename], None, None)
 
 def iter_mod_file_versions(rs5, undo_pos):
 	'''
@@ -319,12 +301,17 @@ def iter_mod_file_versions(rs5, undo_pos):
 	for (filename, off) in remaining:
 		yield rs5[filename]
 
-# Too slow when dealing with a large number of files
-# def iter_all_used_sections(rs5):
-# 	yield (0, 24, '__header__') # Header
-# 	yield (rs5.d_off, rs5.d_off + rs5.d_orig_len, '__directory__') # Central Directory
-# 	for file in iter_all_file_versions(rs5):
-# 		yield (file.data_off, file.data_off + file.compressed_size, file.filename)
+def iter_all_used_sections(rs5):
+	try:
+		undo = UndoMetaDecoder(rs5)
+	except KeyError:
+		undo = None
+	yield (0, 24, '<HEADER>', None, None) # Header
+	yield (rs5.d_off, rs5.d_off + rs5.d_orig_len, '<CENTRAL DIRECTORY>', None, None) # Central Directory
+	if undo is not None and (undo['directory_offset'] != rs5.d_off or undo['directory_size'] != rs5.d_orig_len):
+		yield (undo['directory_offset'], undo['directory_offset'] + undo['directory_size'], '<ORIGINAL CENTRAL DIRECTORY>', None, 'other central directory')
+	for (file, mod, masked) in iter_all_file_versions(rs5, undo):
+		yield (file.data_off, file.data_off + file.compressed_size, file.filename, mod, masked)
 
 def iter_used_sections(rs5):
 	undo = rs5[undo_file]
@@ -344,27 +331,21 @@ def find_eof(rs5):
 	'''
 	return max([x[1] for x in iter_used_sections(rs5)])
 
-# A bit slow for what I wanted, but may still be useful for printing out the
-# used regions
-# def find_hole(rs5, size):
-# 	'''
-# 	Finds a hole in the rs5 archive large enough to fit some data.
-# 	Guaranteed not to return a position before the end of the undo
-# 	metadata.
-# 	'''
-# 	undo = rs5[undo_file]
-# 	undo_pos = undo.data_off + undo.compressed_size
-# 	regions = sorted(iter_all_used_sections(rs5))
-# 	for (i, (start, fin, name)) in enumerate(regions):
-# 		space = 0
-# 		if i:
-# 			space = start - regions[i-1][1]
-# 		print '%.8x:%.8x %+8i %s' % (start, fin, space, name)
-# 		if fin < undo_pos:
-# 			continue
-# 		if i == len(regions) - 1 or regions[i+1][0] - fin >= size:
-# 			return fin
-# 	raise Exception()
+def list_holes(archive):
+	rs5 = rs5archive.Rs5ArchiveDecoder(open(archive, 'rb'))
+	regions = sorted(iter_all_used_sections(rs5))
+	for (i, (start, fin, name, mod, masked)) in enumerate(regions):
+		if i:
+			space = start - regions[i-1][1]
+			if space:
+				print '<-- HOLE: %i bytes -->' % space
+			assert(space >= 0)
+		mask_str = mod_str = ''
+		if mod is not None:
+			mod_str = '(%s) ' % mod
+		if masked is not None:
+			mask_str = ' (MASKED BY %s)' % masked
+		print '%.8x:%.8x %s%s%s' % (start, fin, mod_str, name, mask_str)
 
 def find_holes(rs5):
 	undo = rs5[undo_file]
@@ -549,6 +530,8 @@ def parse_args():
 			help='List all files and contained chunks in the rs5 archive')
 	group.add_argument('--sha1', action='store_true',
 			help='Calculate the sha1sum of the zlib compressed version of all files within the archive')
+	group.add_argument('--list-holes', action='store_true',
+			help='List the location of each file or structure in the archive, and any holes between them')
 	group.add_argument('-x', '--extract', action='store_true',
 			help='Extract files from the archive')
 	group.add_argument('-c', '--create', action='store_true',
@@ -600,6 +583,9 @@ def main():
 
 	if args.sha1:
 		return list_files(args.file, args.files, sha=True)
+
+	if args.list_holes:
+		return list_holes(args.file)
 
 	if args.extract:
 		directory = args.directory
