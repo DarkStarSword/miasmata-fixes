@@ -334,11 +334,13 @@ def find_eof(rs5):
 def list_holes(archive):
 	rs5 = rs5archive.Rs5ArchiveDecoder(open(archive, 'rb'))
 	regions = sorted(iter_all_used_sections(rs5))
+	wasted = 0
 	for (i, (start, fin, name, mod, masked)) in enumerate(regions):
 		if i:
 			space = start - regions[i-1][1]
 			if space:
 				print '<-- HOLE: %i bytes -->' % space
+				wasted += space
 			assert(space >= 0)
 		mask_str = mod_str = ''
 		if mod is not None:
@@ -346,6 +348,8 @@ def list_holes(archive):
 		if masked is not None:
 			mask_str = ' (MASKED BY %s)' % masked
 		print '%.8x:%.8x %s%s%s' % (start, fin, mod_str, name, mask_str)
+	print
+	print 'Total space wasted by holes: %i bytes' % wasted
 
 def find_holes(rs5):
 	undo = rs5[undo_file]
