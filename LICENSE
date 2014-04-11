@@ -1,6 +1,16 @@
+Please note that some files in this repository are not covered under the below
+license. This includes at least any files taken/modified from the game Miasmata
+(copyright 2012 IonFX) and any contributed translations, which are distributed
+here in good faith and indicated by the presence of other LICENSE files in
+their directories.
+
+All of the source code in this repository IS covered by the below license.
+
+
+
 The MIT License (MIT)
 
-Copyright (c) 2013 Ian Munsie
+Copyright (c) 2013-2014 Ian Munsie
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
