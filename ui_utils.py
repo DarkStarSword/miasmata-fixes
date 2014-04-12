@@ -16,7 +16,7 @@ def catch_error(f):
 			dialog = QtGui.QMessageBox()
 			dialog.setWindowTitle('MiasMod')
 			dialog.setIcon(QtGui.QMessageBox.Critical)
-			dialog.setText('Unhandled Exception')
+			dialog.setText(QtGui.QApplication.translate('Errors', 'Unhandled Exception', None, QtGui.QApplication.UnicodeUTF8))
 			dialog.setInformativeText('%s: %s' % (e.__class__.__name__, str(e)))
 			dialog.setDetailedText(traceback.format_exc())
 			dialog.exec_()
