@@ -84,7 +84,17 @@
        </layout>
       </item>
       <item>
-       <widget class="QTableView" name="patch_list"/>
+       <widget class="QTableView" name="patch_list">
+        <property name="alternatingRowColors">
+         <bool>true</bool>
+        </property>
+        <property name="showGrid">
+         <bool>false</bool>
+        </property>
+        <attribute name="verticalHeaderVisible">
+         <bool>false</bool>
+        </attribute>
+       </widget>
       </item>
       <item>
        <spacer name="verticalSpacer">

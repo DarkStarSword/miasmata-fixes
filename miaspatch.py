@@ -11,6 +11,42 @@ import rs5archive
 
 from ui_utils import catch_error
 
+class PatchListModel(QtCore.QAbstractTableModel):
+	def __init__(self, patch_list):
+		QtCore.QAbstractTableModel.__init__(self)
+		self.patch_list = patch_list
+
+	def rowCount(self, parent):
+		return len(self.patch_list)
+
+	def columnCount(self, parent):
+		return 2
+
+	def data(self, index, role):
+		patch = self.patch_list[index.row()]
+		if role == Qt.DisplayRole:
+			if index.column() == 1:
+				return patch
+		# if role == Qt.ToolTipRole:
+		if role == Qt.CheckStateRole:
+			if index.column() == 0:
+				return Qt.CheckState.Checked
+
+	def headerData(self, section, orientation, role):
+		if role == Qt.DisplayRole and orientation == Qt.Horizontal:
+			if section == 0:
+				return 'Install'
+			if section == 1:
+				return 'Mod Path'
+
+	def flags(self, index):
+		if not index.isValid():
+			return
+		flags = Qt.ItemIsEnabled
+		if index.column() == 0:
+			return flags | Qt.ItemIsUserCheckable
+		return flags
+
 class MiasPatch(QtGui.QDialog):
 	from miaspatch_ui import Ui_Dialog
 	def __init__(self, parent=None):
@@ -38,6 +74,18 @@ class MiasPatch(QtGui.QDialog):
 		self.install_path = path
 		self.ui.install_path.setText(path)
 		self.ui.groupBox.setEnabled(True)
+		self.enumerate_patches()
+
+	def enumerate_patches(self):
+		patch_list = []
+		for path in glob('*.rs5mod'):
+			patch_list.append(path)
+		for path in glob('*.miasmod'):
+			patch_list.append(path)
+
+		self.patch_list = PatchListModel(patch_list)
+		self.ui.patch_list.setModel(self.patch_list)
+		self.ui.patch_list.resizeColumnsToContents()
 
         @QtCore.Slot()
         @catch_error
@@ -58,9 +106,10 @@ class MiasPatch(QtGui.QDialog):
 
 	def find_install_path(self):
 		try:
-			self.install_path = miasutil.find_miasmata_install()
+			path = miasutil.find_miasmata_install()
 		except Exception as e:
 			return self.on_browse_clicked()
+		self.process_install_path(path)
 
         @QtCore.Slot()
         @catch_error
