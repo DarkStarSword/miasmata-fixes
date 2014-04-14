@@ -3,8 +3,8 @@
 import sys
 from PIL import Image, ImageFile
 import struct
-import multiprocessing
 from StringIO import StringIO
+import numpy as np
 
 # Documentation:
 # https://en.wikipedia.org/wiki/S3_Texture_Compression
@@ -81,71 +81,6 @@ class DDSHeader(object):
 		assert(size==124)
 		assert(self.flags & self.Flags.REQUIRED == self.Flags.REQUIRED)
 
-def dxt1(pix, x, y, c0, c1, clookup):
-	def rgb565(c):
-		return [(c & 0xf800) >> 8,
-			(c & 0x07e0) >> 3,
-			(c & 0x001f) << 3]
-	table = [ rgb565(c0), rgb565(c1) ]
-	z = zip(*table)
-	if c0 > c1:
-		table.append([ (c0 * 2 + c1) / 3 for (c0, c1) in z ])
-		table.append([ (c1 * 2 + c0) / 3 for (c0, c1) in z ])
-	else:
-		table.append([ (c0     + c1) / 2 for (c0, c1) in z ])
-		table.append([0, 0, 0]) # >Transparent< black? Alpha in DXT1?
-
-	for y1 in xrange(y, y+4):
-		for x1 in xrange(x, x+4):
-			l = clookup & 0x3
-			clookup >>= 2
-			pix[x1, y1] = tuple(table[l])
-
-def dxt5(pix, x, y, alpha):
-	# Byte swapped due to reading in LE
-	a0      = (alpha & 0x00000000000000ff) >> 0
-	a1      = (alpha & 0x000000000000ff00) >> 8
-	alookup = (alpha & 0xffffffffffff0000) >> 16
-
-	table = [a0, a1]
-
-	if a0 > a1:
-		for i in xrange(1, 7):
-			table.append(((7-i)*a0 + i*a1) / 7)
-	else:
-		for i in xrange(1, 5):
-			table.append(((5-i)*a0 + i*a1) / 5)
-		table.append(0)
-		table.append(255)
-
-	for y1 in xrange(y, y+4):
-		for x1 in xrange(x, x+4):
-			l = alookup & 0x7
-			alookup >>= 3
-			pix[x1, y1] = pix[x1, y1][0:3] + (table[l],)
-
-def process_strip_dxt1((y, mode, buf)):
-	width = len(buf) / 2
-	buf = StringIO(buf)
-	image = Image.new(mode, (width, 4))
-	pix = image.load()
-	for x in xrange(0, width, 4):
-		(c0, c1, clookup) = struct.unpack('<HHI', buf.read(8))
-		dxt1(pix, x, 0, c0, c1, clookup)
-	return (y, image.tostring())
-
-def process_strip_dxt5((y, mode, buf)):
-	width = len(buf) / 4
-	buf = StringIO(buf)
-	image = Image.new(mode, (width, 4))
-	pix = image.load()
-	for x in xrange(0, width, 4):
-		(alpha, c0, c1, clookup) = struct.unpack('<QHHI', buf.read(16))
-		dxt1(pix, x, 0, c0, c1, clookup)
-		if mode == 'RGBA':
-			dxt5(pix, x, 0, alpha)
-	return (y, image.tostring())
-
 def open_dds(fp, mipmap=None, mode='RGBA'):
 	if fp.read(4) != 'DDS ':
 		raise ValueError('Not a DDS file')
@@ -154,10 +89,10 @@ def open_dds(fp, mipmap=None, mode='RGBA'):
 	assert(header.pixel_format.four_cc) in ('DXT5', 'DXT1')
 	if header.pixel_format.four_cc == 'DXT1':
 		block_size = 8
-		process_strip = process_strip_dxt1
+		fmt = [('c0', '<u2'), ('c1', '<u2'), ('clookup', '<u4')]
 	else:
 		block_size = 16
-		process_strip = process_strip_dxt5
+		fmt = [('alpha', '<u8'), ('c0', '<u2'), ('c1', '<u2'), ('clookup', '<u4')]
 
 	(width, height) = (header.width, header.height)
 	if mipmap:
@@ -165,18 +100,85 @@ def open_dds(fp, mipmap=None, mode='RGBA'):
 			fp.seek(width * height * block_size / 16, 1)
 			(width, height) = (width/2, height/2)
 
-	buf = [ (y, mode, fp.read(block_size * width / 4)) for y in xrange(0, height, 4) ]
+	l = width * height / 16 * block_size
+	buf = np.frombuffer(fp.read(l), fmt)
 
-	image = Image.new(mode, (width, height))
-	pix = image.load()
+	def rgb565(c):
+		r = (c & 0xf800) >> 8
+		g = (c & 0x07e0) >> 3
+		b = (c & 0x001f) << 3
+		return np.dstack((r, g, b))
 
-	pool = multiprocessing.Pool()
+	c = [None]*4
+	c[0] = buf['c0'].reshape([height / 4, width / 4])
+	c[1] = buf['c1'].reshape([height / 4, width / 4])
+	ct = (c[0] <= c[1]).reshape([height / 4, width / 4, 1])
+	c[0] = rgb565(c[0])
+	c[1] = rgb565(c[1])
+	c[2] = np.choose(ct, ((2*c[0] + c[1]) / 3, (c[0] + c[1]) / 2))
+	c[3] = np.choose(ct, ((c[0] + 2*c[1]) / 3, np.zeros_like(c[0])))
+	del ct
+	cl = buf['clookup'].reshape([height / 4, width / 4, 1]).copy()
 
-	for (y, strip) in pool.imap_unordered(process_strip, buf, height / 16):
-		image.paste(Image.fromstring(mode, (width, 4), strip), (0, y))
+	alpha = None
+	channels = 3
+	if header.pixel_format.four_cc == 'DXT5' and mode == 'RGBA':
+		channels = 4
+		alpha = buf['alpha'].reshape(height / 4, width / 4)
+		a = [None]*8
+		aa = [None]*8
+		ab = [None]*8
+		# Byte swapped due to reading in LE
+		al = ((alpha & 0xffffffffffff0000) >> 16)
+		a[0] = alpha & 0xff
+		a[1] = (alpha & 0xff00) >> 8
+		at = a[0] <= a[1]
+		for i in xrange(1, 7):
+			aa[i+1] = ((7-i)*a[0] + i*a[1]) / 7
+		for i in xrange(1, 5):
+			ab[i+1] = ((5-i)*a[0] + i*a[1]) / 5
+		ab[6] = np.zeros_like(a[0])
+		ab[7] = np.empty_like(a[0])
+		ab[7].fill(255)
+		for i in xrange(2, 8):
+			a[i] = np.choose(at, [aa[i], ab[i]])
+		del aa, ab, at
 
-	pool.close()
-	pool.join()
+	out = np.empty([height, width, channels], np.uint16)
+	for y in range(4):
+		for x in range(4):
+			print y, x
+
+			# I feel like there's probably a more efficient way to do this...
+
+			# Look up the value
+			l = (cl & 0x3)
+			cl >>= 2
+
+			# Lookup the value of each of the pixels we are working on:
+			o = np.choose(l, c)
+
+			if channels == 4:
+				l = np.uint8(al & 0x7)
+				al >>= 3
+
+				oa = np.choose(l, a)
+				o = np.insert(o, 3, oa, 2)
+
+			# Enlarge that 4x in both directions:
+			o = o.repeat(4, 0).repeat(4, 1)
+
+			# Construct a mask of the pixels in the final image we are working on:
+			m = np.zeros([4, 4, channels])
+			m[y,  x] = [1] * channels
+			m = np.tile(m, [height / 4, width / 4, 1])
+
+			# Copy these pixels to the output image - this is the slowest operation:
+			np.putmask(out, m, o)
+
+	# Finally cast to uint8 here - too early causes overflows in the DXT
+	# calculations and any time after that actually slows things down
+	image = Image.fromarray(np.array(out, np.uint8))
 
 	return image
 
