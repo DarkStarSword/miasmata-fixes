@@ -3,6 +3,7 @@
 import sys
 from PIL import Image, ImageFile
 import struct
+import multiprocessing
 from StringIO import StringIO
 import numpy as np
 
@@ -81,27 +82,8 @@ class DDSHeader(object):
 		assert(size==124)
 		assert(self.flags & self.Flags.REQUIRED == self.Flags.REQUIRED)
 
-def open_dds(fp, mipmap=None, mode='RGBA'):
-	if fp.read(4) != 'DDS ':
-		raise ValueError('Not a DDS file')
-	header = DDSHeader(fp)
-
-	assert(header.pixel_format.four_cc) in ('DXT5', 'DXT1')
-	if header.pixel_format.four_cc == 'DXT1':
-		block_size = 8
-		fmt = [('c0', '<u2'), ('c1', '<u2'), ('clookup', '<u4')]
-	else:
-		block_size = 16
-		fmt = [('alpha', '<u8'), ('c0', '<u2'), ('c1', '<u2'), ('clookup', '<u4')]
-
-	(width, height) = (header.width, header.height)
-	if mipmap:
-		while mipmap < (width, height):
-			fp.seek(width * height * block_size / 16, 1)
-			(width, height) = (width/2, height/2)
-
-	l = width * height / 16 * block_size
-	buf = np.frombuffer(fp.read(l), fmt)
+def process_strip((y_out, width, height, fmt, mode, block_size, buf)):
+	buf = np.frombuffer(buf, fmt)
 
 	def rgb565(c):
 		r = (c & 0xf800) >> 8
@@ -122,7 +104,7 @@ def open_dds(fp, mipmap=None, mode='RGBA'):
 
 	alpha = None
 	channels = 3
-	if header.pixel_format.four_cc == 'DXT5' and mode == 'RGBA':
+	if block_size == 16 and mode == 'RGBA':
 		channels = 4
 		alpha = buf['alpha'].reshape(height / 4, width / 4)
 		a = [None]*8
@@ -147,8 +129,6 @@ def open_dds(fp, mipmap=None, mode='RGBA'):
 	out = np.empty([height, width, channels], np.uint16)
 	for y in range(4):
 		for x in range(4):
-			print y, x
-
 			# I feel like there's probably a more efficient way to do this...
 
 			# Look up the value
@@ -179,6 +159,40 @@ def open_dds(fp, mipmap=None, mode='RGBA'):
 	# Finally cast to uint8 here - too early causes overflows in the DXT
 	# calculations and any time after that actually slows things down
 	image = Image.fromarray(np.array(out, np.uint8))
+
+	return (y_out, image.tostring())
+
+def open_dds(fp, mipmap=None, mode='RGBA'):
+	if fp.read(4) != 'DDS ':
+		raise ValueError('Not a DDS file')
+	header = DDSHeader(fp)
+
+	assert(header.pixel_format.four_cc) in ('DXT5', 'DXT1')
+	if header.pixel_format.four_cc == 'DXT1':
+		block_size = 8
+		fmt = [('c0', '<u2'), ('c1', '<u2'), ('clookup', '<u4')]
+	else:
+		block_size = 16
+		fmt = [('alpha', '<u8'), ('c0', '<u2'), ('c1', '<u2'), ('clookup', '<u4')]
+
+	(width, height) = (header.width, header.height)
+	if mipmap:
+		while mipmap < (width, height):
+			fp.seek(width * height * block_size / 16, 1)
+			(width, height) = (width/2, height/2)
+
+	strip_height = height / multiprocessing.cpu_count()
+	assert(strip_height % 4 == 0)
+
+	buf = [ (y, width, strip_height, fmt, mode, block_size, fp.read(block_size * width * strip_height / 16)) \
+			for y in xrange(0, height, strip_height) ]
+	image = Image.new(mode, (width, height))
+
+	pool = multiprocessing.Pool()
+	for (y, strip) in pool.imap_unordered(process_strip, buf, height / 16):
+		image.paste(Image.fromstring(mode, (width, strip_height), strip), (0, y))
+	pool.close()
+	pool.join()
 
 	return image
 
