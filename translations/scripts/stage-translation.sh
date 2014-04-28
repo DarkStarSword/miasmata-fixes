@@ -3,8 +3,6 @@
 headers=$PWD/miasmata-headers
 translation=/var/www/miasmata/fr
 staging=$PWD/miasmata-fr
-miasmata_fixes_top=$(readlink -f $(dirname $(readlink -f "$0"))/../../)
-communitypatch=${miasmata_fixes_top}/communitypatch
 
 link_dds_files()
 {
@@ -22,9 +20,6 @@ link_dds_files()
 }
 
 rm -frv "$staging"
-
-mkdir -p "$staging"
-cp -rsv "$communitypatch"/main/* "$staging"
 
 mkdir -p "$staging/TEX/J2"
 for dir in index drugs plants research objectives conditions tabs; do
