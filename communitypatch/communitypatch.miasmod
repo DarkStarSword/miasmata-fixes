@@ -58,6 +58,30 @@
         ], 
         [
             [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_bindings", 
+                "children", 
+                "GI_LOOK_L"
+            ], 
+            "[\"T\",{\"s:text\": \"Glance Left\",\"I:pos\": [30,260],\"s:template\": \"setting_key\"}]"
+        ], 
+        [
+            [
+                "menus", 
+                "menus", 
+                "SETTINGS", 
+                "children", 
+                "settings_tab_bindings", 
+                "children", 
+                "GI_LOOK_R"
+            ], 
+            "[\"T\",{\"s:text\": \"Glance Right\",\"I:pos\": [30,300],\"s:template\": \"setting_key\"}]"
+        ], 
+        [
+            [
                 "texture_flags", 
                 "TEX\\J2\\LIST_Note18"
             ], 

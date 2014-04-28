@@ -805,20 +805,6 @@
                 "children", 
                 "settings_tab_bindings", 
                 "children", 
-                "GI_LOOK_R", 
-                "text"
-            ], 
-            "[\"s\",\"Glance Right\"]", 
-            "[\"s\",\"\"]"
-        ], 
-        [
-            [
-                "menus", 
-                "menus", 
-                "SETTINGS", 
-                "children", 
-                "settings_tab_bindings", 
-                "children", 
                 "GI_LEFT", 
                 "text"
             ], 
@@ -894,20 +880,6 @@
             ], 
             "[\"s\",\"Map\"]", 
             "[\"s\",\"Carte\"]"
-        ], 
-        [
-            [
-                "menus", 
-                "menus", 
-                "SETTINGS", 
-                "children", 
-                "settings_tab_bindings", 
-                "children", 
-                "GI_LOOK_L", 
-                "text"
-            ], 
-            "[\"s\",\"Glance Left\"]", 
-            "[\"s\",\"\"]"
         ], 
         [
             [
