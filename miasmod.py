@@ -37,7 +37,7 @@ from ui_utils import catch_error
 
 class ModList(object):
 	class mod(object):
-		def __init__(self, name, path, basename, type, note=None, include=True):
+		def __init__(self, name, path, basename, type, note=None, include=True, version=None):
 			self.rs5_name = None
 			self.rs5_path = None
 			self.miasmod_name = None
@@ -45,15 +45,17 @@ class ModList(object):
 			self.name = name
 			self.note = (None, None)
 			self.include = include
+			self.version = version
 
 			self.add(path, basename, type, note, include)
 
-		def add(self, path, basename, type, note=None, include=True):
+		def add(self, path, basename, type, note=None, include=True, version=None):
 			if type == 'rs5':
 				basename = '%s/environment' % basename
 			setattr(self, '%s_path' % type, path)
 			setattr(self, '%s_name' % type, basename)
 			self.note = note or self.note
+			self.version = version or self.version
 			if include is not None:
 				self.include = include
 		@property
@@ -81,7 +83,7 @@ class ModList(object):
 		(name, ext) = [ x.lower() for x in os.path.splitext(basename) ]
 		ext = ext[1:]
 
-		note = None
+		note = version = None
 		if ext == 'rs5':
 			if name < self.active:
 				self.active = name
@@ -94,6 +96,10 @@ class ModList(object):
 				note = ('WARNING: Filename may cause crash on load!',
 					'To avoid crashes, environment.rs5' \
 					' should come last alphabetically')
+		else:
+			diff = data.json_decode_diff(open(path, 'rb'))
+			if 'version' in diff:
+				version = diff['version']
 
 		include=True
 		if includes is not None and name in includes:
@@ -103,9 +109,9 @@ class ModList(object):
 		if name == 'alocalmod':
 			l = self.mods_last
 		if name in l:
-			l[name].add(path, basename, ext, note, include)
+			l[name].add(path, basename, ext, note, include, version)
 		else:
-			l[name] = ModList.mod(name, path, basename, ext, note, include)
+			l[name] = ModList.mod(name, path, basename, ext, note, include, version)
 
 	def extend(self, iterable, includes=None):
 		for item in iterable:
@@ -124,7 +130,7 @@ class ModListModel(QtCore.QAbstractTableModel):
 		return len(self.mod_list)
 
 	def columnCount(self, paretn):
-		return 3
+		return 4
 
 	def data(self, index, role):
 		mod = self.mod_list[index.row()]
@@ -134,21 +140,23 @@ class ModListModel(QtCore.QAbstractTableModel):
 			if index.column() == 1:
 				return mod.rs5_name
 			if index.column() == 2:
+				return mod.version
+			if index.column() == 3:
 				note = mod.note[0]
 				if note is None and mod.name == self.mod_list.active:
 					return 'Active'
 				return note
 		if role == Qt.ToolTipRole:
-			if index.column() == 2:
+			if index.column() == 3:
 				note = mod.note[1]
 				if note is None and mod.name == self.mod_list.active:
 					return 'Based on the filename, Miasmata will use the environment found in this RS5 file'
 				return note
 		if role == Qt.ForegroundRole:
-			if index.column() == 2 and mod.note[0]:
+			if index.column() == 3 and mod.note[0]:
 				return QtGui.QBrush(Qt.red)
 		if role == Qt.FontRole:
-			if index.column() == 2:
+			if index.column() == 3:
 				return QtGui.QFont(None, italic=True)
 		if role == Qt.CheckStateRole:
 			if index.column() == 0 and \
@@ -163,6 +171,8 @@ class ModListModel(QtCore.QAbstractTableModel):
 			if section == 1:
 				return 'RS5 Files'
 			if section == 2:
+				return 'Version'
+			if section == 3:
 				return 'Notes'
 
 	def setData(self, index, value, role = Qt.EditRole):
@@ -469,8 +479,8 @@ class MiasMod(QtGui.QMainWindow):
 		env1 = self.generate_env_from_diffs(row, mod, False)
 		env2 = environment.parse_from_archive(mod.rs5_path)
 		diff = data.diff_data(env1, env2)
-		mod_path = os.path.join(self.install_path, mod.miasmod_name)
-		data.json_encode_diff(diff, open(mod_path, 'wb'))
+		mod.miasmod_path = os.path.join(self.install_path, mod.miasmod_name)
+		data.json_encode_diff(diff, open(mod.miasmod_path, 'wb'))
 		self.refresh_mod_list()
 		self.done()
 
@@ -512,7 +522,7 @@ class MiasMod(QtGui.QMainWindow):
 		self.progress('Opening %s...' % mod.rs5_name)
 		env = environment.parse_from_archive(mod.rs5_path)
 		env.name = mod.rs5_name
-		view = miasmod_data.MiasmataDataView(env, name = mod.name, rs5_path = mod.rs5_path)
+		view = miasmod_data.MiasmataDataView(env, name = mod.name, rs5_path = mod.rs5_path, version=mod.version)
 		self.add_tab(view, mod.rs5_name, mod.name)
 		self.done()
 
@@ -523,7 +533,7 @@ class MiasMod(QtGui.QMainWindow):
 		env = environment.parse_from_archive(mod.rs5_path)
 		env.name = mod.name
 
-		view = miasmod_data.MiasmataDataView(env, name = mod.name, diff_base = diff_base, miasmod_path = mod.miasmod_path, rs5_path = mod.rs5_path)
+		view = miasmod_data.MiasmataDataView(env, name = mod.name, diff_base = diff_base, miasmod_path = mod.miasmod_path, rs5_path = mod.rs5_path, version=mod.version)
 		self.add_tab(view, mod.name, mod.name)
 		self.done()
 
@@ -532,7 +542,7 @@ class MiasMod(QtGui.QMainWindow):
 		(diff_base, env) = self.generate_env_from_single_diff(row, mod)
 		env.name = mod.miasmod_name
 
-		view = miasmod_data.MiasmataDataView(env, name = mod.name, diff_base = diff_base, miasmod_path = mod.miasmod_path)
+		view = miasmod_data.MiasmataDataView(env, name = mod.name, diff_base = diff_base, miasmod_path = mod.miasmod_path, version=mod.version)
 		self.add_tab(view, mod.miasmod_name, mod.name)
 		self.done()
 

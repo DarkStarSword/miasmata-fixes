@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'miasmod_data.ui'
 #
-# Created: Mon Dec 30 19:06:59 2013
+# Created: Tue Apr 29 18:40:05 2014
 #      by: pyside-uic 0.2.15 running on PySide 1.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -25,6 +25,15 @@ class Ui_MiasmataData(object):
         self.show_diff.setEnabled(False)
         self.show_diff.setObjectName("show_diff")
         self.horizontalLayout_2.addWidget(self.show_diff)
+        self.lblVersion = QtGui.QLabel(MiasmataData)
+        self.lblVersion.setEnabled(False)
+        self.lblVersion.setObjectName("lblVersion")
+        self.horizontalLayout_2.addWidget(self.lblVersion)
+        self.version = QtGui.QLineEdit(MiasmataData)
+        self.version.setEnabled(False)
+        self.version.setMaximumSize(QtCore.QSize(84, 16777215))
+        self.version.setObjectName("version")
+        self.horizontalLayout_2.addWidget(self.version)
         spacerItem = QtGui.QSpacerItem(20, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem)
         self.verticalLayout_3.addLayout(self.horizontalLayout_2)
@@ -142,6 +151,7 @@ class Ui_MiasmataData(object):
         self.actionInsert_Row.setObjectName("actionInsert_Row")
         self.actionRemove_Row = QtGui.QAction(MiasmataData)
         self.actionRemove_Row.setObjectName("actionRemove_Row")
+        self.lblVersion.setBuddy(self.version)
         self.label_4.setBuddy(self.search)
         self.label.setBuddy(self.name)
         self.label_2.setBuddy(self.type)
@@ -159,7 +169,8 @@ class Ui_MiasmataData(object):
         QtCore.QObject.connect(self.clear_search, QtCore.SIGNAL("clicked()"), self.search.clear)
         QtCore.QMetaObject.connectSlotsByName(MiasmataData)
         MiasmataData.setTabOrder(self.treeView, self.search)
-        MiasmataData.setTabOrder(self.search, self.name)
+        MiasmataData.setTabOrder(self.search, self.clear_search)
+        MiasmataData.setTabOrder(self.clear_search, self.name)
         MiasmataData.setTabOrder(self.name, self.type)
         MiasmataData.setTabOrder(self.type, self.value_line)
         MiasmataData.setTabOrder(self.value_line, self.value_list)
@@ -168,12 +179,14 @@ class Ui_MiasmataData(object):
         MiasmataData.setTabOrder(self.new_key, self.new_value)
         MiasmataData.setTabOrder(self.new_value, self.undo)
         MiasmataData.setTabOrder(self.undo, self.delete_node)
-        MiasmataData.setTabOrder(self.delete_node, self.show_diff)
-        MiasmataData.setTabOrder(self.show_diff, self.save)
+        MiasmataData.setTabOrder(self.delete_node, self.save)
+        MiasmataData.setTabOrder(self.save, self.show_diff)
+        MiasmataData.setTabOrder(self.show_diff, self.version)
 
     def retranslateUi(self, MiasmataData):
         self.save.setText(QtGui.QApplication.translate("MiasmataData", "&Save...", None, QtGui.QApplication.UnicodeUTF8))
         self.show_diff.setText(QtGui.QApplication.translate("MiasmataData", "Show &mod changes...", None, QtGui.QApplication.UnicodeUTF8))
+        self.lblVersion.setText(QtGui.QApplication.translate("MiasmataData", "&Version:", None, QtGui.QApplication.UnicodeUTF8))
         self.label_4.setText(QtGui.QApplication.translate("MiasmataData", "&Search:", None, QtGui.QApplication.UnicodeUTF8))
         self.clear_search.setText(QtGui.QApplication.translate("MiasmataData", "&Clear", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setText(QtGui.QApplication.translate("MiasmataData", "&Name:", None, QtGui.QApplication.UnicodeUTF8))

@@ -363,7 +363,7 @@ class MiasmataDataView(QtGui.QWidget):
 
 	saved = QtCore.Signal()
 
-	def __init__(self, root, sort=True, save_path=None, diff_base=None, miasmod_path=None, rs5_path=None, parent=None, name=None):
+	def __init__(self, root, sort=True, save_path=None, diff_base=None, miasmod_path=None, rs5_path=None, parent=None, name=None, version=None):
 		super(MiasmataDataView, self).__init__(parent)
 		self.ui = self.Ui_MiasmataData()
 		self.ui.setupUi(self)
@@ -378,6 +378,11 @@ class MiasmataDataView(QtGui.QWidget):
 
 		if self.diff_base is not None:
 			self.ui.show_diff.setEnabled(True)
+		if miasmod_path is not None:
+			self.ui.lblVersion.setEnabled(True)
+			self.ui.version.setEnabled(True)
+		if version is not None:
+			self.ui.version.setText(version)
 
 		self.model = self.underlying_model = MiasmataDataModel(root)
 		if sort:
@@ -523,6 +528,11 @@ class MiasmataDataView(QtGui.QWidget):
 
 	@QtCore.Slot()
 	@catch_error
+	def on_version_editingFinished(self):
+		self.ui.save.setEnabled(True)
+
+	@QtCore.Slot()
+	@catch_error
 	def enable_save(self, parent, start, end):
 		self.ui.save.setEnabled(True)
 
@@ -583,7 +593,8 @@ class MiasmataDataView(QtGui.QWidget):
 
 	def write_miasmod(self):
 		diff = data.diff_data(self.diff_base, self.root)
-		data.json_encode_diff(diff, open(self.miasmod_path, 'wb'))
+		version = self.ui.version.text() or None
+		data.json_encode_diff(diff, open(self.miasmod_path, 'wb'), version)
 		return True
 
 	def write_rs5(self):

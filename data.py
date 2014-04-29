@@ -493,12 +493,14 @@ def apply_diff(root, diff):
 		name = null_str(plist[-1])
 		parent[name] = node
 
-def json_encode_diff(diff, outputfd):
+def json_encode_diff(diff, outputfd, version=None):
 	tmp = diff.copy()
 	tmp['added']   = [ (plist, dumps_json_node(node)) for (plist, node) in diff['added'] ]
 	tmp['removed'] = [ (plist, dumps_json_node(node)) for (plist, node) in diff['removed'] ]
 	tmp['changed'] = [ (plist, dumps_json_node(node1), dumps_json_node(node2)) \
 			for (plist, node1, node2) in diff['changed'] ]
+	if version is not None:
+		tmp['version'] = version
 
 	t = json.dumps(tmp, indent=4, ensure_ascii=False)
 	outputfd.write(t.encode('utf-8'))
