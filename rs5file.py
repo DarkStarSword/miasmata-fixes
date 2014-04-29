@@ -153,4 +153,20 @@ def rs5_file_decoder_factory(data):
 	except:
 		return Rs5FileDecoder(data)
 
+def create_header_chunk(magic, name):
+	# NOTE: This will create a header with a filesize of 0, which is ok
+	# when used in a chunk directory as it is ignored, but shouldn't be
+	# used directly inside an rs5 archive file.
+	sys.stdout.write(enc_header(magic, name, 0, 1))
+
+if __name__ == '__main__':
+	if len(sys.argv) != 3:
+		print 'Creates a local file header suitable for use as 00-HEADER'
+		print 'in a chunk directory. WARNING: filesize will be 0 and'
+		print 'the resulting header should not be used directly!'
+		print
+		print 'usage: %s type filename > 00-HEADER' % sys.argv[0]
+		sys.exit(1)
+	sys.exit(create_header_chunk(sys.argv[1], sys.argv[2]))
+
 # vi:noexpandtab:sw=8:ts=8

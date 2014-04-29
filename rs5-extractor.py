@@ -9,6 +9,7 @@ import rs5file
 undo_file = r'MIASMOD\UNDO'
 mod_manifests = r'MIASMOD\MODS'
 mod_order_file = r'MIASMOD\ORDER'
+mod_meta_file = r'MIASMOD\MODINFO'
 
 def file_blacklisted(name):
 	'''Files not permitted to be manually added to an archive'''
@@ -231,7 +232,7 @@ class ModOrderDecoder(ModOrder, rs5file.Rs5FileDecoder):
 		list.__init__(self, self.json.loads(self.data))
 
 def rs5_mods(rs5):
-	mods = filter(lambda x: x.startswith('%s\\' % mod_manifests), rs5)
+	mods = filter(lambda x: x.startswith('%s\\' % mod_manifests) and x.endswith('.manifest'), rs5)
 	if mod_order_file in rs5:
 		order = ModOrderDecoder(rs5)
 		for mod in order:
@@ -431,6 +432,7 @@ class ModNotFound(Exception): pass
 
 def do_rm_mod(rs5, mod):
 	manifest_name = '%s\\%s.manifest' % (mod_manifests, mod)
+	modinfo_name = '%s\\%s.modinfo' % (mod_manifests, mod)
 	try:
 		manifest = rs5[manifest_name]
 	except:
@@ -445,6 +447,8 @@ def do_rm_mod(rs5, mod):
 			print 'Skipping %s - offsets do not match' % filename
 	print 'Removing %s...' % manifest_name
 	del rs5[manifest_name]
+	if modinfo_name in rs5:
+		del rs5[modinfo_name]
 	print 'Rebuilding directory from mod order...'
 	apply_mod_order(rs5)
 	rs5.save()
@@ -459,14 +463,29 @@ def rm_mod(archive, mods):
 		except ModNotFound:
 			return 1
 
+def get_mod_meta(rs5):
+	return rs5file.Rs5ChunkedFileDecoder(rs5[mod_meta_file].decompress())
+
+def get_mod_name(rs5, filename):
+	try:
+		meta = get_mod_meta(rs5)
+	except:
+		# Fall through
+		pass
+	else:
+		if 'NAME' in meta:
+			return meta['NAME'].data.strip()
+	return os.path.splitext(os.path.basename(filename))[0]
+
 def add_mod(dest_archive, source_archives):
 	rs5 = Rs5ModArchiveUpdater(open(dest_archive, 'rb+'))
 	do_add_undo(rs5)
 	for source_archive in source_archives:
 		source_rs5 = rs5archive.Rs5ArchiveDecoder(open(source_archive, 'rb'))
-		mod_name = os.path.splitext(os.path.basename(source_archive))[0]
+		mod_name = get_mod_name(source_rs5, source_archive)
 
 		manifest_name = '%s\\%s.manifest' % (mod_manifests, mod_name)
+		modinfo_name = '%s\\%s.modinfo' % (mod_manifests, mod_name)
 		if manifest_name in rs5:
 			do_rm_mod(rs5, mod_name)
 
@@ -477,6 +496,8 @@ def add_mod(dest_archive, source_archives):
 				continue
 			print 'Adding %s->%s...' % (source_archive, source_file.filename)
 			entry = rs5archive.Rs5CompressedFileRepacker(rs5.fp, source_file, seek_cb=rs5.seek_find_hole)
+			if entry.filename == mod_meta_file:
+				entry.filename = modinfo_name
 			rs5[entry.filename] = entry
 			mod_entries[entry.filename] = entry
 		rs5.add_from_buf(mod_entries.encode())
