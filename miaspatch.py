@@ -9,6 +9,7 @@ from PySide.QtCore import Qt
 import miasutil
 import rs5archive
 import rs5mod
+import data
 
 from ui_utils import catch_error
 
@@ -35,6 +36,9 @@ class EnvMod(Mod):
 
 	def __init__(self, path):
 		self.name = os.path.splitext(os.path.basename(path))[0]
+		self.mod = data.json_decode_diff(open(path, 'rb'))
+		if 'version' in self.mod:
+			self.version = self.mod['version']
 
 class Rs5Mod(Mod):
 	type = 'rs5'
