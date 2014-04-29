@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'miaspatch.ui'
 #
-# Created: Sat Apr 12 12:53:07 2014
+# Created: Tue Apr 29 17:20:46 2014
 #      by: pyside-uic 0.2.15 running on PySide 1.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -12,7 +12,7 @@ from PySide import QtCore, QtGui
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(400, 309)
+        Dialog.resize(362, 305)
         self.verticalLayout = QtGui.QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName("verticalLayout")
         self.label = QtGui.QLabel(Dialog)
@@ -52,6 +52,7 @@ class Ui_Dialog(object):
         self.patch_list = QtGui.QTableView(self.groupBox)
         self.patch_list.setAlternatingRowColors(True)
         self.patch_list.setShowGrid(False)
+        self.patch_list.setWordWrap(False)
         self.patch_list.setObjectName("patch_list")
         self.patch_list.verticalHeader().setVisible(False)
         self.verticalLayout_2.addWidget(self.patch_list)

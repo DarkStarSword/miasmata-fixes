@@ -2,7 +2,11 @@
 
 from __future__ import print_function
 
+from PySide import QtGui
 from mmap import *
+
+name = QtGui.QApplication.translate('Patch names', 'Botanical Bad A** fix', None, QtGui.QApplication.UnicodeUTF8)
+version = '1.0'
 
 class PatchFailed(Exception): pass
 

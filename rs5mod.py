@@ -374,6 +374,14 @@ def get_mod_name(rs5, filename):
 			return meta['NAME'].data.strip()
 	return os.path.splitext(os.path.basename(filename))[0]
 
+def get_mod_version(rs5):
+	try:
+		meta = get_mod_meta(rs5)
+	except:
+		return None
+	if 'VRSN' in meta:
+		return meta['VRSN'].data.strip()
+
 def add_mod(dest_archive, source_archives):
 	rs5 = Rs5ModArchiveUpdater(open(dest_archive, 'rb+'))
 	do_add_undo(rs5)

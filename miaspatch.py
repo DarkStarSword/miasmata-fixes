@@ -8,8 +8,42 @@ from PySide.QtCore import Qt
 
 import miasutil
 import rs5archive
+import rs5mod
 
 from ui_utils import catch_error
+
+class Mod(object):
+	type = None
+	install = False
+	version = None
+
+class BinMod(Mod):
+	type = 'exe'
+
+	def __init__(self, mod):
+		self.mod = mod
+
+	@property
+	def name(self):
+		return self.mod.name
+	@property
+	def version(self):
+		return self.mod.version
+
+class EnvMod(Mod):
+	type = 'env'
+
+	def __init__(self, path):
+		self.name = os.path.splitext(os.path.basename(path))[0]
+
+class Rs5Mod(Mod):
+	type = 'rs5'
+
+	def __init__(self, path):
+		self.rs5 = rs5archive.Rs5ArchiveDecoder(open(path, 'rb'))
+		self.name = rs5mod.get_mod_name(self.rs5, path)
+		self.version = rs5mod.get_mod_version(self.rs5)
+		print self.version
 
 class PatchListModel(QtCore.QAbstractTableModel):
 	def __init__(self, patch_list):
@@ -20,24 +54,28 @@ class PatchListModel(QtCore.QAbstractTableModel):
 		return len(self.patch_list)
 
 	def columnCount(self, parent):
-		return 2
+		return 3
 
 	def data(self, index, role):
-		patch = self.patch_list[index.row()]
+		mod = self.patch_list[index.row()]
 		if role == Qt.DisplayRole:
-			if index.column() == 1:
-				return patch
+			return {
+				0: mod.name,
+				1: mod.type,
+				2: mod.version,
+			}.get(index.column(), None)
 		# if role == Qt.ToolTipRole:
 		if role == Qt.CheckStateRole:
 			if index.column() == 0:
-				return Qt.CheckState.Checked
+				return mod.install and Qt.CheckState.Checked or Qt.CheckState.Unchecked
 
 	def headerData(self, section, orientation, role):
 		if role == Qt.DisplayRole and orientation == Qt.Horizontal:
-			if section == 0:
-				return 'Install'
-			if section == 1:
-				return 'Mod Path'
+			return {
+				0: self.tr('Mod'),
+				1: self.tr('Type'),
+				2: self.tr('Version'),
+			}[section]
 
 	def flags(self, index):
 		if not index.isValid():
@@ -79,13 +117,42 @@ class MiasPatch(QtGui.QDialog):
 	def enumerate_patches(self):
 		patch_list = []
 		for path in glob('*.rs5mod'):
-			patch_list.append(path)
+			patch_list.append(Rs5Mod(path))
 		for path in glob('*.miasmod'):
-			patch_list.append(path)
+			patch_list.append(EnvMod(path))
+		try:
+			mod = __import__('botanical')
+		except:
+			pass
+		else:
+			patch_list.append(BinMod(mod))
 
 		self.patch_list = PatchListModel(patch_list)
 		self.ui.patch_list.setModel(self.patch_list)
+		self.resize_patch_list()
+
+	def resize_patch_list(self):
+		self.ui.patch_list.resizeRowsToContents()
 		self.ui.patch_list.resizeColumnsToContents()
+
+		def sizeHint():
+			# Seems to be a fairly common use case, darned if I
+			# know why Qt doesn't support this in an easier manner.
+
+			# This seems to return a bogus size:
+			# size = self.ui.patch_list.maximumViewportSize()
+
+			head_size = self.ui.patch_list.horizontalHeader().size()
+			# hbar_size = self.ui.patch_list.horizontalScrollBar().size()
+			width = self.ui.patch_list.frameWidth()*2
+			height = width + head_size.height() # + hbar_size.height()
+			for row in range(self.patch_list.rowCount(None)):
+				height += self.ui.patch_list.rowHeight(row)
+			for col in range(self.patch_list.columnCount(None)):
+				width += self.ui.patch_list.columnWidth(col)
+			return QtCore.QSize(width, height)
+		self.ui.patch_list.minimumSizeHint = sizeHint
+		self.ui.patch_list.updateGeometry()
 
         @QtCore.Slot()
         @catch_error
