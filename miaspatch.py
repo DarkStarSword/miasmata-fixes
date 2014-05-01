@@ -21,20 +21,6 @@ STATUS_OLD_VERSION     = 2
 STATUS_INSTALLED       = 3
 STATUS_NEWER_VERSION   = 4
 
-status_old_version = QtGui.QApplication.translate('Mod Status', 'Old version installed', None, QtGui.QApplication.UnicodeUTF8)
-status_version_installed = QtGui.QApplication.translate('Mod Status', 'Version {0} installed', None, QtGui.QApplication.UnicodeUTF8)
-status_installed = QtGui.QApplication.translate('Mod Status', 'Installed', None, QtGui.QApplication.UnicodeUTF8)
-status_not_installed = QtGui.QApplication.translate('Mod Status', 'Not installed', None, QtGui.QApplication.UnicodeUTF8)
-status_not_installable = QtGui.QApplication.translate('Mod Status', 'Not applicable', None, QtGui.QApplication.UnicodeUTF8)
-
-status_txt = {
-	STATUS_NOT_INSTALLABLE: (status_not_installable, None),
-	STATUS_NOT_INSTALLED:   (status_not_installed, None),
-	STATUS_OLD_VERSION:     (status_old_version, None),
-	STATUS_INSTALLED:       (status_installed, Qt.darkGreen),
-	STATUS_NEWER_VERSION:   (status_installed, Qt.darkGreen),
-}
-
 class Mod(object):
 	installable = False
 	install = False
@@ -43,9 +29,15 @@ class Mod(object):
 	status_colour = None
 
 	def update_status(self, status, version=None):
-		(self.status, self.status_colour) = status_txt[status]
+		(self.status, self.status_colour) = {
+			STATUS_NOT_INSTALLABLE: (QtGui.QApplication.translate('Mod Status', 'Not applicable', None, QtGui.QApplication.UnicodeUTF8), None),
+			STATUS_NOT_INSTALLED:   (QtGui.QApplication.translate('Mod Status', 'Not installed', None, QtGui.QApplication.UnicodeUTF8), None),
+			STATUS_OLD_VERSION:     (QtGui.QApplication.translate('Mod Status', 'Old version installed', None, QtGui.QApplication.UnicodeUTF8), None),
+			STATUS_INSTALLED:       (QtGui.QApplication.translate('Mod Status', 'Installed', None, QtGui.QApplication.UnicodeUTF8), Qt.darkGreen),
+			STATUS_NEWER_VERSION:   (QtGui.QApplication.translate('Mod Status', 'Installed', None, QtGui.QApplication.UnicodeUTF8), Qt.darkGreen),
+		}[status]
 		if version is not None:
-			self.status = status_version_installed.format(version)
+			self.status = QtGui.QApplication.translate('Mod Status', 'Version {0} installed', None, QtGui.QApplication.UnicodeUTF8).format(version)
 		self.installable = status != STATUS_NOT_INSTALLABLE
 		self.install = (status in (STATUS_NOT_INSTALLED, STATUS_OLD_VERSION))
 
@@ -283,9 +275,11 @@ class MiasPatch(QtGui.QDialog):
         @catch_error
 	def on_patch_game_clicked(self):
 		self.progress(percent=0, msg=self.tr('Patching game...'))
+		# TODO: config.get('DEFAULT', 'delete')
 		for mod in self.patch_list:
 			if mod.install:
 				mod.install_mod(self.progress)
+		# TODO: config.get('DEFAULT', 'prefix_order')
 		self.patch_list.refresh()
 		self.progress(percent=100, msg=self.tr('Game patched'))
 
@@ -323,7 +317,7 @@ def start_gui_process(pipe=None):
 		pass
 	else:
 		translator = QtCore.QTranslator()
-		translator.load('miaspatch_i18l/%s' % language)
+		translator.load('miaspatch_i18n/%s' % language)
 		app.installTranslator(translator)
 
 	window = MiasPatch()
