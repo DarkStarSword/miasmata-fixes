@@ -25,10 +25,10 @@ status_old_version = QtGui.QApplication.translate('Mod Status', 'Old version ins
 status_version_installed = QtGui.QApplication.translate('Mod Status', 'Version {0} installed', None, QtGui.QApplication.UnicodeUTF8)
 status_installed = QtGui.QApplication.translate('Mod Status', 'Installed', None, QtGui.QApplication.UnicodeUTF8)
 status_not_installed = QtGui.QApplication.translate('Mod Status', 'Not installed', None, QtGui.QApplication.UnicodeUTF8)
-status_not_installable = QtGui.QApplication.translate('Mod Status', 'Unable to install', None, QtGui.QApplication.UnicodeUTF8)
+status_not_installable = QtGui.QApplication.translate('Mod Status', 'Not applicable', None, QtGui.QApplication.UnicodeUTF8)
 
 status_txt = {
-	STATUS_NOT_INSTALLABLE: (status_not_installable, Qt.red),
+	STATUS_NOT_INSTALLABLE: (status_not_installable, None),
 	STATUS_NOT_INSTALLED:   (status_not_installed, None),
 	STATUS_OLD_VERSION:     (status_old_version, None),
 	STATUS_INSTALLED:       (status_installed, Qt.darkGreen),
@@ -124,10 +124,10 @@ class PatchListModel(QtCore.QAbstractTableModel):
 			}.get(index.column(), None)
 		# if role == Qt.ToolTipRole:
 		if role == Qt.ForegroundRole:
-			if index.column() == 2 and mod.status_colour is not None:
-				return QtGui.QBrush(mod.status_colour)
 			if not mod.installable:
 				return QtGui.QBrush(Qt.gray)
+			if index.column() == 2 and mod.status_colour is not None:
+				return QtGui.QBrush(mod.status_colour)
 		if role == Qt.CheckStateRole:
 			if index.column() == 0 and mod.installable:
 				return mod.install and Qt.CheckState.Checked or Qt.CheckState.Unchecked
@@ -294,10 +294,11 @@ class MiasPatch(QtGui.QDialog):
 	def on_remove_all_mods_clicked(self):
 		self.progress(percent=0, msg=self.tr('Removing all mods...'))
 		for mod in self.patch_list:
-			try:
-				mod.remove_mod(self.progress)
-			except:
-				pass
+			if mod.installable:
+				try:
+					mod.remove_mod(self.progress)
+				except:
+					pass
 		self.patch_list.refresh()
 		self.progress(percent=100, msg=self.tr('Mods removed'))
 

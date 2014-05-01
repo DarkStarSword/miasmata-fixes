@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'miaspatch.ui'
 #
-# Created: Fri May  2 02:23:33 2014
+# Created: Fri May  2 02:28:57 2014
 #      by: pyside-uic 0.2.15 running on PySide 1.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -46,6 +46,7 @@ class Ui_Dialog(object):
         self.patch_list.setShowGrid(False)
         self.patch_list.setWordWrap(False)
         self.patch_list.setObjectName("patch_list")
+        self.patch_list.horizontalHeader().setStretchLastSection(True)
         self.patch_list.verticalHeader().setVisible(False)
         self.verticalLayout_2.addWidget(self.patch_list)
         spacerItem = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
