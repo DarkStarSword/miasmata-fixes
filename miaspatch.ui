@@ -64,20 +64,7 @@
         <item>
          <widget class="QLabel" name="label_2">
           <property name="text">
-           <string>The following items will be installed:</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="change_mods">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="text">
-           <string>&amp;Change</string>
+           <string>The following mods will be installed:</string>
           </property>
          </widget>
         </item>
@@ -614,7 +601,6 @@
  <tabstops>
   <tabstop>install_path</tabstop>
   <tabstop>browse</tabstop>
-  <tabstop>change_mods</tabstop>
   <tabstop>patch_list</tabstop>
   <tabstop>patch_game</tabstop>
   <tabstop>remove_all_mods</tabstop>

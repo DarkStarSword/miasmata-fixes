@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'miaspatch.ui'
 #
-# Created: Tue Apr 29 17:20:46 2014
+# Created: Thu May  1 18:36:28 2014
 #      by: pyside-uic 0.2.15 running on PySide 1.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -40,14 +40,6 @@ class Ui_Dialog(object):
         self.label_2 = QtGui.QLabel(self.groupBox)
         self.label_2.setObjectName("label_2")
         self.horizontalLayout_3.addWidget(self.label_2)
-        self.change_mods = QtGui.QPushButton(self.groupBox)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.change_mods.sizePolicy().hasHeightForWidth())
-        self.change_mods.setSizePolicy(sizePolicy)
-        self.change_mods.setObjectName("change_mods")
-        self.horizontalLayout_3.addWidget(self.change_mods)
         self.verticalLayout_2.addLayout(self.horizontalLayout_3)
         self.patch_list = QtGui.QTableView(self.groupBox)
         self.patch_list.setAlternatingRowColors(True)
@@ -237,8 +229,7 @@ class Ui_Dialog(object):
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
         Dialog.setTabOrder(self.install_path, self.browse)
-        Dialog.setTabOrder(self.browse, self.change_mods)
-        Dialog.setTabOrder(self.change_mods, self.patch_list)
+        Dialog.setTabOrder(self.browse, self.patch_list)
         Dialog.setTabOrder(self.patch_list, self.patch_game)
         Dialog.setTabOrder(self.patch_game, self.remove_all_mods)
 
@@ -246,8 +237,7 @@ class Ui_Dialog(object):
         Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", "Miasmata Patcher", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setText(QtGui.QApplication.translate("Dialog", "Miasmata Install &Location:", None, QtGui.QApplication.UnicodeUTF8))
         self.browse.setText(QtGui.QApplication.translate("Dialog", "&Browse...", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_2.setText(QtGui.QApplication.translate("Dialog", "The following items will be installed:", None, QtGui.QApplication.UnicodeUTF8))
-        self.change_mods.setText(QtGui.QApplication.translate("Dialog", "&Change", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_2.setText(QtGui.QApplication.translate("Dialog", "The following mods will be installed:", None, QtGui.QApplication.UnicodeUTF8))
         self.patch_game.setText(QtGui.QApplication.translate("Dialog", "&Patch Game", None, QtGui.QApplication.UnicodeUTF8))
         self.remove_all_mods.setText(QtGui.QApplication.translate("Dialog", "&Remove all mods", None, QtGui.QApplication.UnicodeUTF8))
 
