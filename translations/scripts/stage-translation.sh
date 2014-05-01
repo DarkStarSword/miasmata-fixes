@@ -3,6 +3,14 @@
 headers=$PWD/miasmata-headers
 translation=/var/www/miasmata/fr
 staging=$PWD/miasmata-fr
+miasmata_fixes_top=$(readlink -f $(dirname $(readlink -f "$0"))/../../)
+mod_name="$1"
+mod_version="$2"
+
+if [ -z "$mod_version" ]; then
+	echo "usage: $0 name version"
+	exit 1
+fi
 
 link_dds_files()
 {
@@ -39,3 +47,9 @@ link_dds_files "$translation/notes" "TEX/J2" "N*_*.dds"
 link_dds_files "$translation/notes" "TEX" "InWorldNotesz_Set*.dds"
 link_dds_files "$translation/notes" "TEX" "Notes.dds"
 link_dds_files "$translation/" "TEX/MENU" "copyright.dds"
+
+# Add mod name & version metadata:
+mkdir -p "$staging/MIASMOD/MODINFO"
+${miasmata_fixes_top}/rs5file.py META 'MIASMOD\MODINFO' > "$staging/MIASMOD/MODINFO/00-HEADER"
+echo -n "$mod_name" > "$staging/MIASMOD/MODINFO/01-NAME"
+echo -n "$mod_version" > "$staging/MIASMOD/MODINFO/02-VRSN"
