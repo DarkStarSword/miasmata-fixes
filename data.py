@@ -453,6 +453,9 @@ def diff_data(tree1, tree2):
 	(added, removed, changed) = tree1.diff(tree2, root=tree1, other_root=tree2)
 	return {'added': added, 'removed': removed, 'changed': changed}
 
+def null_diff():
+	return {'added': [], 'removed': [], 'changed': []}
+
 def is_new_style_diff_removed(removed):
 	return len(removed) and len(removed[0]) == 2 and isinstance(removed[0][0], list)
 

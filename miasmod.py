@@ -35,6 +35,9 @@ import miasmod_data
 
 from ui_utils import catch_error
 
+def conf_path(install_path):
+	return os.path.join(install_path, 'miasmod.conf')
+
 class ModList(object):
 	class mod(object):
 		def __init__(self, name, path, basename, type, note=None, include=True, version=None):
@@ -210,7 +213,7 @@ class MiasMod(QtGui.QMainWindow):
 		self.open_tabs = {}
 
 		self.find_install_path()
-		self.conf_path = os.path.join(self.install_path, 'miasmod.conf')
+		self.conf_path = conf_path(self.install_path)
 
 		self.busy = False
 
@@ -289,6 +292,15 @@ class MiasMod(QtGui.QMainWindow):
 
 		if not len(mod_list):
 			self.warn_bad_miasmata_path(self.install_path)
+
+		# Previously I was shipping communitypatch as an rs5 and I
+		# expected it to get in the right order implicitly from the
+		# above sort, however I no longer do that (and the patcher even
+		# automatically deletes communitypatch.rs5 if it exists), so I
+		# now set the order of the community patch explicitly here:
+		path = os.path.join(self.install_path, 'communitypatch.miasmod')
+		if os.path.isfile(path):
+			mod_list.add(path, mod_states)
 
 		mod_list.extend(sorted(glob(os.path.join(self.install_path, '*.miasmod'))), mod_states)
 

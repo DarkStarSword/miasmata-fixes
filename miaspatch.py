@@ -3,12 +3,15 @@
 import sys, os
 from glob import glob
 import ConfigParser
+import shutil
 import time
 
 from PySide import QtCore, QtGui
 from PySide.QtCore import Qt
 
 import miasutil
+import miasmod
+import environment
 import rs5archive
 import rs5mod
 import data
@@ -74,6 +77,9 @@ class Mod(object):
 	def steps(self):
 		return 1
 
+	def __str__(self):
+		return self.name
+
 class BinMod(Mod):
 	def __init__(self, mod, exe_filename):
 		self.mod = mod
@@ -102,7 +108,9 @@ class EnvMod(Mod):
 	installable = True
 
 	def __init__(self, path):
-		self.name = '%s (env)' % os.path.splitext(os.path.basename(path))[0]
+		self.mod_name = os.path.splitext(os.path.basename(path))[0]
+		self.name = '%s (env)' % self.mod_name
+		self.path = path
 		self.mod = data.json_decode_diff(open(path, 'rb'))
 		if 'version' in self.mod:
 			self.version = self.mod['version']
@@ -222,7 +230,7 @@ class MiasPatch(QtGui.QDialog):
 			dialog.setText(self.tr('{0} does not appear to be a Miasmata install: {1} not found').format(path, file))
 			return dialog.exec_()
 
-		for file in ('main.rs5', 'Miasmata.exe'):
+		for file in ('main.rs5', 'environment.rs5', 'Miasmata.exe'):
 			if not os.path.exists(os.path.join(path, file)):
 				return bad_install_path(file)
 
@@ -331,6 +339,7 @@ class MiasPatch(QtGui.QDialog):
 		if percent is not None:
 			self.ui.progress.setValue(percent)
 		if msg is not None:
+			print msg
 			self.ui.lbl_progress.setText(msg)
 			self.ui.lbl_progress.repaint()
 			self.repaint()
@@ -355,7 +364,7 @@ class MiasPatch(QtGui.QDialog):
 				try:
 					os.remove(path)
 				except Exception as e:
-					self.progress(msg = self.tr('{0} while removing {1}: {2}').format(e.__class__.__name__, path, str(e)))
+					self.progress(msg = self.tr('{0} occured while removing {1}: {2}').format(e.__class__.__name__, path, str(e)))
 
 	def delete_files_from_config(self):
 		try:
@@ -416,7 +425,76 @@ class MiasPatch(QtGui.QDialog):
 
 	@catch_error
 	def install_env_mods(self, progress):
-		pass
+		bundled_mods = filter(lambda x: x.install and isinstance(x, EnvMod), self.patch_list)
+
+		installed = glob(os.path.join(self.install_path, '*.miasmod'))
+		mods = dict([ (os.path.splitext(os.path.basename(path))[0], path) for path in installed ])
+
+		# Disregard ignored mods in miasmod.conf if it exists & enable
+		# bundled mods we are installing
+		mod_states_path = miasmod.conf_path(self.install_path)
+		try:
+			mod_states = json.load(open(mod_states_path, 'rb'))
+		except:
+			pass
+		else:
+			for mod in mods:
+				if mod in mod_states and not mod_states[mod]:
+					del mods[mod]
+			for mod in bundled_mods:
+				mod_states[mod] = True
+			try:
+				json.dump(mod_states, open(mod_states_path, 'wb'), ensure_ascii=True)
+			except IOError:
+				progress(msg = self.tr('{0} occured while writing to {1}: {2}').format(e.__class__.__name__, mod_states_path, str(e)))
+
+		for mod in bundled_mods:
+			mods[mod.mod_name] = mod
+
+		# Maintain order consistent with MiasMod, i.e.:
+		# environment.rs5, communitypatch.miasmod, sorted(*.miasmod), alocalmod.miasmod
+		order = sorted(mods)
+		if 'communitypatch' in order:
+			order.remove('communitypatch')
+			order.insert(0, 'communitypatch')
+		if 'alocalmod' in order:
+			order.remove('alocalmod')
+			order.append('alocalmod')
+		else:
+			# Create a blank alocalmod.miasmod so that MiasMod
+			# knows the state that alocalmod.rs5 is in and doesn't
+			# need to ask the user
+			diff = data.null_diff()
+			path = os.path.join(self.install_path, 'alocalmod.miasmod')
+			data.json_encode_diff(data.null_diff(), open(path, 'wb'))
+
+
+		print 'Using these miasmod files:'
+		print '\n'.join(map(str, mods.itervalues()))
+		print 'In this order: %s' % ' '.join(order)
+
+		progress(msg=self.tr('Loading environment.rs5...'))
+		path = os.path.join(self.install_path, 'environment.rs5')
+		env = environment.parse_from_archive(path)
+
+		steps = len(order)
+		for (i, mod) in enumerate(order):
+			progress(percent = i * 100 / steps, msg = self.tr('Applying {0}...').format(mod))
+			path = mods[mod]
+			if isinstance(path, EnvMod):
+				try:
+					shutil.copyfile(path.path, os.path.join(self.install_path, '%s.miasmod' % mod))
+				except:
+					progress(msg=self.tr('{0} occured while copying {1}: {2}').format(e.__class__.__name__, path.path, str(e)))
+				path = path.path
+			diff = data.json_decode_diff(open(path, 'rb'))
+			try:
+				data.apply_diff(env, diff)
+			except:
+				progress(msg=self.tr('{0} occured while applying {1}: {2}').format(e.__class__.__name__, path, str(e)))
+
+		environment.encode_to_archive(env, os.path.join(self.install_path, 'alocalmod.rs5'))
+
 
         @QtCore.Slot()
         @catch_error
