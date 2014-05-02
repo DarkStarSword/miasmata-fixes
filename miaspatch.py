@@ -289,7 +289,6 @@ class MiasPatch(QtGui.QDialog):
 	def get_miasmod_global_status(self):
 		# Check for global status (no alocalmod.rs5, or out of sync)
 		global_stat = None
-		installed = {}
 		if not os.path.isfile(os.path.join(self.install_path, 'alocalmod.rs5')):
 			return (STATUS_NOT_INSTALLED, {})
 		return self.check_installed_miasmods()
@@ -509,8 +508,9 @@ class MiasPatch(QtGui.QDialog):
 			order.append('alocalmod')
 		return order
 
-	def process_miasmods(self, mods, order, copy_mods, progress):
-		env = copy.deepcopy(self.environment)
+	def process_miasmods(self, mods, order, copy_mods, progress, env=None):
+		if env is None:
+			env = copy.deepcopy(self.environment)
 		installed = {}
 
 		steps = len(order)
@@ -540,7 +540,15 @@ class MiasPatch(QtGui.QDialog):
 		(mods, mod_states) = self.get_installed_miasmods()
 		order = self.miasmod_order(mods)
 		self.progress(msg=self.tr('Processing installed miasmod files...'))
-		(env, installed) = self.process_miasmods(mods, order, False, self.progress)
+
+		# Check for deprecated communitypatch.rs5 - if it exists use it
+		# to check if alocalmod.rs5 is synchronised
+		env=None
+		path = os.path.join(self.install_path, 'communitypatch.rs5')
+		if os.path.isfile(path):
+			env = environment.parse_from_archive(path)
+
+		(env, installed) = self.process_miasmods(mods, order, False, self.progress, env)
 
 		self.progress(msg=self.tr('Loading alocalmod.rs5...'))
 		path = os.path.join(self.install_path, 'alocalmod.rs5')
