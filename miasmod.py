@@ -28,6 +28,7 @@ import json
 import miasutil
 import rs5archive
 import rs5file
+import rs5mod
 import environment
 import data
 
@@ -200,6 +201,60 @@ class ModListModel(QtCore.QAbstractTableModel):
 			return flags | Qt.ItemIsUserCheckable
 		return flags
 
+class Rs5ModListModel(QtCore.QAbstractTableModel):
+	def __init__(self, rs5):
+		QtCore.QAbstractTableModel.__init__(self)
+		self.rs5 = rs5
+		self.refresh()
+
+	def refresh(self):
+		try:
+			mod_order = rs5mod.ModOrderDecoder(self.rs5)
+		except Exception as e:
+			mod_order = []
+		self.mods = []
+		for manifest in rs5mod.rs5_mods(self.rs5):
+			name = manifest.rsplit('\\', 1)[1].rsplit('.', 1)[0]
+			meta = version = None
+			try:
+				meta = rs5mod.get_mod_meta(self.rs5, name)
+			except:
+				pass
+			else:
+				version = rs5mod.do_get_mod_version(meta)
+			order = None
+			if name in mod_order:
+				order = mod_order.index(name)
+			self.mods.append((name, version, order))
+		self.reset()
+
+	def rowCount(self, parent):
+		return len(self.mods)
+
+	def columnCount(self, paretn):
+		return 3
+
+	def data(self, index, role):
+		(name, version, order) = self.mods[index.row()]
+		if role == Qt.DisplayRole:
+			return {
+				0: name,
+				1: version,
+				2: order,
+			}.get(index.column(), None)
+
+	def headerData(self, section, orientation, role):
+		if role == Qt.DisplayRole and orientation == Qt.Horizontal:
+			return {
+				0: 'main.rs5 Mods',
+				1: 'Version',
+				2: 'Mod Order',
+			}[section]
+
+	def flags(self, index):
+		if not index.isValid():
+			return
+		return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
 class MiasMod(QtGui.QMainWindow):
 	from miasmod_ui import Ui_MainWindow
@@ -217,11 +272,48 @@ class MiasMod(QtGui.QMainWindow):
 
 		self.busy = False
 
-	def progress(self, msg):
+	@catch_error
+	def load_main_rs5(self):
+		self.progress(self.tr('Loading main.rs5...'))
+		path = os.path.join(self.install_path, 'main.rs5')
+		self.main_rs5 = rs5mod.Rs5ModArchiveUpdater(open(path, 'rb+'))
+		self.rs5_mod_list = Rs5ModListModel(self.main_rs5)
+		self.ui.rs5_mod_list.setModel(self.rs5_mod_list)
+		self.ui.rs5_mod_list.resizeColumnsToContents()
+		self.done()
+
+	@QtCore.Slot()
+	@catch_error
+	def on_revert_main_rs5_clicked(self):
+		self.progress(self.tr('Removing main.rs5 mods...'))
+		try:
+			rs5mod.do_revert(self.main_rs5)
+		except KeyError as e:
+			pass
+		self.load_main_rs5()
+
+	@QtCore.Slot()
+	@catch_error
+	def on_install_rs5mod_clicked(self):
+		path = QtGui.QFileDialog.getOpenFileName(self,
+				"Select mod to install...",
+				None, 'main.rs5 mods (*.rs5mod)')[0]
+		if not path:
+			return
+		rs5 = rs5archive.Rs5ArchiveDecoder(open(path, 'rb'))
+		rs5mod.do_add_one_mod(self.main_rs5, rs5, path, progress=self.progress)
+		self.rs5_mod_list.refresh()
+		self.done()
+
+	def progress(self, msg=None, percent=None):
+		if msg is None:
+			return
 		if not self.busy:
 			QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+		print msg
 		self.busy = True
 		self.statusBar().showMessage(msg)
+		self.repaint()
 
 	def done(self):
 		QtGui.QApplication.restoreOverrideCursor()
@@ -703,6 +795,7 @@ def start_gui_process(pipe=None):
 	# window.open_saves_dat()
 	# window.open_active_environment()
 	# window.refresh_mod_list()
+	window.load_main_rs5()
 	window.synchronise_alocalmod()
 
 	# import trace
