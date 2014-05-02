@@ -77,65 +77,95 @@
 <context>
     <name>MiasPatch</name>
     <message>
-        <location filename="miaspatch.py" line="191"/>
+        <location filename="miaspatch.py" line="220"/>
         <source>Miasmata Patcher</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="193"/>
+        <location filename="miaspatch.py" line="222"/>
         <source>{0} does not appear to be a Miasmata install: {1} not found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="253"/>
+        <location filename="miaspatch.py" line="310"/>
         <source>Select Miasmata Install Location...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="285"/>
+        <location filename="miaspatch.py" line="395"/>
         <source>Patching game...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="290"/>
+        <location filename="miaspatch.py" line="402"/>
         <source>Game patched</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="295"/>
+        <location filename="miaspatch.py" line="408"/>
         <source>Removing all mods...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="303"/>
+        <location filename="miaspatch.py" line="425"/>
         <source>Mods removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="miaspatch.py" line="236"/>
+        <source>Loading main.rs5...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="miaspatch.py" line="415"/>
+        <source>Removing environment mods...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="miaspatch.py" line="419"/>
+        <source>Removing main.rs5 mods...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="miaspatch.py" line="354"/>
+        <source>Removing {0}...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="miaspatch.py" line="358"/>
+        <source>{0} while removing {1}: {2}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="miaspatch.py" line="233"/>
+        <source>Ready</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>Mod Status</name>
     <message>
-        <location filename="miaspatch.py" line="25"/>
+        <location filename="miaspatch.py" line="35"/>
         <source>Old version installed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="26"/>
+        <location filename="miaspatch.py" line="40"/>
         <source>Version {0} installed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="27"/>
+        <location filename="miaspatch.py" line="37"/>
         <source>Installed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="28"/>
+        <location filename="miaspatch.py" line="34"/>
         <source>Not installed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="30"/>
+        <location filename="miaspatch.py" line="33"/>
         <source>Not applicable</source>
         <translation type="unfinished"></translation>
     </message>
@@ -143,18 +173,91 @@
 <context>
     <name>PatchListModel</name>
     <message>
-        <location filename="miaspatch.py" line="146"/>
+        <location filename="miaspatch.py" line="175"/>
         <source>Mod</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="147"/>
+        <location filename="miaspatch.py" line="176"/>
         <source>Version</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="148"/>
+        <location filename="miaspatch.py" line="177"/>
         <source>Status</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>RS5Patcher</name>
+    <message>
+        <location filename="rs5mod.py" line="66"/>
+        <source>Previously added undo metadata found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="rs5mod.py" line="69"/>
+        <source>Undo metadata appears to be invalid, updating</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="rs5mod.py" line="75"/>
+        <source>ERROR: {0} occured while adding undo metadata: {1}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="rs5mod.py" line="76"/>
+        <source>REVERTING CHANGES...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="rs5mod.py" line="79"/>
+        <source>FILE RESTORED</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="rs5mod.py" line="353"/>
+        <source>ERROR: {0} not found in archive!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="rs5mod.py" line="362"/>
+        <source>Removing {0}...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="rs5mod.py" line="361"/>
+        <source>Skipping {0} - offsets do not match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="rs5mod.py" line="366"/>
+        <source>Rebuilding directory from mod order...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="rs5mod.py" line="421"/>
+        <source>Skipping {0}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="rs5archive.py" line="247"/>
+        <source>Adding {0}...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="rs5archive.py" line="272"/>
+        <source>Writing RS5 header...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="rs5archive.py" line="305"/>
+        <source>Writing central directory...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="rs5archive.py" line="313"/>
+        <source>Done</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

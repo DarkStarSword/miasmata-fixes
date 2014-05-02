@@ -6,6 +6,8 @@
 # so I could examine the format for myself. Don't expect this to be feature
 # complete for a while
 
+from PySide import QtCore
+
 import struct
 import zlib
 import sys
@@ -20,6 +22,9 @@ chunk_extensions = {
 def progress(percent=None, msg=None):
 	if msg is not None:
 		print(msg)
+# For PySide translations without being overly verbose...
+class RS5Patcher(QtCore.QObject): pass
+RS5Patcher = RS5Patcher()
 
 # http://msdn.microsoft.com/en-us/library/system.datetime.fromfiletimeutc.aspx:
 # A Windows file time is a 64-bit value that represents the number of
@@ -232,18 +237,18 @@ class Rs5ArchiveEncoder(Rs5CentralDirectoryEncoder):
 		self.fp = open(filename, 'wb')
 		self.fp.seek(self.header_len)
 
-	def add(self, filename, seek_cb=None):
-		print "Adding %s..." % filename
+	def add(self, filename, seek_cb=None, progress=progress):
+		progress(msg=RS5Patcher.tr("Adding {0}...").format(filename))
 		entry = Rs5CompressedFileEncoder(self.fp, filename, seek_cb=seek_cb)
 		self[entry.filename] = entry
 
-	def add_from_buf(self, buf, seek_cb=None):
+	def add_from_buf(self, buf, seek_cb=None, progress=progress):
 		entry = Rs5CompressedFileEncoder(self.fp, buf=buf, seek_cb=seek_cb)
-		print "Adding %s..." % entry.filename
+		progress(msg=RS5Patcher.tr("Adding {0}...").format(entry.filename))
 		self[entry.filename] = entry
 
 	def add_chunk_dir(self, path, seek_cb=None):
-		print "Adding chunks from %s..." % path
+		print "Adding chunks from {0}...".format(path)
 		files = sorted(os.listdir(path))
 		files.remove('00-HEADER')
 		header = open(os.path.join(path, '00-HEADER'), 'rb')
@@ -252,10 +257,10 @@ class Rs5ArchiveEncoder(Rs5CentralDirectoryEncoder):
 		for filename in files:
 			chunk_path = os.path.join(path, filename)
 			if not os.path.isfile(chunk_path) or '-' not in filename:
-				print 'Skipping %s: not a valid chunk' % chunk_path
+				print 'Skipping {0}: not a valid chunk'.format(chunk_path)
 				continue
 			chunk_name = filename.split('-', 1)[1]
-			print '  %s' % filename
+			print '  {0}'.format(filename)
 			chunk = open(chunk_path, 'rb')
 			chunk = rs5file.Rs5ChunkEncoder(chunk_name, chunk.read())
 			chunks[chunk.name] = chunk
@@ -264,16 +269,16 @@ class Rs5ArchiveEncoder(Rs5CentralDirectoryEncoder):
 		self[entry.filename] = entry
 
 	def write_header(self, progress=progress):
-		progress(msg="Writing RS5 header...")
+		progress(msg=RS5Patcher.tr("Writing RS5 header..."))
 		self.fp.seek(0)
 		self.fp.write(struct.pack('<8sQII', 'CFILEHDR', self.d_off, self.ent_len, self.u1))
 
 	def save(self, progress=progress):
-		progress(msg="Writing central directory...")
+		progress(msg=RS5Patcher.tr("Writing central directory..."))
 		self.write_directory()
-		self.write_header()
+		self.write_header(progress=progress)
 		self.fp.flush()
-		progress(msg="Done.")
+		progress(msg=RS5Patcher.tr("Done"))
 
 class Rs5ArchiveUpdater(Rs5ArchiveEncoder, Rs5ArchiveDecoder):
 	def __init__(self, fp):
@@ -286,25 +291,25 @@ class Rs5ArchiveUpdater(Rs5ArchiveEncoder, Rs5ArchiveDecoder):
 		'''Safe fallback version - always seeks to the end of file'''
 		return self.seek_eof()
 
-	def add(self, filename):
-		return Rs5ArchiveEncoder.add(self, filename, seek_cb = self.seek_find_hole)
+	def add(self, filename, progress=progress):
+		return Rs5ArchiveEncoder.add(self, filename, seek_cb = self.seek_find_hole, progress=progress)
 
 	def add_chunk_dir(self, path):
 		return Rs5ArchiveEncoder.add_chunk_dir(self, path, seek_cb = self.seek_find_hole)
 
-	def add_from_buf(self, buf):
-		return Rs5ArchiveEncoder.add_from_buf(self, buf, seek_cb = self.seek_find_hole)
+	def add_from_buf(self, buf, progress=progress):
+		return Rs5ArchiveEncoder.add_from_buf(self, buf, seek_cb = self.seek_find_hole, progress=progress)
 
 	def save(self, progress=progress):
 		self.seek_find_hole(self.d_size)
-		progress(msg="Writing central directory...")
+		progress(msg=RS5Patcher.tr("Writing central directory..."))
 		self.write_directory()
 		# When updating an existing archive we use an extra flush
 		# before writing the header to reduce the risk of writing a bad
 		# header in case of an IO error, power failure, etc:
 		self.fp.flush()
-		self.write_header()
+		self.write_header(progress=progress)
 		self.fp.flush()
-		progress(msg="Done.")
+		progress(msg=RS5Patcher.tr("Done"))
 
 # vi:noexpandtab:sw=8:ts=8

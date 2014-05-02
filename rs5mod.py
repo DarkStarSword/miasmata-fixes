@@ -2,6 +2,8 @@
 
 from __future__ import print_function
 
+from PySide import QtCore
+
 import sys
 import os
 import rs5archive
@@ -15,6 +17,9 @@ mod_meta_file = r'MIASMOD\MODINFO'
 def progress(percent=None, msg=None):
 	if msg is not None:
 		print(msg)
+# For PySide translations without being overly verbose...
+class RS5Patcher(QtCore.QObject): pass
+RS5Patcher = RS5Patcher()
 
 def file_blacklisted(name):
 	'''Files not permitted to be manually added to an archive'''
@@ -58,19 +63,20 @@ class UndoMetaDecoder(UndoMeta, rs5file.Rs5FileDecoder):
 
 def do_add_undo(rs5, overwrite=False, progress=progress):
 	if undo_file in rs5 and not overwrite:
-		progress(msg='Previously added undo metadata found')
+		progress(msg=RS5Patcher.tr('Previously added undo metadata found'))
 		if validate_undo(rs5):
 			return 1
-		progress(msg='Undo metadata appears to be invalid, updating')
+		progress(msg=RS5Patcher.tr('Undo metadata appears to be invalid, updating'))
 	undo = UndoMetaEncoder(rs5)
 	try:
 		rs5.add_from_buf(undo.encode())
-		rs5.save()
+		rs5.save(progress=progress)
 	except Exception as e:
-		progress(msg='ERROR: %s occured while adding undo metadata: %s' % (e.__class__.__name__, str(e)), file=sys.stderr)
-		progress(msg='REVERTING CHANGES...', file=sys.stderr)
+		progress(msg=RS5Patcher.tr('ERROR: {0} occured while adding undo metadata: {1}').format(e.__class__.__name__, str(e)), file=sys.stderr)
+		progress(msg=RS5Patcher.tr('REVERTING CHANGES...'), file=sys.stderr)
 		undo.revert_rs5(rs5)
-		progress(msg='\nFILE RESTORED', file=sys.stderr)
+		print('\n')
+		progress(msg=RS5Patcher.tr('FILE RESTORED'), file=sys.stderr)
 		raise
 
 def add_undo(archive, overwrite):
@@ -338,28 +344,28 @@ def order_mods(archive, mod_list):
 
 class ModNotFound(Exception): pass
 
-def do_rm_mod(rs5, mod):
+def do_rm_mod(rs5, mod, progress=progress):
 	manifest_name = '%s\\%s.manifest' % (mod_manifests, mod)
 	modinfo_name = '%s\\%s.modinfo' % (mod_manifests, mod)
 	try:
 		manifest = rs5[manifest_name]
 	except:
-		print('ERROR: %s not found in archive!' % manifest_name)
+		progress(msg=RS5Patcher.tr('ERROR: {0} not found in archive!').format(manifest_name))
 		raise ModNotFound()
 	for (filename, mod_f) in ModCentralDirectoryDecoder(rs5, manifest).iteritems():
 		cur_f = rs5[filename]
 		if cur_f.data_off == mod_f.data_off:
-			print('Removing %s...' % filename)
+			progress(msg=RS5Patcher.tr('Removing {0}...').format(filename))
 			del rs5[filename]
 		else:
-			print('Skipping %s - offsets do not match' % filename)
-	print('Removing %s...' % manifest_name)
+			progress(msg=RS5Patcher.tr('Skipping {0} - offsets do not match').format(filename))
+	progress(msg=RS5Patcher.tr('Removing {0}...').format(manifest_name))
 	del rs5[manifest_name]
 	if modinfo_name in rs5:
 		del rs5[modinfo_name]
-	print('Rebuilding directory from mod order...')
+	progress(msg=RS5Patcher.tr('Rebuilding directory from mod order...'))
 	apply_mod_order(rs5)
-	rs5.save()
+	rs5.save(progress=progress)
 	rs5.truncate_eof()
 
 def rm_mod(archive, mods):
@@ -400,29 +406,30 @@ def get_mod_version(rs5):
 	return do_get_mod_version(meta)
 
 def _do_add_mod(dest_rs5, source_rs5, source_archive, progress=progress):
+	do_add_undo(dest_rs5, progress=progress)
 	mod_name = get_mod_name(source_rs5, source_archive)
 
 	manifest_name = '%s\\%s.manifest' % (mod_manifests, mod_name)
 	modinfo_name = '%s\\%s.modinfo' % (mod_manifests, mod_name)
 	if manifest_name in dest_rs5:
-		do_rm_mod(dest_rs5, mod_name)
+		do_rm_mod(dest_rs5, mod_name, progress=progress)
 
 	mod_entries = ModCentralDirectoryEncoder(mod_name, dest_rs5.ent_len)
 	for (i, source_file) in enumerate(source_rs5.itervalues()):
 		percent = i * 100 / len(source_rs5)
 		if file_blacklisted(source_file.filename):
-			progress(percent = percent, msg='Skipping %s' % source_file.filename)
+			progress(percent = percent, msg=RS5Patcher.tr('Skipping {0}').format(source_file.filename))
 			continue
-		progress(percent = percent, msg='Adding %s...' % source_file.filename)
+		progress(percent = percent, msg=RS5Patcher.tr('Adding {0}...').format(source_file.filename))
 		entry = rs5archive.Rs5CompressedFileRepacker(dest_rs5.fp, source_file, seek_cb=dest_rs5.seek_find_hole)
 		if entry.filename == mod_meta_file:
 			entry.filename = modinfo_name
 		dest_rs5[entry.filename] = entry
 		mod_entries[entry.filename] = entry
+	progress(percent = 100)
 	dest_rs5.add_from_buf(mod_entries.encode())
 
 def do_add_mod(dest_rs5, source_rs5, source_archive, progress=progress):
-	do_add_undo(dest_rs5, progress=progress)
 	_do_add_mod(dest_rs5, source_rs5, source_archive, progress=progress)
 	apply_mod_order(dest_rs5)
 	dest_rs5.save(progress=progress)

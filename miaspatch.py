@@ -230,11 +230,14 @@ class MiasPatch(QtGui.QDialog):
 		self.ui.install_path.setText(path)
 		self.ui.groupBox.setEnabled(True)
 		self.enumerate_patches()
+		self.progress(percent=0, msg=self.tr('Ready'))
 
 	def load_main_rs5(self):
 		self.progress(msg=self.tr('Loading main.rs5...'))
 		path = os.path.join(self.install_path, 'main.rs5')
 		self.main_rs5 = rs5mod.Rs5ModArchiveUpdater(open(path, 'rb+'))
+		# TODO: Perhaps display a message about running as admin if we
+		# get a permission denied IOError?
 
 	def enumerate_rs5mod(self):
 		patch_list = []
@@ -328,29 +331,31 @@ class MiasPatch(QtGui.QDialog):
 		if percent is not None:
 			self.ui.progress.setValue(percent)
 		if msg is not None:
-			print msg
 			self.ui.lbl_progress.setText(msg)
 			self.ui.lbl_progress.repaint()
 			self.repaint()
 
-	def progress_extra(self, prefix='', min=0, max=100):
+	def progress_extra(self, prefix='', min=0, max=100, progress=None):
+		if progress is None:
+			progress = self.progress
 		def foo(msg=None, percent=None):
 			if msg is not None:
 				msg = '%s%s' % (prefix, msg)
 			if percent is not None:
 				percent = int(min + percent * (max - min) / 100)
-			self.progress(msg=msg, percent=percent)
+			progress(msg=msg, percent=percent)
+		progress(percent=min)
 		return foo
 
 	def delete_files(self, files):
 		for file in files:
 			path = os.path.join(self.install_path, file)
 			if os.path.isfile(path):
-				self.progress(msg = self.tr('Deleting {0}...').format(path))
+				self.progress(msg = self.tr('Removing {0}...').format(path))
 				try:
 					os.remove(path)
 				except Exception as e:
-					self.progress(msg = self.tr('{0} while deleting {1}: {2}').format(e.__class__.__name__, path, str(e)))
+					self.progress(msg = self.tr('{0} while removing {1}: {2}').format(e.__class__.__name__, path, str(e)))
 
 	def delete_files_from_config(self):
 		try:
@@ -362,20 +367,38 @@ class MiasPatch(QtGui.QDialog):
 	def refresh_patch_list(self):
 		self.patch_list.refresh(main_rs5 = self.main_rs5)
 
+	@catch_error
+	def install_bin_mods(self, progress):
+		mods = filter(lambda x: x.install and isinstance(x, BinMod), self.patch_list)
+		steps = len(mods)
+		for (i, mod) in enumerate(mods):
+			p = self.progress_extra('%s: ' % mod.name, min=i*100/steps, max=(i+1)*100/steps, progress=progress)
+			mod.install_mod(p, main_rs5 = self.main_rs5)
+
+	@catch_error
+	def install_rs5_mods(self, progress):
+		mods = filter(lambda x: x.install and isinstance(x, Rs5Mod), self.patch_list)
+		if len(mods) == 0:
+			return
+
+		steps = sum([x.steps() for x in mods])
+		for (i, mod) in enumerate(mods):
+			p = self.progress_extra('%s: ' % mod.name, min=i*100/steps, max=(i+mod.steps())*100/steps, progress=progress)
+			mod.install_mod(p, main_rs5 = self.main_rs5)
+			i += mod.steps()
+
+		# TODO: config.get('DEFAULT', 'prefix_order')
+
         @QtCore.Slot()
         @catch_error
 	def on_patch_game_clicked(self):
 		self.progress(percent=0, msg=self.tr('Patching game...'))
 
 		self.delete_files_from_config()
+		self.install_bin_mods(self.progress_extra(min=0, max=10))
+		self.install_rs5_mods(self.progress_extra(min=10, max=90))
+		self.install_env_mods(self.progress_extra(min=90, max=100))
 
-		steps = sum([x.steps() for x in self.patch_list if x.install])
-		i = 0
-		for mod in self.patch_list:
-			if mod.install:
-				p = self.progress_extra('%s: ' % mod.name, min=i*100/steps, max=(i+mod.steps())*100/steps)
-				mod.install_mod(p, main_rs5 = self.main_rs5)
-		# TODO: config.get('DEFAULT', 'prefix_order')
 		self.progress(percent=100, msg=self.tr('Game patched'))
 		self.refresh_patch_list()
 
@@ -389,9 +412,11 @@ class MiasPatch(QtGui.QDialog):
 					mod.remove_mod(self.progress)
 				except:
 					pass
-		self.progress(percent=25, msg=self.tr('Removing environment mods...'))
+		self.progress(percent=33, msg=self.tr('Removing environment mods...'))
+		# TODO: Maybe also remove french & communitypatch.miasmod?
+		# Alternatively just mark them disabled in miasmod.conf?
 		self.delete_files(('alocalmod.rs5', 'communitypatch.rs5'))
-		self.progress(percent=50, msg=self.tr('Removing main.rs5 mods...'))
+		self.progress(percent=66, msg=self.tr('Removing main.rs5 mods...'))
 		try:
 			rs5mod.do_revert(self.main_rs5)
 		except KeyError as e:
