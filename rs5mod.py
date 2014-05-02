@@ -12,6 +12,10 @@ mod_manifests = r'MIASMOD\MODS'
 mod_order_file = r'MIASMOD\ORDER'
 mod_meta_file = r'MIASMOD\MODINFO'
 
+def progress(percent=None, msg=None):
+	if msg is not None:
+		print(msg)
+
 def file_blacklisted(name):
 	'''Files not permitted to be manually added to an archive'''
 	if name.upper() in (undo_file, mod_order_file):
@@ -52,21 +56,21 @@ class UndoMetaDecoder(UndoMeta, rs5file.Rs5FileDecoder):
 		rs5file.Rs5FileDecoder.__init__(self, rs5[undo_file].decompress())
 		self.update(self.json.loads(self.data))
 
-def do_add_undo(rs5, overwrite=False):
+def do_add_undo(rs5, overwrite=False, progress=progress):
 	if undo_file in rs5 and not overwrite:
-		print('Previously added undo metadata found')
+		progress(msg='Previously added undo metadata found')
 		if validate_undo(rs5):
 			return 1
-		print('Undo metadata appears to be invalid, updating')
+		progress(msg='Undo metadata appears to be invalid, updating')
 	undo = UndoMetaEncoder(rs5)
 	try:
 		rs5.add_from_buf(undo.encode())
 		rs5.save()
 	except Exception as e:
-		print('ERROR: %s occured while adding undo metadata: %s' % (e.__class__.__name__, str(e)), file=sys.stderr)
-		print('REVERTING CHANGES...', file=sys.stderr)
+		progress(msg='ERROR: %s occured while adding undo metadata: %s' % (e.__class__.__name__, str(e)), file=sys.stderr)
+		progress(msg='REVERTING CHANGES...', file=sys.stderr)
 		undo.revert_rs5(rs5)
-		print('\nFILE RESTORED', file=sys.stderr)
+		progress(msg='\nFILE RESTORED', file=sys.stderr)
 		raise
 
 def add_undo(archive, overwrite):
@@ -78,7 +82,7 @@ def add_undo(archive, overwrite):
 
 def do_revert(rs5):
 	if undo_file not in rs5:
-		raise KeyError('%s does not contain undo metadata!' % archive)
+		raise KeyError('rs5 archive does not contain undo metadata!')
 	if not validate_undo(rs5):
 		raise IOError('Undo metadata appears to be invalid!')
 	undo = UndoMetaDecoder(rs5)
@@ -395,7 +399,7 @@ def get_mod_version(rs5):
 		return None
 	return do_get_mod_version(meta)
 
-def _do_add_mod(dest_rs5, source_rs5, source_archive):
+def _do_add_mod(dest_rs5, source_rs5, source_archive, progress=progress):
 	mod_name = get_mod_name(source_rs5, source_archive)
 
 	manifest_name = '%s\\%s.manifest' % (mod_manifests, mod_name)
@@ -404,11 +408,12 @@ def _do_add_mod(dest_rs5, source_rs5, source_archive):
 		do_rm_mod(dest_rs5, mod_name)
 
 	mod_entries = ModCentralDirectoryEncoder(mod_name, dest_rs5.ent_len)
-	for source_file in source_rs5.itervalues():
+	for (i, source_file) in enumerate(source_rs5.itervalues()):
+		percent = i * 100 / len(source_rs5)
 		if file_blacklisted(source_file.filename):
-			print('Skipping %s' % source_file.filename)
+			progress(percent = percent, msg='Skipping %s' % source_file.filename)
 			continue
-		print('Adding %s->%s...' % (source_archive, source_file.filename))
+		progress(percent = percent, msg='Adding %s...' % source_file.filename)
 		entry = rs5archive.Rs5CompressedFileRepacker(dest_rs5.fp, source_file, seek_cb=dest_rs5.seek_find_hole)
 		if entry.filename == mod_meta_file:
 			entry.filename = modinfo_name
@@ -416,11 +421,11 @@ def _do_add_mod(dest_rs5, source_rs5, source_archive):
 		mod_entries[entry.filename] = entry
 	dest_rs5.add_from_buf(mod_entries.encode())
 
-def do_add_mod(dest_rs5, source_rs5, source_archive):
-	do_add_undo(dest_rs5)
-	_do_add_mod(dest_rs5, source_rs5, source_archive)
+def do_add_mod(dest_rs5, source_rs5, source_archive, progress=progress):
+	do_add_undo(dest_rs5, progress=progress)
+	_do_add_mod(dest_rs5, source_rs5, source_archive, progress=progress)
 	apply_mod_order(dest_rs5)
-	dest_rs5.save()
+	dest_rs5.save(progress=progress)
 	dest_rs5.truncate_eof()
 
 def add_mod(dest_archive, source_archives):

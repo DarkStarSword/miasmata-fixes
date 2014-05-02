@@ -17,6 +17,10 @@ chunk_extensions = {
 	('IMAG', 'DATA'): '.dds',
 }
 
+def progress(percent=None, msg=None):
+	if msg is not None:
+		print(msg)
+
 # http://msdn.microsoft.com/en-us/library/system.datetime.fromfiletimeutc.aspx:
 # A Windows file time is a 64-bit value that represents the number of
 # 100-nanosecond intervals that have elapsed since 12:00 midnight,
@@ -259,17 +263,17 @@ class Rs5ArchiveEncoder(Rs5CentralDirectoryEncoder):
 		entry = Rs5CompressedFileEncoder(self.fp, buf=chunks.encode(), seek_cb=seek_cb)
 		self[entry.filename] = entry
 
-	def write_header(self):
-		print "Writing RS5 header..."
+	def write_header(self, progress=progress):
+		progress(msg="Writing RS5 header...")
 		self.fp.seek(0)
 		self.fp.write(struct.pack('<8sQII', 'CFILEHDR', self.d_off, self.ent_len, self.u1))
 
-	def save(self):
-		print "Writing central directory..."
+	def save(self, progress=progress):
+		progress(msg="Writing central directory...")
 		self.write_directory()
 		self.write_header()
 		self.fp.flush()
-		print "Done."
+		progress(msg="Done.")
 
 class Rs5ArchiveUpdater(Rs5ArchiveEncoder, Rs5ArchiveDecoder):
 	def __init__(self, fp):
@@ -291,9 +295,9 @@ class Rs5ArchiveUpdater(Rs5ArchiveEncoder, Rs5ArchiveDecoder):
 	def add_from_buf(self, buf):
 		return Rs5ArchiveEncoder.add_from_buf(self, buf, seek_cb = self.seek_find_hole)
 
-	def save(self):
+	def save(self, progress=progress):
 		self.seek_find_hole(self.d_size)
-		print "Writing central directory..."
+		progress(msg="Writing central directory...")
 		self.write_directory()
 		# When updating an existing archive we use an extra flush
 		# before writing the header to reduce the risk of writing a bad
@@ -301,6 +305,6 @@ class Rs5ArchiveUpdater(Rs5ArchiveEncoder, Rs5ArchiveDecoder):
 		self.fp.flush()
 		self.write_header()
 		self.fp.flush()
-		print "Done."
+		progress(msg="Done.")
 
 # vi:noexpandtab:sw=8:ts=8

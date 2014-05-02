@@ -59,9 +59,9 @@ class Mod(object):
 		if version == None:
 			return self.update_status(STATUS_OLD_VERSION)
 		v = self.cmp_version(self.version, version)
-		if v == 1:
-			return self.update_status(STATUS_NEWER_VERSION, version)
 		if v == -1:
+			return self.update_status(STATUS_NEWER_VERSION, version)
+		if v == 1:
 			return self.update_status(STATUS_OLD_VERSION, version)
 		return self.update_status(STATUS_INSTALLED, version)
 
@@ -70,6 +70,9 @@ class Mod(object):
 
 	def install_mod(self, *args, **kwargs):
 		raise NotImplementedError()
+
+	def steps(self):
+		return 1
 
 class BinMod(Mod):
 	def __init__(self, mod, exe_filename):
@@ -80,18 +83,13 @@ class BinMod(Mod):
 	def refresh(self, **kwargs):
 		self.update_status(self.mod.check_status(self.exe_filename))
 
-	def print_cb(self, callback):
-		def foo(msg):
-			callback(msg='%s: %s' % (self.name, msg))
-		return foo
-
 	@catch_error
 	def install_mod(self, progress_cb, **kwargs):
-		self.mod.apply_patch(self.exe_filename, self.print_cb(progress_cb))
+		self.mod.apply_patch(self.exe_filename, progress_cb)
 
 	@catch_error
 	def remove_mod(self, progress_cb):
-		self.mod.remove_patch(self.exe_filename, self.print_cb(progress_cb))
+		self.mod.remove_patch(self.exe_filename, progress_cb)
 
 	@property
 	def name(self):
@@ -129,7 +127,10 @@ class Rs5Mod(Mod):
 
 	@catch_error
 	def install_mod(self, progress_cb, main_rs5 = None, **kwargs):
-		rs5mod.do_add_mod(main_rs5, self.rs5, self.path)
+		rs5mod.do_add_mod(main_rs5, self.rs5, self.path, progress=progress_cb)
+
+	def steps(self):
+		return len(self.rs5)
 
 class PatchListModel(QtCore.QAbstractTableModel):
 	def __init__(self, patch_list):
@@ -323,7 +324,7 @@ class MiasPatch(QtGui.QDialog):
 			return self.on_browse_clicked()
 		self.process_install_path(path)
 
-	def progress(self, percent=None, msg=None):
+	def progress(self, msg=None, percent=None):
 		if percent is not None:
 			self.ui.progress.setValue(percent)
 		if msg is not None:
@@ -331,6 +332,15 @@ class MiasPatch(QtGui.QDialog):
 			self.ui.lbl_progress.setText(msg)
 			self.ui.lbl_progress.repaint()
 			self.repaint()
+
+	def progress_extra(self, prefix='', min=0, max=100):
+		def foo(msg=None, percent=None):
+			if msg is not None:
+				msg = '%s%s' % (prefix, msg)
+			if percent is not None:
+				percent = int(min + percent * (max - min) / 100)
+			self.progress(msg=msg, percent=percent)
+		return foo
 
 	def delete_files(self, files):
 		for file in files:
@@ -359,9 +369,12 @@ class MiasPatch(QtGui.QDialog):
 
 		self.delete_files_from_config()
 
+		steps = sum([x.steps() for x in self.patch_list if x.install])
+		i = 0
 		for mod in self.patch_list:
 			if mod.install:
-				mod.install_mod(self.progress, main_rs5 = self.main_rs5)
+				p = self.progress_extra('%s: ' % mod.name, min=i*100/steps, max=(i+mod.steps())*100/steps)
+				mod.install_mod(p, main_rs5 = self.main_rs5)
 		# TODO: config.get('DEFAULT', 'prefix_order')
 		self.progress(percent=100, msg=self.tr('Game patched'))
 		self.refresh_patch_list()
