@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import sys
 import os
 import rs5archive
@@ -19,7 +21,7 @@ def file_blacklisted(name):
 	return False
 
 def validate_undo(rs5):
-	print 'STUB: validate_undo()'
+	print('STUB: validate_undo()')
 	# TODO: Make sure the values in the undo file look sane - that there is
 	# a central directory archive where it points and that there is no file
 	# listed in that directory past the truncation point.
@@ -52,19 +54,19 @@ class UndoMetaDecoder(UndoMeta, rs5file.Rs5FileDecoder):
 
 def do_add_undo(rs5, overwrite=False):
 	if undo_file in rs5 and not overwrite:
-		print 'Previously added undo metadata found'
+		print('Previously added undo metadata found')
 		if validate_undo(rs5):
 			return 1
-		print 'Undo metadata appears to be invalid, updating'
+		print('Undo metadata appears to be invalid, updating')
 	undo = UndoMetaEncoder(rs5)
 	try:
 		rs5.add_from_buf(undo.encode())
 		rs5.save()
 	except Exception as e:
-		print>>sys.stderr, 'ERROR: %s occured while adding undo metadata: %s' % (e.__class__.__name__, str(e))
-		print>>sys.stderr, 'REVERTING CHANGES...'
+		print('ERROR: %s occured while adding undo metadata: %s' % (e.__class__.__name__, str(e)), file=sys.stderr)
+		print('REVERTING CHANGES...', file=sys.stderr)
 		undo.revert_rs5(rs5)
-		print>>sys.stderr, '\nFILE RESTORED'
+		print('\nFILE RESTORED', file=sys.stderr)
 		raise
 
 def add_undo(archive, overwrite):
@@ -140,12 +142,12 @@ def rs5_mods(rs5):
 		for mod in order:
 			manifest = '%s\\%s.manifest' % (mod_manifests, mod)
 			if manifest in rs5:
-				# print 'Processing %s (ordered)' % mod
+				# print('Processing %s (ordered)' % mod)
 				yield mods.pop(mods.index(manifest))
 			else:
-				print 'WARNING: %s listed in %s not found in archive!' % (mod, mod_order_file)
+				print('WARNING: %s listed in %s not found in archive!' % (mod, mod_order_file))
 	for mod in mods:
-		# print 'Processing %s (UNORDERED)' % mod
+		# print('Processing %s (UNORDERED)' % mod)
 		yield mod
 
 def iter_all_file_versions(rs5, undo):
@@ -243,19 +245,19 @@ def list_holes(archive):
 		if i:
 			space = start - regions[i-1][1]
 			if space:
-				print '<-- HOLE: %i bytes -->' % space
+				print('<-- HOLE: %i bytes -->' % space)
 				wasted += space
 			if space < 0:
-				print ' !!! WARNING: %i BYTES OF OVERLAPPING DATA DETECTED !!!' % -space
+				print(' !!! WARNING: %i BYTES OF OVERLAPPING DATA DETECTED !!!' % -space)
 				bad = True
 		mask_str = mod_str = ''
 		if mod is not None:
 			mod_str = '(%s) ' % mod
 		if masked is not None:
 			mask_str = ' (MASKED BY %s)' % masked
-		print '%.8x:%.8x %s%s%s' % (start, fin, mod_str, name, mask_str)
-	print
-	print 'Total space wasted by holes: %i bytes' % wasted
+		print('%.8x:%.8x %s%s%s' % (start, fin, mod_str, name, mask_str))
+	print()
+	print('Total space wasted by holes: %i bytes' % wasted)
 	assert (not bad)
 
 def find_holes(rs5):
@@ -281,12 +283,12 @@ class Rs5ModArchiveUpdater(rs5archive.Rs5ArchiveUpdater):
 		self.holes = None
 
 	def find_holes(self):
-		print 'Searching for holes...'
+		print('Searching for holes...')
 		self.holes = sorted(find_holes(self))
 		if len(self.holes):
-			print '\n'.join('Hole found: %i bytes at 0x%x' % x for x in self.holes)
+			print('\n'.join('Hole found: %i bytes at 0x%x' % x for x in self.holes))
 		else:
-			print 'No holes found'
+			print('No holes found')
 
 	def seek_find_hole(self, size):
 		if undo_file not in self:
@@ -295,7 +297,7 @@ class Rs5ModArchiveUpdater(rs5archive.Rs5ArchiveUpdater):
 			self.find_holes()
 		for (i, (hole_size, hole)) in enumerate(self.holes):
 			if hole_size >= size:
-				print 'Filling hole at 0x%x of size %i with %i bytes' % (hole, hole_size, size)
+				print('Filling hole at 0x%x of size %i with %i bytes' % (hole, hole_size, size))
 				if hole_size == size:
 					del self.holes[i]
 				else:
@@ -338,20 +340,20 @@ def do_rm_mod(rs5, mod):
 	try:
 		manifest = rs5[manifest_name]
 	except:
-		print 'ERROR: %s not found in archive!' % manifest_name
+		print('ERROR: %s not found in archive!' % manifest_name)
 		raise ModNotFound()
 	for (filename, mod_f) in ModCentralDirectoryDecoder(rs5, manifest).iteritems():
 		cur_f = rs5[filename]
 		if cur_f.data_off == mod_f.data_off:
-			print 'Removing %s...' % filename
+			print('Removing %s...' % filename)
 			del rs5[filename]
 		else:
-			print 'Skipping %s - offsets do not match' % filename
-	print 'Removing %s...' % manifest_name
+			print('Skipping %s - offsets do not match' % filename)
+	print('Removing %s...' % manifest_name)
 	del rs5[manifest_name]
 	if modinfo_name in rs5:
 		del rs5[modinfo_name]
-	print 'Rebuilding directory from mod order...'
+	print('Rebuilding directory from mod order...')
 	apply_mod_order(rs5)
 	rs5.save()
 	rs5.truncate_eof()
@@ -404,13 +406,12 @@ def _do_add_mod(dest_rs5, source_rs5, source_archive):
 	mod_entries = ModCentralDirectoryEncoder(mod_name, dest_rs5.ent_len)
 	for source_file in source_rs5.itervalues():
 		if file_blacklisted(source_file.filename):
-			print 'Skipping %s' % source_file.filename
+			print('Skipping %s' % source_file.filename)
 			continue
-		print 'Adding %s->%s...' % (source_archive, source_file.filename)
+		print('Adding %s->%s...' % (source_archive, source_file.filename))
 		entry = rs5archive.Rs5CompressedFileRepacker(dest_rs5.fp, source_file, seek_cb=dest_rs5.seek_find_hole)
 		if entry.filename == mod_meta_file:
 			entry.filename = modinfo_name
-			print repr(entry)
 		dest_rs5[entry.filename] = entry
 		mod_entries[entry.filename] = entry
 	dest_rs5.add_from_buf(mod_entries.encode())
