@@ -87,7 +87,6 @@ class BinMod(Mod):
 	def __init__(self, mod, exe_filename):
 		self.mod = mod
 		self.exe_filename = exe_filename
-		self.refresh()
 
 	def refresh(self, **kwargs):
 		self.update_status(self.mod.check_status(self.exe_filename))
@@ -110,14 +109,13 @@ class BinMod(Mod):
 class EnvMod(Mod):
 	installable = True
 
-	def __init__(self, path, global_stat=None, installed=None):
+	def __init__(self, path):
 		self.mod_name = os.path.splitext(os.path.basename(path))[0]
 		self.name = '%s (env)' % self.mod_name
 		self.path = path
 		self.mod = data.json_decode_diff(open(path, 'rb'))
 		if 'version' in self.mod:
 			self.version = self.mod['version']
-		self.refresh(miasmod_global_stat=global_stat, miasmod_installed=installed)
 
 	def refresh(self, miasmod_global_stat = None, miasmod_installed = {}, **kwargs):
 		if miasmod_global_stat is not None:
@@ -130,13 +128,12 @@ class EnvMod(Mod):
 class Rs5Mod(Mod):
 	installable = True
 
-	def __init__(self, path, main_rs5):
+	def __init__(self, path):
 		self.rs5 = rs5archive.Rs5ArchiveDecoder(open(path, 'rb'))
 		self.path = path
 		self.mod_name = rs5mod.get_mod_name(self.rs5, path)
 		self.name = '%s (main.rs5)' % self.mod_name
 		self.version = rs5mod.get_mod_version(self.rs5)
-		self.refresh(main_rs5 = main_rs5)
 
 	def refresh(self, main_rs5 = None, **kwargs):
 		try:
@@ -283,10 +280,9 @@ class MiasPatch(QtGui.QDialog):
 
 	def enumerate_rs5mod(self):
 		patch_list = []
-		self.load_main_rs5()
 
 		for path in glob('*.rs5mod'):
-			patch_list.append(Rs5Mod(path, self.main_rs5))
+			patch_list.append(Rs5Mod(path))
 
 		return patch_list
 
@@ -299,13 +295,9 @@ class MiasPatch(QtGui.QDialog):
 		return self.check_installed_miasmods()
 
 	def enumerate_miasmod(self):
-		self.load_environment_rs5()
-
-		(global_stat, installed) = self.get_miasmod_global_status()
-
 		patch_list = []
 		for path in glob('*.miasmod'):
-			patch_list.append(EnvMod(path, global_stat, installed))
+			patch_list.append(EnvMod(path))
 		return patch_list
 
 	def enumerate_bin_patch(self):
@@ -324,16 +316,23 @@ class MiasPatch(QtGui.QDialog):
 		patch_list = []
 		self.progress(percent=0)
 		patch_list.extend(self.enumerate_rs5mod())
-		self.progress(percent=33)
+		self.progress(percent=3)
 		patch_list.extend(self.enumerate_miasmod())
-		self.progress(percent=66)
+		self.progress(percent=6)
 		patch_list.extend(self.enumerate_bin_patch())
+		self.progress(percent=9)
 
 		self.patch_list = PatchListModel(sorted(patch_list))
 		self.patch_list.dataChanged.connect(self.dataChanged)
 		self.ui.patch_list.setModel(self.patch_list)
 		self.resize_patch_list()
-		self.update_install_button()
+
+		self.progress(percent=20)
+		self.load_main_rs5()
+		self.progress(percent=50)
+		self.load_environment_rs5()
+		self.progress(percent=80)
+		self.refresh_patch_list()
 		self.progress(percent=100)
 
 	def resize_patch_list(self):
@@ -429,6 +428,7 @@ class MiasPatch(QtGui.QDialog):
 		(global_stat, installed) = self.get_miasmod_global_status()
 		self.patch_list.refresh(main_rs5 = self.main_rs5, miasmod_global_stat = global_stat, miasmod_installed = installed)
 		self.update_install_button()
+		self.resize_patch_list()
 		self.progress(percent=0, msg=self.tr('Ready'))
 
 	@catch_error
@@ -539,6 +539,7 @@ class MiasPatch(QtGui.QDialog):
 	def check_installed_miasmods(self):
 		(mods, mod_states) = self.get_installed_miasmods()
 		order = self.miasmod_order(mods)
+		self.progress(msg=self.tr('Processing installed miasmod files...'))
 		(env, installed) = self.process_miasmods(mods, order, False, self.progress)
 
 		self.progress(msg=self.tr('Loading alocalmod.rs5...'))
