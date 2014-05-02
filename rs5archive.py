@@ -6,7 +6,16 @@
 # so I could examine the format for myself. Don't expect this to be feature
 # complete for a while
 
-from PySide import QtCore
+try:
+	from PySide import QtCore
+except ImportError:
+	class RS5Patcher(object):
+		def tr(self, msg):
+			return msg
+else:
+	# For PySide translations without being overly verbose...
+	class RS5Patcher(QtCore.QObject): pass
+RS5Patcher = RS5Patcher()
 
 import struct
 import zlib
@@ -22,9 +31,6 @@ chunk_extensions = {
 def progress(percent=None, msg=None):
 	if msg is not None:
 		print(msg)
-# For PySide translations without being overly verbose...
-class RS5Patcher(QtCore.QObject): pass
-RS5Patcher = RS5Patcher()
 
 # http://msdn.microsoft.com/en-us/library/system.datetime.fromfiletimeutc.aspx:
 # A Windows file time is a 64-bit value that represents the number of

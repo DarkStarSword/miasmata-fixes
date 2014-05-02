@@ -2,7 +2,19 @@
 
 from __future__ import print_function
 
-from PySide import QtCore
+try:
+	from PySide import QtCore
+except ImportError:
+	class RS5Patcher(object):
+		def tr(self, msg):
+			return msg
+else:
+	def progress(percent=None, msg=None):
+		if msg is not None:
+			print(msg)
+	# For PySide translations without being overly verbose...
+	class RS5Patcher(QtCore.QObject): pass
+RS5Patcher = RS5Patcher()
 
 import sys
 import os
@@ -17,9 +29,6 @@ mod_meta_file = r'MIASMOD\MODINFO'
 def progress(percent=None, msg=None):
 	if msg is not None:
 		print(msg)
-# For PySide translations without being overly verbose...
-class RS5Patcher(QtCore.QObject): pass
-RS5Patcher = RS5Patcher()
 
 def file_blacklisted(name):
 	'''Files not permitted to be manually added to an archive'''
