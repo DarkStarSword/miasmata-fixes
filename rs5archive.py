@@ -278,7 +278,7 @@ class Rs5ArchiveEncoder(Rs5CentralDirectoryEncoder):
 		self.write_directory()
 		self.write_header(progress=progress)
 		self.fp.flush()
-		progress(msg=RS5Patcher.tr("Done"))
+		progress(msg=RS5Patcher.tr("RS5 Written"))
 
 class Rs5ArchiveUpdater(Rs5ArchiveEncoder, Rs5ArchiveDecoder):
 	def __init__(self, fp):
@@ -310,6 +310,6 @@ class Rs5ArchiveUpdater(Rs5ArchiveEncoder, Rs5ArchiveDecoder):
 		self.fp.flush()
 		self.write_header(progress=progress)
 		self.fp.flush()
-		progress(msg=RS5Patcher.tr("Done"))
+		progress(msg=RS5Patcher.tr("RS5 Written"))
 
 # vi:noexpandtab:sw=8:ts=8

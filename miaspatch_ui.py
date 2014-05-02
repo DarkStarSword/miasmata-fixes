@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'miaspatch.ui'
 #
-# Created: Fri May  2 02:28:57 2014
+# Created: Fri May  2 17:24:52 2014
 #      by: pyside-uic 0.2.15 running on PySide 1.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -277,6 +277,6 @@ class Ui_Dialog(object):
         self.label.setText(QtGui.QApplication.translate("Dialog", "Miasmata Install &Location:", None, QtGui.QApplication.UnicodeUTF8))
         self.browse.setText(QtGui.QApplication.translate("Dialog", "&Browse...", None, QtGui.QApplication.UnicodeUTF8))
         self.label_2.setText(QtGui.QApplication.translate("Dialog", "The following mods will be installed:", None, QtGui.QApplication.UnicodeUTF8))
-        self.patch_game.setText(QtGui.QApplication.translate("Dialog", "&Patch Game", None, QtGui.QApplication.UnicodeUTF8))
+        self.patch_game.setText(QtGui.QApplication.translate("Dialog", "&Install Mods", None, QtGui.QApplication.UnicodeUTF8))
         self.remove_all_mods.setText(QtGui.QApplication.translate("Dialog", "&Remove all mods", None, QtGui.QApplication.UnicodeUTF8))
 

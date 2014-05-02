@@ -333,11 +333,14 @@ def apply_mod_order(rs5):
 
 	rs5.update(directory)
 
-def order_mods(archive, mod_list):
-	rs5 = Rs5ModArchiveUpdater(open(archive, 'rb+'))
+def do_order_mods(rs5, mod_list):
 	do_add_undo(rs5)
 	file = ModOrderEncoder(rs5, mod_list)
 	rs5.add_from_buf(file.encode())
+
+def order_mods(archive, mod_list):
+	rs5 = Rs5ModArchiveUpdater(open(archive, 'rb+'))
+	return do_order_mods(rs5, mod_list)
 	apply_mod_order(rs5)
 	rs5.save()
 	rs5.truncate_eof()
@@ -405,7 +408,7 @@ def get_mod_version(rs5):
 		return None
 	return do_get_mod_version(meta)
 
-def _do_add_mod(dest_rs5, source_rs5, source_archive, progress=progress):
+def do_add_mod(dest_rs5, source_rs5, source_archive, progress=progress):
 	do_add_undo(dest_rs5, progress=progress)
 	mod_name = get_mod_name(source_rs5, source_archive)
 
@@ -429,18 +432,12 @@ def _do_add_mod(dest_rs5, source_rs5, source_archive, progress=progress):
 	progress(percent = 100)
 	dest_rs5.add_from_buf(mod_entries.encode())
 
-def do_add_mod(dest_rs5, source_rs5, source_archive, progress=progress):
-	_do_add_mod(dest_rs5, source_rs5, source_archive, progress=progress)
-	apply_mod_order(dest_rs5)
-	dest_rs5.save(progress=progress)
-	dest_rs5.truncate_eof()
-
 def add_mod(dest_archive, source_archives):
 	rs5 = Rs5ModArchiveUpdater(open(dest_archive, 'rb+'))
 	do_add_undo(rs5)
 	for source_archive in source_archives:
 		source_rs5 = rs5archive.Rs5ArchiveDecoder(open(source_archive, 'rb'))
-		_do_add_mod(rs5, source_rs5, source_archive)
+		do_add_mod(rs5, source_rs5, source_archive)
 	apply_mod_order(rs5)
 	rs5.save()
 	rs5.truncate_eof()

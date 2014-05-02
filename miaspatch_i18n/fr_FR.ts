@@ -51,11 +51,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch_ui.py" line="280"/>
-        <source>&amp;Patch Game</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="miaspatch_ui.py" line="279"/>
         <source>The following mods will be installed:</source>
         <translation type="unfinished"></translation>
@@ -63,6 +58,11 @@
     <message>
         <location filename="miaspatch_ui.py" line="281"/>
         <source>&amp;Remove all mods</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="miaspatch_ui.py" line="280"/>
+        <source>&amp;Install Mods</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -92,22 +92,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="395"/>
+        <location filename="miaspatch.py" line="424"/>
         <source>Patching game...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="402"/>
+        <location filename="miaspatch.py" line="431"/>
         <source>Game patched</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="408"/>
+        <location filename="miaspatch.py" line="437"/>
         <source>Removing all mods...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="425"/>
+        <location filename="miaspatch.py" line="454"/>
         <source>Mods removed</source>
         <translation type="unfinished"></translation>
     </message>
@@ -117,12 +117,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="415"/>
+        <location filename="miaspatch.py" line="444"/>
         <source>Removing environment mods...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="419"/>
+        <location filename="miaspatch.py" line="448"/>
         <source>Removing main.rs5 mods...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -139,6 +139,11 @@
     <message>
         <location filename="miaspatch.py" line="233"/>
         <source>Ready</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="miaspatch.py" line="412"/>
+        <source>Applying main.rs5 mod order...</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -216,27 +221,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="rs5mod.py" line="353"/>
+        <location filename="rs5mod.py" line="356"/>
         <source>ERROR: {0} not found in archive!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="rs5mod.py" line="362"/>
+        <location filename="rs5mod.py" line="365"/>
         <source>Removing {0}...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="rs5mod.py" line="361"/>
+        <location filename="rs5mod.py" line="364"/>
         <source>Skipping {0} - offsets do not match</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="rs5mod.py" line="366"/>
+        <location filename="rs5mod.py" line="369"/>
         <source>Rebuilding directory from mod order...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="rs5mod.py" line="421"/>
+        <location filename="rs5mod.py" line="424"/>
         <source>Skipping {0}</source>
         <translation type="unfinished"></translation>
     </message>
@@ -257,7 +262,7 @@
     </message>
     <message>
         <location filename="rs5archive.py" line="313"/>
-        <source>Done</source>
+        <source>RS5 Written</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

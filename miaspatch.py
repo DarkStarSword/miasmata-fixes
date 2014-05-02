@@ -381,13 +381,42 @@ class MiasPatch(QtGui.QDialog):
 		if len(mods) == 0:
 			return
 
-		steps = sum([x.steps() for x in mods])
-		for (i, mod) in enumerate(mods):
+		rs5mod.do_add_undo(self.main_rs5, progress=progress)
+
+		steps = sum([x.steps() for x in mods]); i = 0
+		for mod in mods:
 			p = self.progress_extra('%s: ' % mod.name, min=i*100/steps, max=(i+mod.steps())*100/steps, progress=progress)
 			mod.install_mod(p, main_rs5 = self.main_rs5)
 			i += mod.steps()
 
-		# TODO: config.get('DEFAULT', 'prefix_order')
+		try:
+			prefix_order = config.get('DEFAULT', 'prefix_order').split()
+		except:
+			pass
+		else:
+			print 'Prefixing mod order with: {0}'.format(prefix_order)
+			try:
+				order = rs5mod.ModOrderDecoder(self.main_rs5)
+			except Exception as e:
+				order = []
+			print 'Old mod order: {0}'.format(order)
+			for mod in reversed(prefix_order):
+				try:
+					order.remove(mod)
+				except ValueError:
+					pass
+				order.insert(0, mod)
+			print 'New mod order: {0}'.format(order)
+			rs5mod.do_order_mods(self.main_rs5, order)
+
+		progress(msg=self.tr('Applying main.rs5 mod order...'))
+		rs5mod.apply_mod_order(self.main_rs5)
+		self.main_rs5.save(progress=progress)
+		self.main_rs5.truncate_eof()
+
+	@catch_error
+	def install_env_mods(self, progress):
+		pass
 
         @QtCore.Slot()
         @catch_error
@@ -399,7 +428,7 @@ class MiasPatch(QtGui.QDialog):
 		self.install_rs5_mods(self.progress_extra(min=10, max=90))
 		self.install_env_mods(self.progress_extra(min=90, max=100))
 
-		self.progress(percent=100, msg=self.tr('Game patched'))
+		self.progress(percent=100, msg=self.tr('Mods installed'))
 		self.refresh_patch_list()
 
         @QtCore.Slot()
