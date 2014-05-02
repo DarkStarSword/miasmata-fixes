@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>362</width>
+    <width>423</width>
     <height>305</height>
    </rect>
   </property>
@@ -106,6 +106,9 @@
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
          <widget class="QPushButton" name="patch_game">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="sizePolicy">
            <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
             <horstretch>0</horstretch>
@@ -127,9 +130,9 @@
              <colorrole role="Button">
               <brush brushstyle="SolidPattern">
                <color alpha="255">
-                <red>0</red>
+                <red>135</red>
                 <green>170</green>
-                <blue>0</blue>
+                <blue>135</blue>
                </color>
               </brush>
              </colorrole>
@@ -190,18 +193,18 @@
              <colorrole role="Base">
               <brush brushstyle="SolidPattern">
                <color alpha="255">
-                <red>0</red>
+                <red>135</red>
                 <green>170</green>
-                <blue>0</blue>
+                <blue>135</blue>
                </color>
               </brush>
              </colorrole>
              <colorrole role="Window">
               <brush brushstyle="SolidPattern">
                <color alpha="255">
-                <red>0</red>
+                <red>135</red>
                 <green>170</green>
-                <blue>0</blue>
+                <blue>135</blue>
                </color>
               </brush>
              </colorrole>
@@ -219,9 +222,9 @@
              <colorrole role="Button">
               <brush brushstyle="SolidPattern">
                <color alpha="255">
-                <red>0</red>
+                <red>135</red>
                 <green>170</green>
-                <blue>0</blue>
+                <blue>135</blue>
                </color>
               </brush>
              </colorrole>
@@ -282,18 +285,18 @@
              <colorrole role="Base">
               <brush brushstyle="SolidPattern">
                <color alpha="255">
-                <red>0</red>
+                <red>135</red>
                 <green>170</green>
-                <blue>0</blue>
+                <blue>135</blue>
                </color>
               </brush>
              </colorrole>
              <colorrole role="Window">
               <brush brushstyle="SolidPattern">
                <color alpha="255">
-                <red>0</red>
+                <red>135</red>
                 <green>170</green>
-                <blue>0</blue>
+                <blue>135</blue>
                </color>
               </brush>
              </colorrole>
@@ -311,9 +314,9 @@
              <colorrole role="Button">
               <brush brushstyle="SolidPattern">
                <color alpha="255">
-                <red>0</red>
+                <red>135</red>
                 <green>170</green>
-                <blue>0</blue>
+                <blue>135</blue>
                </color>
               </brush>
              </colorrole>
@@ -374,18 +377,18 @@
              <colorrole role="Base">
               <brush brushstyle="SolidPattern">
                <color alpha="255">
-                <red>0</red>
+                <red>135</red>
                 <green>170</green>
-                <blue>0</blue>
+                <blue>135</blue>
                </color>
               </brush>
              </colorrole>
              <colorrole role="Window">
               <brush brushstyle="SolidPattern">
                <color alpha="255">
-                <red>0</red>
+                <red>135</red>
                 <green>170</green>
-                <blue>0</blue>
+                <blue>135</blue>
                </color>
               </brush>
              </colorrole>
@@ -398,7 +401,7 @@
            </font>
           </property>
           <property name="styleSheet">
-           <string notr="true">background-color: rgb(0, 170, 0);</string>
+           <string notr="true">background-color: rgb(135, 170, 135);</string>
           </property>
           <property name="text">
            <string>&amp;Install Mods</string>

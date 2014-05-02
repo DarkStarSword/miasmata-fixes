@@ -36,32 +36,32 @@
 <context>
     <name>Dialog</name>
     <message>
-        <location filename="miaspatch_ui.py" line="276"/>
+        <location filename="miaspatch_ui.py" line="277"/>
         <source>Miasmata Patcher</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch_ui.py" line="277"/>
+        <location filename="miaspatch_ui.py" line="278"/>
         <source>Miasmata Install &amp;Location:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch_ui.py" line="278"/>
+        <location filename="miaspatch_ui.py" line="279"/>
         <source>&amp;Browse...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch_ui.py" line="279"/>
+        <location filename="miaspatch_ui.py" line="280"/>
         <source>The following mods will be installed:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch_ui.py" line="281"/>
+        <location filename="miaspatch_ui.py" line="282"/>
         <source>&amp;Remove all mods</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch_ui.py" line="280"/>
+        <location filename="miaspatch_ui.py" line="281"/>
         <source>&amp;Install Mods</source>
         <translation type="unfinished"></translation>
     </message>
@@ -77,118 +77,158 @@
 <context>
     <name>MiasPatch</name>
     <message>
-        <location filename="miaspatch.py" line="220"/>
+        <location filename="miaspatch.py" line="238"/>
         <source>Miasmata Patcher</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="222"/>
+        <location filename="miaspatch.py" line="240"/>
         <source>{0} does not appear to be a Miasmata install: {1} not found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="310"/>
+        <location filename="miaspatch.py" line="370"/>
         <source>Select Miasmata Install Location...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="424"/>
+        <location filename="miaspatch.py" line="592"/>
         <source>Patching game...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="431"/>
-        <source>Game patched</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="miaspatch.py" line="437"/>
+        <location filename="miaspatch.py" line="605"/>
         <source>Removing all mods...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="454"/>
+        <location filename="miaspatch.py" line="622"/>
         <source>Mods removed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="236"/>
+        <location filename="miaspatch.py" line="254"/>
         <source>Loading main.rs5...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="444"/>
+        <location filename="miaspatch.py" line="612"/>
         <source>Removing environment mods...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="448"/>
+        <location filename="miaspatch.py" line="616"/>
         <source>Removing main.rs5 mods...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="354"/>
+        <location filename="miaspatch.py" line="415"/>
         <source>Removing {0}...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="358"/>
-        <source>{0} while removing {1}: {2}</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="miaspatch.py" line="233"/>
+        <location filename="miaspatch.py" line="432"/>
         <source>Ready</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="412"/>
+        <location filename="miaspatch.py" line="476"/>
         <source>Applying main.rs5 mod order...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="miaspatch.py" line="263"/>
+        <source>Loading environment.rs5...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="miaspatch.py" line="419"/>
+        <source>{0} occurred while removing {1}: {2}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="miaspatch.py" line="518"/>
+        <source>Processing {0}...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="miaspatch.py" line="526"/>
+        <source>{0} occurred while copying {1}: {2}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="miaspatch.py" line="532"/>
+        <source>{0} occurred while processing {1}: {2}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="miaspatch.py" line="544"/>
+        <source>Loading alocalmod.rs5...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="miaspatch.py" line="549"/>
+        <source>alocalmod.rs5 is out of sync</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="miaspatch.py" line="566"/>
+        <source>{0} occurred while writing to {1}: {2}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="miaspatch.py" line="599"/>
+        <source>Mods installed</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>Mod Status</name>
     <message>
-        <location filename="miaspatch.py" line="35"/>
+        <location filename="miaspatch.py" line="40"/>
         <source>Old version installed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="40"/>
+        <location filename="miaspatch.py" line="46"/>
         <source>Version {0} installed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="37"/>
+        <location filename="miaspatch.py" line="42"/>
         <source>Installed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="34"/>
+        <location filename="miaspatch.py" line="39"/>
         <source>Not installed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="33"/>
+        <location filename="miaspatch.py" line="38"/>
         <source>Not applicable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="miaspatch.py" line="43"/>
+        <source>alocalmod.rs5 not synchronised</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>PatchListModel</name>
     <message>
-        <location filename="miaspatch.py" line="175"/>
+        <location filename="miaspatch.py" line="195"/>
         <source>Mod</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="176"/>
+        <location filename="miaspatch.py" line="196"/>
         <source>Version</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="miaspatch.py" line="177"/>
+        <location filename="miaspatch.py" line="197"/>
         <source>Status</source>
         <translation type="unfinished"></translation>
     </message>

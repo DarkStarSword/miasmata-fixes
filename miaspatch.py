@@ -5,6 +5,7 @@ from glob import glob
 import ConfigParser
 import shutil
 import time
+import copy
 
 from PySide import QtCore, QtGui
 from PySide.QtCore import Qt
@@ -23,6 +24,7 @@ STATUS_NOT_INSTALLED   = 1
 STATUS_OLD_VERSION     = 2
 STATUS_INSTALLED       = 3
 STATUS_NEWER_VERSION   = 4
+STATUS_DESYNC          = 5
 
 class Mod(object):
 	installable = False
@@ -38,11 +40,12 @@ class Mod(object):
 			STATUS_OLD_VERSION:     (QtGui.QApplication.translate('Mod Status', 'Old version installed', None, QtGui.QApplication.UnicodeUTF8), None),
 			STATUS_INSTALLED:       (QtGui.QApplication.translate('Mod Status', 'Installed', None, QtGui.QApplication.UnicodeUTF8), Qt.darkGreen),
 			STATUS_NEWER_VERSION:   (QtGui.QApplication.translate('Mod Status', 'Installed', None, QtGui.QApplication.UnicodeUTF8), Qt.darkGreen),
+			STATUS_DESYNC:          (QtGui.QApplication.translate('Mod Status', 'alocalmod.rs5 not synchronised', None, QtGui.QApplication.UnicodeUTF8), Qt.red),
 		}[status]
 		if version is not None:
 			self.status = QtGui.QApplication.translate('Mod Status', 'Version {0} installed', None, QtGui.QApplication.UnicodeUTF8).format(version)
 		self.installable = status != STATUS_NOT_INSTALLABLE
-		self.install = (status in (STATUS_NOT_INSTALLED, STATUS_OLD_VERSION))
+		self.install = (status in (STATUS_NOT_INSTALLED, STATUS_OLD_VERSION, STATUS_DESYNC))
 
 	@staticmethod
 	def cmp_version(v1, v2):
@@ -107,13 +110,22 @@ class BinMod(Mod):
 class EnvMod(Mod):
 	installable = True
 
-	def __init__(self, path):
+	def __init__(self, path, global_stat=None, installed=None):
 		self.mod_name = os.path.splitext(os.path.basename(path))[0]
 		self.name = '%s (env)' % self.mod_name
 		self.path = path
 		self.mod = data.json_decode_diff(open(path, 'rb'))
 		if 'version' in self.mod:
 			self.version = self.mod['version']
+		self.refresh(miasmod_global_stat=global_stat, miasmod_installed=installed)
+
+	def refresh(self, miasmod_global_stat = None, miasmod_installed = {}, **kwargs):
+		if miasmod_global_stat is not None:
+			return self.update_status(miasmod_global_stat, None)
+		installed = miasmod_installed.get(self.mod_name, None)
+		if installed is None:
+			return self.update_status(STATUS_NOT_INSTALLED)
+		self.update_status_version(installed.get('version', None))
 
 class Rs5Mod(Mod):
 	installable = True
@@ -218,8 +230,6 @@ class MiasPatch(QtGui.QDialog):
 		self.ui = self.Ui_Dialog()
 		self.ui.setupUi(self)
 
-		self.find_install_path()
-
 	def process_install_path(self, path):
 		self.ui.groupBox.setEnabled(False)
 
@@ -247,6 +257,30 @@ class MiasPatch(QtGui.QDialog):
 		# TODO: Perhaps display a message about running as admin if we
 		# get a permission denied IOError?
 
+	def load_environment_rs5(self, progress=None):
+		if progress is None:
+			progress = self.progress
+		progress(msg=self.tr('Loading environment.rs5...'))
+		path = os.path.join(self.install_path, 'environment.rs5')
+		self.environment = environment.parse_from_archive(path)
+
+	def enable_install_button(self):
+		self.ui.patch_game.setStyleSheet('background-color: rgb(0, 170, 0);')
+		self.ui.patch_game.setEnabled(True)
+	def disable_install_button(self):
+		self.ui.patch_game.setStyleSheet('background-color: rgb(135, 170, 135);')
+		self.ui.patch_game.setEnabled(False)
+	def update_install_button(self):
+		for mod in self.patch_list:
+			if mod.installable and mod.install:
+				return self.enable_install_button()
+		self.disable_install_button()
+
+	@QtCore.Slot()
+	@catch_error
+	def dataChanged(self, topLeft, bottomRight):
+		self.update_install_button()
+
 	def enumerate_rs5mod(self):
 		patch_list = []
 		self.load_main_rs5()
@@ -256,10 +290,22 @@ class MiasPatch(QtGui.QDialog):
 
 		return patch_list
 
+	def get_miasmod_global_status(self):
+		# Check for global status (no alocalmod.rs5, or out of sync)
+		global_stat = None
+		installed = {}
+		if not os.path.isfile(os.path.join(self.install_path, 'alocalmod.rs5')):
+			return (STATUS_NOT_INSTALLED, {})
+		return self.check_installed_miasmods()
+
 	def enumerate_miasmod(self):
+		self.load_environment_rs5()
+
+		(global_stat, installed) = self.get_miasmod_global_status()
+
 		patch_list = []
 		for path in glob('*.miasmod'):
-			patch_list.append(EnvMod(path))
+			patch_list.append(EnvMod(path, global_stat, installed))
 		return patch_list
 
 	def enumerate_bin_patch(self):
@@ -276,13 +322,19 @@ class MiasPatch(QtGui.QDialog):
 
 	def enumerate_patches(self):
 		patch_list = []
+		self.progress(percent=0)
 		patch_list.extend(self.enumerate_rs5mod())
+		self.progress(percent=33)
 		patch_list.extend(self.enumerate_miasmod())
+		self.progress(percent=66)
 		patch_list.extend(self.enumerate_bin_patch())
 
 		self.patch_list = PatchListModel(sorted(patch_list))
+		self.patch_list.dataChanged.connect(self.dataChanged)
 		self.ui.patch_list.setModel(self.patch_list)
 		self.resize_patch_list()
+		self.update_install_button()
+		self.progress(percent=100)
 
 	def resize_patch_list(self):
 		self.ui.patch_list.resizeRowsToContents()
@@ -364,7 +416,7 @@ class MiasPatch(QtGui.QDialog):
 				try:
 					os.remove(path)
 				except Exception as e:
-					self.progress(msg = self.tr('{0} occured while removing {1}: {2}').format(e.__class__.__name__, path, str(e)))
+					self.progress(msg = self.tr('{0} occurred while removing {1}: {2}').format(e.__class__.__name__, path, str(e)))
 
 	def delete_files_from_config(self):
 		try:
@@ -374,7 +426,10 @@ class MiasPatch(QtGui.QDialog):
 		return self.delete_files(delete.split())
 
 	def refresh_patch_list(self):
-		self.patch_list.refresh(main_rs5 = self.main_rs5)
+		(global_stat, installed) = self.get_miasmod_global_status()
+		self.patch_list.refresh(main_rs5 = self.main_rs5, miasmod_global_stat = global_stat, miasmod_installed = installed)
+		self.update_install_button()
+		self.progress(percent=0, msg=self.tr('Ready'))
 
 	@catch_error
 	def install_bin_mods(self, progress):
@@ -424,15 +479,13 @@ class MiasPatch(QtGui.QDialog):
 		self.main_rs5.truncate_eof()
 
 	@catch_error
-	def install_env_mods(self, progress):
-		bundled_mods = filter(lambda x: x.install and isinstance(x, EnvMod), self.patch_list)
-
+	def get_installed_miasmods(self):
 		installed = glob(os.path.join(self.install_path, '*.miasmod'))
 		mods = dict([ (os.path.splitext(os.path.basename(path))[0], path) for path in installed ])
 
-		# Disregard ignored mods in miasmod.conf if it exists & enable
-		# bundled mods we are installing
+		# Disregard ignored mods in miasmod.conf if it exists
 		mod_states_path = miasmod.conf_path(self.install_path)
+		mod_states = None
 		try:
 			mod_states = json.load(open(mod_states_path, 'rb'))
 		except:
@@ -441,16 +494,10 @@ class MiasPatch(QtGui.QDialog):
 			for mod in mods:
 				if mod in mod_states and not mod_states[mod]:
 					del mods[mod]
-			for mod in bundled_mods:
-				mod_states[mod] = True
-			try:
-				json.dump(mod_states, open(mod_states_path, 'wb'), ensure_ascii=True)
-			except IOError:
-				progress(msg = self.tr('{0} occured while writing to {1}: {2}').format(e.__class__.__name__, mod_states_path, str(e)))
+		return (mods, mod_states)
 
-		for mod in bundled_mods:
-			mods[mod.mod_name] = mod
-
+	@staticmethod
+	def miasmod_order(mods):
 		# Maintain order consistent with MiasMod, i.e.:
 		# environment.rs5, communitypatch.miasmod, sorted(*.miasmod), alocalmod.miasmod
 		order = sorted(mods)
@@ -460,7 +507,67 @@ class MiasPatch(QtGui.QDialog):
 		if 'alocalmod' in order:
 			order.remove('alocalmod')
 			order.append('alocalmod')
-		else:
+		return order
+
+	def process_miasmods(self, mods, order, copy_mods, progress):
+		env = copy.deepcopy(self.environment)
+		installed = {}
+
+		steps = len(order)
+		for (i, mod) in enumerate(order):
+			progress(percent = i * 100 / steps, msg = self.tr('Processing {0}...').format(mod))
+
+			path = mods[mod]
+			if isinstance(path, EnvMod):
+				assert(copy_mods)
+				try:
+					shutil.copyfile(path.path, os.path.join(self.install_path, '%s.miasmod' % mod))
+				except:
+					progress(msg=self.tr('{0} occurred while copying {1}: {2}').format(e.__class__.__name__, path.path, str(e)))
+				path = path.path
+			diff = data.json_decode_diff(open(path, 'rb'))
+			try:
+				data.apply_diff(env, diff)
+			except:
+				progress(msg=self.tr('{0} occurred while processing {1}: {2}').format(e.__class__.__name__, path, str(e)))
+			else:
+				name = os.path.splitext(os.path.basename(path))[0]
+				installed[name] = diff
+		progress(percent=100)
+		return (env, installed)
+
+	def check_installed_miasmods(self):
+		(mods, mod_states) = self.get_installed_miasmods()
+		order = self.miasmod_order(mods)
+		(env, installed) = self.process_miasmods(mods, order, False, self.progress)
+
+		self.progress(msg=self.tr('Loading alocalmod.rs5...'))
+		path = os.path.join(self.install_path, 'alocalmod.rs5')
+		alocalmod = environment.parse_from_archive(path)
+
+		if env != alocalmod:
+			self.progress(msg=self.tr('alocalmod.rs5 is out of sync'))
+			return (STATUS_DESYNC, installed)
+		return (None, installed)
+
+	@catch_error
+	def install_env_mods(self, progress):
+		bundled_mods = filter(lambda x: x.install and isinstance(x, EnvMod), self.patch_list)
+
+		(mods, mod_states) = self.get_installed_miasmods()
+
+		# Enable bundled mods we are installing in MiasMod
+		if mod_states is not None:
+			for mod in bundled_mods:
+				mod_states[mod] = True
+			try:
+				json.dump(mod_states, open(mod_states_path, 'wb'), ensure_ascii=True)
+			except IOError:
+				progress(msg = self.tr('{0} occurred while writing to {1}: {2}').format(e.__class__.__name__, mod_states_path, str(e)))
+
+		for mod in bundled_mods:
+			mods[mod.mod_name] = mod
+		if 'alocalmod' not in mods:
 			# Create a blank alocalmod.miasmod so that MiasMod
 			# knows the state that alocalmod.rs5 is in and doesn't
 			# need to ask the user
@@ -468,37 +575,20 @@ class MiasPatch(QtGui.QDialog):
 			path = os.path.join(self.install_path, 'alocalmod.miasmod')
 			data.json_encode_diff(data.null_diff(), open(path, 'wb'))
 
+		order = self.miasmod_order(mods)
 
 		print 'Using these miasmod files:'
 		print '\n'.join(map(str, mods.itervalues()))
 		print 'In this order: %s' % ' '.join(order)
 
-		progress(msg=self.tr('Loading environment.rs5...'))
-		path = os.path.join(self.install_path, 'environment.rs5')
-		env = environment.parse_from_archive(path)
-
-		steps = len(order)
-		for (i, mod) in enumerate(order):
-			progress(percent = i * 100 / steps, msg = self.tr('Applying {0}...').format(mod))
-			path = mods[mod]
-			if isinstance(path, EnvMod):
-				try:
-					shutil.copyfile(path.path, os.path.join(self.install_path, '%s.miasmod' % mod))
-				except:
-					progress(msg=self.tr('{0} occured while copying {1}: {2}').format(e.__class__.__name__, path.path, str(e)))
-				path = path.path
-			diff = data.json_decode_diff(open(path, 'rb'))
-			try:
-				data.apply_diff(env, diff)
-			except:
-				progress(msg=self.tr('{0} occured while applying {1}: {2}').format(e.__class__.__name__, path, str(e)))
-
+		(env, installed) = self.process_miasmods(mods, order, True, progress)
 		environment.encode_to_archive(env, os.path.join(self.install_path, 'alocalmod.rs5'))
 
 
         @QtCore.Slot()
         @catch_error
 	def on_patch_game_clicked(self):
+		self.disable_install_button()
 		self.progress(percent=0, msg=self.tr('Patching game...'))
 
 		self.delete_files_from_config()
@@ -558,6 +648,9 @@ def start_gui_process(pipe=None):
 
 	window = MiasPatch()
 	window.show()
+
+	window.find_install_path()
+
 	app.exec_()
 	del window
 
