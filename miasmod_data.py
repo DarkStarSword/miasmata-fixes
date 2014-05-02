@@ -18,6 +18,36 @@ def add_undo_data(object):
 	object.undo = copy.deepcopy(object)
 	object.parent = parent
 
+def warn_unsupported_encoding(orig, filtered, illegal):
+	dialog = QtGui.QMessageBox()
+	dialog.setWindowTitle('MiasMod')
+	dialog.setText('Unsupported characters')
+	dialog.setInformativeText('Some characters could not be encoded in'
+			' Windows-1252 used by Miasmata and have been removed.'
+			' Please refer to this page for a table of supported'
+			' characters:'
+			' https://en.wikipedia.org/wiki/Windows-1252')
+	dialog.setDetailedText(u'Your text:\n{0}\ncontained the following'
+			' unsupported characters:\n{1}\nIt was filtered'
+			' to:\n{2}'.format(orig, u' '.join(illegal), filtered))
+	ret = dialog.exec_()
+
+def filter_cp1252(string):
+	def f(c):
+		try:
+			c.encode('cp1252')
+			return True
+		except:
+			return False
+	def nf(c):
+		return not f(c)
+	bad = illegal = None
+	new = string.__class__(filter(f, string))
+	if string != new:
+		bad = string
+		illegal = string.__class__(filter(nf, string))
+	return (new, bad, illegal)
+
 class MiasmataDataModel(QtCore.QAbstractItemModel):
 	class ThisIsNotAFuckingIntDamnit(object):
 		# God damn fucking overloaded functions and type checking!
@@ -286,6 +316,10 @@ class MiasmataDataListModel(QtCore.QAbstractListModel):
 
 	def _setData(self, index, new_item):
 		add_undo_data(self.node)
+		if isinstance(new_item, unicode):
+			(new_item, bad, illegal) = filter_cp1252(new_item)
+			if bad is not None:
+				warn_unsupported_encoding(bad, new_item, illegal)
 		self.node[index.row()] = new_item
 		self.dataChanged.emit(index, index)
 		self.notify_parent_model()
@@ -676,6 +710,10 @@ class MiasmataDataView(QtGui.QWidget):
 	@catch_error
 	def on_value_line_editingFinished(self):
 		text = self.ui.value_line.text()
+		(text, bad, illegal) = filter_cp1252(text)
+		if bad is not None:
+			self.ui.value_line.setText(text)
+			warn_unsupported_encoding(bad, text, illegal)
 		if unicode(self.cur_node) != text:
 			selection = self.selection_model.currentIndex()
 			self.model.setDataValue(selection, text)
@@ -684,6 +722,10 @@ class MiasmataDataView(QtGui.QWidget):
 	@catch_error
 	def on_name_editingFinished(self):
 		name = self.ui.name.text()
+		(name, bad, illegal) = filter_cp1252(name)
+		if bad is not None:
+			self.ui.name.setText(name)
+			warn_unsupported_encoding(bad, name, illegal)
 		if self.cur_node.name != name:
 			selection = self.selection_model.currentIndex()
 			new_index = self.model.setDataName(selection, name)

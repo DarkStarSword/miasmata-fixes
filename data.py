@@ -361,11 +361,11 @@ class data_list(object):
 
 	def summary(self):
 		if len(self.list) > 5:
-			return ', '.join(map(str, self.list[:5]) + ['...'])
-		return ', '.join(map(str, self.list))
+			return u', '.join(map(unicode, self.list[:5]) + ['...'])
+		return u', '.join(map(unicode, self.list))
 
 	def __str__(self):
-		return ', '.join(map(str, self.list))
+		return u', '.join(map(unicode, self.list))
 	def __eq__(self, other):
 		if not type(self) == type(other):
 			return False
