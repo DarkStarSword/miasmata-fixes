@@ -41,12 +41,34 @@ class Mod(object):
 		self.installable = status != STATUS_NOT_INSTALLABLE
 		self.install = (status in (STATUS_NOT_INSTALLED, STATUS_OLD_VERSION))
 
+	@staticmethod
+	def cmp_version(v1, v2):
+		def conv(v):
+			v = v.split('.')
+			for i in range(len(v)):
+				try:
+					v[i] = int(v[i])
+				except:
+					pass
+			return v
+		v1 = conv(v1)
+		v2 = conv(v2)
+		return cmp(v1, v2)
+
+	def update_status_version(self, version):
+		if version == None:
+			return self.update_status(STATUS_OLD_VERSION)
+		v = self.cmp_version(self.version, version)
+		if v == 1:
+			return self.update_status(STATUS_NEWER_VERSION, version)
+		if v == -1:
+			return self.update_status(STATUS_OLD_VERSION, version)
+		return self.update_status(STATUS_INSTALLED, version)
+
 	def __lt__(self, other):
 		return self.name < other.name
 
 	def install_mod(self, *args, **kwargs):
-		raise NotImplementedError()
-	def remove_mod(self, *args, **kwargs):
 		raise NotImplementedError()
 
 class BinMod(Mod):
@@ -55,7 +77,7 @@ class BinMod(Mod):
 		self.exe_filename = exe_filename
 		self.refresh()
 
-	def refresh(self):
+	def refresh(self, **kwargs):
 		self.update_status(self.mod.check_status(self.exe_filename))
 
 	def print_cb(self, callback):
@@ -64,7 +86,7 @@ class BinMod(Mod):
 		return foo
 
 	@catch_error
-	def install_mod(self, progress_cb):
+	def install_mod(self, progress_cb, **kwargs):
 		self.mod.apply_patch(self.exe_filename, self.print_cb(progress_cb))
 
 	@catch_error
@@ -90,10 +112,24 @@ class EnvMod(Mod):
 class Rs5Mod(Mod):
 	installable = True
 
-	def __init__(self, path):
+	def __init__(self, path, main_rs5):
 		self.rs5 = rs5archive.Rs5ArchiveDecoder(open(path, 'rb'))
-		self.name = '%s (main.rs5)' % rs5mod.get_mod_name(self.rs5, path)
+		self.path = path
+		self.mod_name = rs5mod.get_mod_name(self.rs5, path)
+		self.name = '%s (main.rs5)' % self.mod_name
 		self.version = rs5mod.get_mod_version(self.rs5)
+		self.refresh(main_rs5 = main_rs5)
+
+	def refresh(self, main_rs5 = None, **kwargs):
+		try:
+			mod_info = rs5mod.get_mod_meta(main_rs5, self.mod_name)
+		except KeyError as e:
+			return self.update_status(STATUS_NOT_INSTALLED)
+		self.update_status_version(rs5mod.do_get_mod_version(mod_info))
+
+	@catch_error
+	def install_mod(self, progress_cb, main_rs5 = None, **kwargs):
+		rs5mod.do_add_mod(main_rs5, self.rs5, self.path)
 
 class PatchListModel(QtCore.QAbstractTableModel):
 	def __init__(self, patch_list):
@@ -149,10 +185,10 @@ class PatchListModel(QtCore.QAbstractTableModel):
 			return flags | Qt.ItemIsUserCheckable
 		return flags
 
-	def refresh(self):
+	def refresh(self, **kwargs):
 		for (i, mod) in enumerate(self.patch_list):
 			try:
-				mod.refresh()
+				mod.refresh(**kwargs)
 				start = self.createIndex(i, 0)
 				end = self.createIndex(i, self.columnCount(None))
 				self.dataChanged.emit(start, end)
@@ -194,22 +230,43 @@ class MiasPatch(QtGui.QDialog):
 		self.ui.groupBox.setEnabled(True)
 		self.enumerate_patches()
 
-	def enumerate_patches(self):
+	def load_main_rs5(self):
+		self.progress(msg=self.tr('Loading main.rs5...'))
+		path = os.path.join(self.install_path, 'main.rs5')
+		self.main_rs5 = rs5mod.Rs5ModArchiveUpdater(open(path, 'rb+'))
+
+	def enumerate_rs5mod(self):
 		patch_list = []
+		self.load_main_rs5()
+
 		for path in glob('*.rs5mod'):
-			patch_list.append(Rs5Mod(path))
+			patch_list.append(Rs5Mod(path, self.main_rs5))
+
+		return patch_list
+
+	def enumerate_miasmod(self):
+		patch_list = []
 		for path in glob('*.miasmod'):
 			patch_list.append(EnvMod(path))
+		return patch_list
 
+	def enumerate_bin_patch(self):
+		patch_list = []
 		try:
 			patches = config.get('DEFAULT', 'binary_patches')
 		except:
-			pass
-		else:
-			exe_path = os.path.join(self.install_path, 'Miasmata.exe')
-			for patch in patches.split():
-				mod = __import__(patch)
-				patch_list.append(BinMod(mod, exe_path))
+			return []
+		exe_path = os.path.join(self.install_path, 'Miasmata.exe')
+		for patch in patches.split():
+			mod = __import__(patch)
+			patch_list.append(BinMod(mod, exe_path))
+		return patch_list
+
+	def enumerate_patches(self):
+		patch_list = []
+		patch_list.extend(self.enumerate_rs5mod())
+		patch_list.extend(self.enumerate_miasmod())
+		patch_list.extend(self.enumerate_bin_patch())
 
 		self.patch_list = PatchListModel(sorted(patch_list))
 		self.ui.patch_list.setModel(self.patch_list)
@@ -232,8 +289,12 @@ class MiasPatch(QtGui.QDialog):
 			height = width + head_size.height() # + hbar_size.height()
 			for row in range(self.patch_list.rowCount(None)):
 				height += self.ui.patch_list.rowHeight(row)
-			for col in range(self.patch_list.columnCount(None)):
-				width += self.ui.patch_list.columnWidth(col)
+			cols = self.patch_list.columnCount(None)
+			for col in range(cols):
+				col_width = self.ui.patch_list.columnWidth(col)
+				if col == cols-1 and self.ui.patch_list.horizontalHeader().stretchLastSection():
+					col_width = max(col_width, self.ui.patch_list.horizontalHeader().defaultSectionSize())
+				width += col_width
 			return QtCore.QSize(width, height)
 		self.ui.patch_list.minimumSizeHint = sizeHint
 		self.ui.patch_list.updateGeometry()
@@ -271,30 +332,60 @@ class MiasPatch(QtGui.QDialog):
 			self.ui.lbl_progress.repaint()
 			self.repaint()
 
+	def delete_files(self, files):
+		for file in files:
+			path = os.path.join(self.install_path, file)
+			if os.path.isfile(path):
+				self.progress(msg = self.tr('Deleting {0}...').format(path))
+				try:
+					os.remove(path)
+				except Exception as e:
+					self.progress(msg = self.tr('{0} while deleting {1}: {2}').format(e.__class__.__name__, path, str(e)))
+
+	def delete_files_from_config(self):
+		try:
+			delete = config.get('DEFAULT', 'delete')
+		except:
+			return
+		return self.delete_files(delete.split())
+
+	def refresh_patch_list(self):
+		self.patch_list.refresh(main_rs5 = self.main_rs5)
+
         @QtCore.Slot()
         @catch_error
 	def on_patch_game_clicked(self):
 		self.progress(percent=0, msg=self.tr('Patching game...'))
-		# TODO: config.get('DEFAULT', 'delete')
+
+		self.delete_files_from_config()
+
 		for mod in self.patch_list:
 			if mod.install:
-				mod.install_mod(self.progress)
+				mod.install_mod(self.progress, main_rs5 = self.main_rs5)
 		# TODO: config.get('DEFAULT', 'prefix_order')
-		self.patch_list.refresh()
 		self.progress(percent=100, msg=self.tr('Game patched'))
+		self.refresh_patch_list()
 
         @QtCore.Slot()
         @catch_error
 	def on_remove_all_mods_clicked(self):
 		self.progress(percent=0, msg=self.tr('Removing all mods...'))
 		for mod in self.patch_list:
-			if mod.installable:
+			if mod.installable and hasattr(mod, 'remove_mod'):
 				try:
 					mod.remove_mod(self.progress)
 				except:
 					pass
-		self.patch_list.refresh()
+		self.progress(percent=25, msg=self.tr('Removing environment mods...'))
+		self.delete_files(('alocalmod.rs5', 'communitypatch.rs5'))
+		self.progress(percent=50, msg=self.tr('Removing main.rs5 mods...'))
+		try:
+			rs5mod.do_revert(self.main_rs5)
+		except KeyError as e:
+			pass
+		self.load_main_rs5()
 		self.progress(percent=100, msg=self.tr('Mods removed'))
+		self.refresh_patch_list()
 
 def start_gui_process(pipe=None):
 	global config

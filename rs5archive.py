@@ -160,6 +160,7 @@ class Rs5CompressedFileRepacker(Rs5CompressedFile):
 		self.u2 = oldfile.u2
 		self.modtime = oldfile.modtime
 		self.filename = oldfile.filename
+		self.fp = newfp
 
 		if seek_cb is not None:
 			seek_cb(self.compressed_size)
@@ -172,17 +173,19 @@ class Rs5CentralDirectory(collections.OrderedDict):
 		return self.ent_len * (1 + len(self))
 
 class Rs5CentralDirectoryDecoder(Rs5CentralDirectory):
-	def __init__(self):
+	def __init__(self, real_fp = None):
 		self.fp.seek(self.d_off)
 		data = self.fp.read(self.ent_len)
 		(d_off1, self.d_orig_len, flags) = struct.unpack('<QII', data[:16])
 		assert(self.d_off == d_off1)
+		if real_fp is None:
+			real_fp = self.fp
 
 		collections.OrderedDict.__init__(self)
 
 		for f_off in range(self.d_off + self.ent_len, self.d_off + self.d_orig_len, self.ent_len):
 			try:
-				entry = Rs5CompressedFileDecoder(self.fp, self.fp.read(self.ent_len))
+				entry = Rs5CompressedFileDecoder(real_fp, self.fp.read(self.ent_len))
 				self[entry.filename] = entry
 			except NotAFile:
 				# XXX: Figure out what these are.

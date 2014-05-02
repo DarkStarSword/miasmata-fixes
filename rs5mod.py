@@ -34,6 +34,7 @@ class UndoMeta(dict):
 		rs5.ent_len = self['entry_size']
 		rs5.write_header()
 		rs5.fp.flush()
+		rs5.holes = None
 		rs5.fp.truncate(self['filesize'])
 
 class UndoMetaEncoder(UndoMeta, rs5file.Rs5FileEncoder):
@@ -73,16 +74,20 @@ def add_undo(archive, overwrite):
 	except Exception as e:
 		return 1
 
-def revert(archive):
-	rs5 = rs5archive.Rs5ArchiveUpdater(open(archive, 'rb+'))
+def do_revert(rs5):
 	if undo_file not in rs5:
-		print '%s does not contain undo metadata!' % archive
-		return 1
+		raise KeyError('%s does not contain undo metadata!' % archive)
 	if not validate_undo(rs5):
-		print 'Undo metadata appears to be invalid, aborting!'
-		return 1
+		raise IOError('Undo metadata appears to be invalid!')
 	undo = UndoMetaDecoder(rs5)
 	undo.revert_rs5(rs5)
+
+def revert(archive):
+	rs5 = rs5archive.Rs5ArchiveUpdater(open(archive, 'rb+'))
+	try:
+		return do_revert(rs5)
+	except Exception as e:
+		return 1
 
 class ModCentralDirectoryEncoder(rs5archive.Rs5CentralDirectoryEncoder, rs5file.Rs5FileEncoder):
 	def __init__(self, name, ent_len):
@@ -113,7 +118,7 @@ class ModCentralDirectoryDecoder(rs5archive.Rs5CentralDirectoryDecoder):
 		self.fp = StringIO(decoder.data)
 		self.d_off = 0
 		self.ent_len = rs5.ent_len
-		rs5archive.Rs5CentralDirectoryDecoder.__init__(self)
+		rs5archive.Rs5CentralDirectoryDecoder.__init__(self, real_fp = rs5.fp)
 
 class ModOrder(list):
 	import json
@@ -360,8 +365,11 @@ def rm_mod(archive, mods):
 		except ModNotFound:
 			return 1
 
-def get_mod_meta(rs5):
-	return rs5file.Rs5ChunkedFileDecoder(rs5[mod_meta_file].decompress())
+def get_mod_meta(rs5, mod_name=None):
+	file = mod_meta_file
+	if mod_name is not None:
+		file = '%s\\%s.modinfo' % (mod_manifests, mod_name)
+	return rs5file.Rs5ChunkedFileDecoder(rs5[file].decompress())
 
 def get_mod_name(rs5, filename):
 	try:
@@ -374,38 +382,52 @@ def get_mod_name(rs5, filename):
 			return meta['NAME'].data.strip()
 	return os.path.splitext(os.path.basename(filename))[0]
 
+def do_get_mod_version(meta):
+	if 'VRSN' in meta:
+		return meta['VRSN'].data.strip()
+
 def get_mod_version(rs5):
 	try:
 		meta = get_mod_meta(rs5)
 	except:
 		return None
-	if 'VRSN' in meta:
-		return meta['VRSN'].data.strip()
+	return do_get_mod_version(meta)
+
+def _do_add_mod(dest_rs5, source_rs5, source_archive):
+	mod_name = get_mod_name(source_rs5, source_archive)
+
+	manifest_name = '%s\\%s.manifest' % (mod_manifests, mod_name)
+	modinfo_name = '%s\\%s.modinfo' % (mod_manifests, mod_name)
+	if manifest_name in dest_rs5:
+		do_rm_mod(dest_rs5, mod_name)
+
+	mod_entries = ModCentralDirectoryEncoder(mod_name, dest_rs5.ent_len)
+	for source_file in source_rs5.itervalues():
+		if file_blacklisted(source_file.filename):
+			print 'Skipping %s' % source_file.filename
+			continue
+		print 'Adding %s->%s...' % (source_archive, source_file.filename)
+		entry = rs5archive.Rs5CompressedFileRepacker(dest_rs5.fp, source_file, seek_cb=dest_rs5.seek_find_hole)
+		if entry.filename == mod_meta_file:
+			entry.filename = modinfo_name
+			print repr(entry)
+		dest_rs5[entry.filename] = entry
+		mod_entries[entry.filename] = entry
+	dest_rs5.add_from_buf(mod_entries.encode())
+
+def do_add_mod(dest_rs5, source_rs5, source_archive):
+	do_add_undo(dest_rs5)
+	_do_add_mod(dest_rs5, source_rs5, source_archive)
+	apply_mod_order(dest_rs5)
+	dest_rs5.save()
+	dest_rs5.truncate_eof()
 
 def add_mod(dest_archive, source_archives):
 	rs5 = Rs5ModArchiveUpdater(open(dest_archive, 'rb+'))
 	do_add_undo(rs5)
 	for source_archive in source_archives:
 		source_rs5 = rs5archive.Rs5ArchiveDecoder(open(source_archive, 'rb'))
-		mod_name = get_mod_name(source_rs5, source_archive)
-
-		manifest_name = '%s\\%s.manifest' % (mod_manifests, mod_name)
-		modinfo_name = '%s\\%s.modinfo' % (mod_manifests, mod_name)
-		if manifest_name in rs5:
-			do_rm_mod(rs5, mod_name)
-
-		mod_entries = ModCentralDirectoryEncoder(mod_name, rs5.ent_len)
-		for source_file in source_rs5.itervalues():
-			if file_blacklisted(source_file.filename):
-				print 'Skipping %s' % source_file.filename
-				continue
-			print 'Adding %s->%s...' % (source_archive, source_file.filename)
-			entry = rs5archive.Rs5CompressedFileRepacker(rs5.fp, source_file, seek_cb=rs5.seek_find_hole)
-			if entry.filename == mod_meta_file:
-				entry.filename = modinfo_name
-			rs5[entry.filename] = entry
-			mod_entries[entry.filename] = entry
-		rs5.add_from_buf(mod_entries.encode())
+		_do_add_mod(rs5, source_rs5, source_archive)
 	apply_mod_order(rs5)
 	rs5.save()
 	rs5.truncate_eof()
