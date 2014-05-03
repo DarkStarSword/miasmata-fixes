@@ -12,6 +12,7 @@ order = ['communitypatch']
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-l', '--language', help='Language pack to include and enable')
+parser.add_argument('-d', '--dest', '--dist', default='miaspatch', help='Destination directory')
 parser.add_argument('mods', nargs='*', help='Extra mods (asside from the community patch) to include')
 args = parser.parse_args()
 
@@ -31,7 +32,7 @@ for file in args.mods:
 print 'Mod order:', order
 
 from bbfreeze import Freezer
-f = Freezer("miaspatch")
+f = Freezer(args.dest)
 f.include_py = False
 f.addScript("miaspatch.py", gui_only=True)
 for patch in binary_patches:
@@ -39,19 +40,19 @@ for patch in binary_patches:
 f()
 
 src = os.path.join('communitypatch', 'communitypatch.miasmod')
-dst = os.path.join('miaspatch', 'communitypatch.miasmod')
+dst = os.path.join(args.dest, 'communitypatch.miasmod')
 shutil.copyfile(src, dst)
 
 src = os.path.join('communitypatch', 'main')
-dst = os.path.join('miaspatch', 'communitypatch.rs5mod')
+dst = os.path.join(args.dest, 'communitypatch.rs5mod')
 extractor.create_rs5(dst, [src], True)
 
 for file in args.mods:
-	dst = os.path.join('miaspatch', os.path.basename(file))
+	dst = os.path.join(args.dest, os.path.basename(file))
 	shutil.copyfile(file, dst)
 
 if args.language is not None:
-	dst_dir = os.path.join('miaspatch', 'miaspatch_i18n')
+	dst_dir = os.path.join(args.dest, 'miaspatch_i18n')
 	if not os.path.isdir(dst_dir):
 		os.mkdir(dst_dir)
 	if copy_language_src:
@@ -64,7 +65,7 @@ if args.language is not None:
 	if os.path.isfile(src):
 		shutil.copyfile(src, dst)
 
-dst = os.path.join('miaspatch', 'miaspatch.cfg')
+dst = os.path.join(args.dest, 'miaspatch.cfg')
 config = ConfigParser.RawConfigParser()
 if binary_patches:
 	config.set('DEFAULT', 'binary_patches', ' '.join(binary_patches))
