@@ -6,6 +6,7 @@ import ConfigParser
 import shutil
 import time
 import copy
+import json
 
 from PySide import QtCore, QtGui
 from PySide.QtCore import Qt
@@ -245,7 +246,6 @@ class MiasPatch(QtGui.QDialog):
 		self.ui.install_path.setText(path)
 		self.ui.groupBox.setEnabled(True)
 		self.enumerate_patches()
-		self.progress(percent=0, msg=self.tr('Ready'))
 
 	def load_main_rs5(self):
 		self.progress(msg=self.tr('Loading main.rs5...'))
@@ -490,7 +490,7 @@ class MiasPatch(QtGui.QDialog):
 		except:
 			pass
 		else:
-			for mod in mods:
+			for mod in mods.copy():
 				if mod in mod_states and not mod_states[mod]:
 					del mods[mod]
 		return (mods, mod_states)
@@ -568,8 +568,9 @@ class MiasPatch(QtGui.QDialog):
 		# Enable bundled mods we are installing in MiasMod
 		if mod_states is not None:
 			for mod in bundled_mods:
-				mod_states[mod] = True
+				mod_states[mod.mod_name] = True
 			try:
+				mod_states_path = miasmod.conf_path(self.install_path)
 				json.dump(mod_states, open(mod_states_path, 'wb'), ensure_ascii=True)
 			except IOError:
 				progress(msg = self.tr('{0} occurred while writing to {1}: {2}').format(e.__class__.__name__, mod_states_path, str(e)))
