@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'miasmod.ui'
 #
-# Created: Sat May  3 05:38:00 2014
+# Created: Sat May  3 20:45:52 2014
 #      by: pyside-uic 0.2.15 running on PySide 1.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -25,6 +25,7 @@ class Ui_MainWindow(object):
         self.gridLayout_2 = QtGui.QGridLayout(self.mods_tab)
         self.gridLayout_2.setObjectName("gridLayout_2")
         self.rs5_mod_list = QtGui.QTableView(self.mods_tab)
+        self.rs5_mod_list.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.rs5_mod_list.setAlternatingRowColors(True)
         self.rs5_mod_list.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.rs5_mod_list.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
@@ -91,6 +92,12 @@ class Ui_MainWindow(object):
         self.statusbar = QtGui.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
+        self.action_Remove_Mod = QtGui.QAction(MainWindow)
+        self.action_Remove_Mod.setObjectName("action_Remove_Mod")
+        self.actionSet_Lowest_Priority = QtGui.QAction(MainWindow)
+        self.actionSet_Lowest_Priority.setObjectName("actionSet_Lowest_Priority")
+        self.actionSet_Highest_Priority = QtGui.QAction(MainWindow)
+        self.actionSet_Highest_Priority.setObjectName("actionSet_Highest_Priority")
 
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(0)
@@ -118,4 +125,7 @@ class Ui_MainWindow(object):
         self.install_rs5mod.setText(QtGui.QApplication.translate("MainWindow", "&Install main.rs5 mod...", None, QtGui.QApplication.UnicodeUTF8))
         self.revert_main_rs5.setText(QtGui.QApplication.translate("MainWindow", "Restore original main.rs5", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.mods_tab), QtGui.QApplication.translate("MainWindow", "Mod List", None, QtGui.QApplication.UnicodeUTF8))
+        self.action_Remove_Mod.setText(QtGui.QApplication.translate("MainWindow", "&Remove Mod", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionSet_Lowest_Priority.setText(QtGui.QApplication.translate("MainWindow", "Set &Lowest Priority", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionSet_Highest_Priority.setText(QtGui.QApplication.translate("MainWindow", "Set &Highest Priority", None, QtGui.QApplication.UnicodeUTF8))
 

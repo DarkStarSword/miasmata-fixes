@@ -347,12 +347,15 @@ def do_order_mods(rs5, mod_list):
 	file = ModOrderEncoder(rs5, mod_list)
 	rs5.add_from_buf(file.encode())
 
+def order_rs5_mods(rs5, mod_list, progress=progress):
+	do_order_mods(rs5, mod_list)
+	apply_mod_order(rs5)
+	rs5.save(progress=progress)
+	rs5.truncate_eof()
+
 def order_mods(archive, mod_list):
 	rs5 = Rs5ModArchiveUpdater(open(archive, 'rb+'))
-	return do_order_mods(rs5, mod_list)
-	apply_mod_order(rs5)
-	rs5.save()
-	rs5.truncate_eof()
+	return order_rs5_mods(rs5, mod_list)
 
 class ModNotFound(Exception): pass
 

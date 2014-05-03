@@ -24,6 +24,7 @@ from PySide.QtCore import Qt
 
 import collections
 import json
+import time
 
 import miasutil
 import rs5archive
@@ -256,6 +257,12 @@ class Rs5ModListModel(QtCore.QAbstractTableModel):
 			return
 		return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
+	def __getitem__(self, item):
+		return self.mods[item][0]
+
+	def __len__(self):
+		return len(self.mods)
+
 class MiasMod(QtGui.QMainWindow):
 	from miasmod_ui import Ui_MainWindow
 	def __init__(self, parent=None):
@@ -271,6 +278,66 @@ class MiasMod(QtGui.QMainWindow):
 		self.conf_path = conf_path(self.install_path)
 
 		self.busy = False
+
+	@QtCore.Slot(QtCore.QPoint)
+	@catch_error
+	def on_rs5_mod_list_customContextMenuRequested(self, pos):
+		if not len(self.ui.rs5_mod_list.selectedIndexes()):
+			return
+		if self.ui.rs5_mod_list.columnAt(pos.x()) == -1 or self.ui.rs5_mod_list.rowAt(pos.y()) == -1:
+			return
+		menu = QtGui.QMenu(self)
+		menu.addAction(self.ui.action_Remove_Mod)
+		menu.addSeparator()
+		menu.addAction(self.ui.actionSet_Lowest_Priority)
+		menu.addAction(self.ui.actionSet_Highest_Priority)
+		menu.exec_(self.ui.rs5_mod_list.viewport().mapToGlobal(pos))
+
+	@QtCore.Slot()
+	@catch_error
+	def on_action_Remove_Mod_triggered(self):
+		selection = self.ui.rs5_mod_list.selectedIndexes()
+		if not len(selection):
+			return
+		selected_mod = self.rs5_mod_list[selection[0].row()]
+		rs5mod.do_rm_mod(self.main_rs5, selected_mod, progress=self.progress)
+		self.rs5_mod_list.refresh()
+		self.done()
+
+	def set_mod_order(self, callback):
+		selection = self.ui.rs5_mod_list.selectedIndexes()
+		if not len(selection):
+			return
+		selected_mod = self.rs5_mod_list[selection[0].row()]
+		try:
+			order = rs5mod.ModOrderDecoder(self.main_rs5)
+		except Exception as e:
+			order = []
+		for mod in self.rs5_mod_list:
+			if mod not in order:
+				order.append(mod)
+		if selected_mod in order:
+			order.remove(selected_mod)
+		callback(order, selected_mod)
+
+		self.progress('Applying new mod order...')
+		rs5mod.order_rs5_mods(self.main_rs5, order, progress=self.progress)
+		self.rs5_mod_list.refresh()
+		self.done()
+
+	@QtCore.Slot()
+	@catch_error
+	def on_actionSet_Lowest_Priority_triggered(self):
+		def callback(order, selected_mod):
+			order.insert(0, selected_mod)
+		self.set_mod_order(callback)
+
+	@QtCore.Slot()
+	@catch_error
+	def on_actionSet_Highest_Priority_triggered(self):
+		def callback(order, selected_mod):
+			order.append(selected_mod)
+		self.set_mod_order(callback)
 
 	@catch_error
 	def load_main_rs5(self):
@@ -781,7 +848,8 @@ class MiasMod(QtGui.QMainWindow):
 
 def start_gui_process(pipe=None):
 	# HACK TO WORK AROUND CRASH ON CONSOLE OUTPUT WITH BBFREEZE GUI_ONLY
-	sys.stdout = sys.stderr = open('miasmod.log', 'w')
+	sys.stdout = sys.stderr = open('miasmod.log', 'a')
+	print time.asctime()
 
 	# Try to get some more useful info on crashes:
 	import faulthandler
