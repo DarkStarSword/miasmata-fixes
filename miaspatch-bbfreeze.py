@@ -3,23 +3,32 @@
 import shutil, sys, os
 extractor = __import__('rs5-extractor')
 import ConfigParser
+import argparse
 
 binary_patches = ['botanical']
 delete = ['communitypatch.rs5']
 copy_language_src = True
+order = ['communitypatch']
 
-# TODO: Have langauge settings & extra miasmod/rs5mod files passed in on the command line
-order = ['communitypatch', 'french']
-language = 'fr_FR'
-extra_files = [
-	os.path.join('translations', 'french.miasmod'),
-	os.path.join('translations', 'french.rs5mod')
-]
+parser = argparse.ArgumentParser()
+parser.add_argument('-l', '--language', help='Language pack to include and enable')
+parser.add_argument('mods', nargs='*', help='Extra mods (asside from the community patch) to include')
+args = parser.parse_args()
 
-for file in extra_files:
+if args.language is not None:
+	if not os.path.isfile(os.path.join('miaspatch_i18n', '%s.ts' % args.language)):
+		if not os.path.isfile(os.path.join('miaspatch_i18n', '%s.qm' % args.language)):
+			print '%s language pack does not exist, exiting!' % args.language
+			sys.exit(1)
+
+for file in args.mods:
 	if not os.path.isfile(file):
 		print '%s does not exist, exiting!' % file
 		sys.exit(1)
+	(name, ext) = os.path.splitext(os.path.basename(file))
+	if ext.lower() == '.rs5mod':
+		order.append(name)
+print 'Mod order:', order
 
 from bbfreeze import Freezer
 f = Freezer("miaspatch")
@@ -37,21 +46,21 @@ src = os.path.join('communitypatch', 'main')
 dst = os.path.join('miaspatch', 'communitypatch.rs5mod')
 extractor.create_rs5(dst, [src], True)
 
-for file in extra_files:
+for file in args.mods:
 	dst = os.path.join('miaspatch', os.path.basename(file))
 	shutil.copyfile(file, dst)
 
-if language is not None:
+if args.language is not None:
 	dst_dir = os.path.join('miaspatch', 'miaspatch_i18n')
 	if not os.path.isdir(dst_dir):
 		os.mkdir(dst_dir)
 	if copy_language_src:
-		src = os.path.join('miaspatch_i18n', '%s.ts' % language)
-		dst = os.path.join(dst_dir, '%s.ts' % language)
+		src = os.path.join('miaspatch_i18n', '%s.ts' % args.language)
+		dst = os.path.join(dst_dir, '%s.ts' % args.language)
 		if os.path.isfile(src):
 			shutil.copyfile(src, dst)
-	src = os.path.join('miaspatch_i18n', '%s.qm' % language)
-	dst = os.path.join(dst_dir, '%s.qm' % language)
+	src = os.path.join('miaspatch_i18n', '%s.qm' % args.language)
+	dst = os.path.join(dst_dir, '%s.qm' % args.language)
 	if os.path.isfile(src):
 		shutil.copyfile(src, dst)
 
@@ -61,8 +70,8 @@ if binary_patches:
 	config.set('DEFAULT', 'binary_patches', ' '.join(binary_patches))
 if delete:
 	config.set('DEFAULT', 'delete', ' '.join(delete))
-if language is not None:
-	config.set('DEFAULT', 'language', language)
+if args.language is not None:
+	config.set('DEFAULT', 'language', args.language)
 if order:
 	config.set('DEFAULT', 'prefix_order', ' '.join(order))
 with open(dst, 'wb') as configfile:
