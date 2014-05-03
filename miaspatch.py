@@ -564,6 +564,24 @@ class MiasPatch(QtGui.QDialog):
 		bundled_mods = filter(lambda x: x.install and isinstance(x, EnvMod), self.patch_list)
 
 		(mods, mod_states) = self.get_installed_miasmods()
+		if len(mods) and not os.path.isfile(os.path.join(self.install_path, 'alocalmod.rs5')):
+			# If alocalmod.rs5 does not exist we only want to
+			# enable the mods we are installing now (if the user
+			# wants any more they can use miasmod), so explictly
+			# disable all installed mods.
+			print 'No alocalmod.rs5 - disabling all installed miasmods'
+			print 'Old mod states:', mod_states
+			mod_states.update(dict(zip(mods.keys(), [False]*len(mods))))
+
+			# Keep alocalmod.miasmod if it exists - it should
+			# always be enabled and we don't want to wipe out any
+			# local changes.
+			del mod_states['alocalmod']
+			print 'New mod states:', mod_states
+			if 'alocalmod' in mods:
+				mods = {'alocalmod': mods['alocalmod']}
+			else:
+				mods = {}
 
 		# Enable bundled mods we are installing in MiasMod
 		if mod_states is not None:
