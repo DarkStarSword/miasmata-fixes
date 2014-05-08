@@ -1,9 +1,24 @@
 #!/usr/bin/env python
 
 import struct
-import sys
+import sys, os
 import collections
 from StringIO import StringIO
+
+chunk_extensions = {
+	('IMAG', 'DATA'): '.dds',
+}
+
+def mkdir_recursive(path):
+	if path == '':
+		return
+	(head, tail) = os.path.split(path)
+	mkdir_recursive(head)
+	if not os.path.exists(path):
+		os.mkdir(path)
+	elif not os.path.isdir(path):
+		raise OSError(17, '%s exists but is not a directory' % path)
+
 
 def parse_raw_header(f): # XXX: Deprecated - use parse_rs5file_header
 	(magic, u1, filename_len, u2, filesize) = struct.unpack('<4s2sB1sI', f.read(12))
@@ -21,13 +36,18 @@ def padding_len(pos, alignment):
 def padding(pos, alignment):
 	return '\0' * padding_len(pos, alignment)
 
-def parse_rs5file_header(f):
+def parse_rs5file_header(f, pk2=False):
 	# Based on parse_inod_header
-	(magic, u1, filename_len, u2, filesize) = struct.unpack('<4s2sBBI', f.read(12))
+	if pk2:
+		# Used in IonFx' earlier games
+		(magic, u1, u2, filesize, filename_len) = struct.unpack('<4s2s2sIB', f.read(13))
+		pad = padding_len(13 + filename_len, 4)
+	else:
+		(magic, u1, filename_len, u2, filesize) = struct.unpack('<4s2sBBI', f.read(12))
+		pad = padding_len(12 + filename_len, 8)
 	assert(u1 == '\0\0')
 	filename = f.read(filename_len).rstrip('\0')
-	# print>>sys.stderr, 'Parsing header %s %s (u=%i)...' % (magic, filename, u2)
-	pad = padding_len(12 + filename_len, 8)
+	# print>>sys.stderr, 'Parsing header %s %s (u=%s)...' % (magic, filename, u2.encode('hex'))
 	# print>>sys.stderr, '%i bytes of padding' % pad
 	assert(f.read(pad) == '\0'*pad)
 	return (magic, filename, filesize, u2)
@@ -94,11 +114,11 @@ class Rs5File(object):
 		return enc_file(self.magic, self.filename, self.data, self.u2)
 
 class Rs5FileDecoder(Rs5File):
-	def __init__(self, data):
+	def __init__(self, data, pk2=False):
 		self.fp = data
 		if not isinstance(data, file):
 			self.fp = StringIO(data)
-		(self.magic, self.filename, self.filesize, self.u2) = parse_rs5file_header(self.fp)
+		(self.magic, self.filename, self.filesize, self.u2) = parse_rs5file_header(self.fp, pk2=pk2)
 		self.data_off = self.fp.tell()
 
 	@property
@@ -116,11 +136,34 @@ class Rs5FileEncoder(Rs5File):
 
 
 class Rs5ChunkedFile(Rs5File, collections.OrderedDict):
-	pass
+	def extract_chunks(self, base_path, overwrite, file_magic=None):
+		dest = os.path.join(base_path, self.filename.replace('\\', os.path.sep))
+		if os.path.exists(dest) and not os.path.isdir(dest):
+			print>>sys.stderr, 'WARNING: %s exists, but is not a directory, skipping!' % dest
+			return
+		mkdir_recursive(dest)
+
+		path = os.path.join(dest, '00-HEADER')
+		if os.path.isfile(path) and not overwrite: # and size != 0
+			print>>sys.stderr, 'Skipping %s - file exists.' % dest
+		else:
+			f = open(path, 'wb')
+			f.write(self.header())
+			f.close()
+
+		for (i, chunk) in enumerate(self.itervalues(), 1):
+			extension = (file_magic, chunk.name)
+			path = os.path.join(dest, '%.2i-%s%s' % (i, chunk.name, chunk_extensions.get(extension, '')))
+			if os.path.isfile(path) and not overwrite: # and size != 0
+				print>>sys.stderr, 'Skipping %s - file exists.' % dest
+				continue
+			f = open(path, 'wb')
+			f.write(chunk.data)
+			f.close()
 
 class Rs5ChunkedFileDecoder(Rs5FileDecoder, Rs5ChunkedFile):
-	def __init__(self, data):
-		Rs5FileDecoder.__init__(self, data)
+	def __init__(self, data, pk2=False):
+		Rs5FileDecoder.__init__(self, data, pk2=pk2)
 		collections.OrderedDict.__init__(self)
 
 		while True:
@@ -147,11 +190,15 @@ class Rs5ChunkedFileEncoder(Rs5FileEncoder, Rs5ChunkedFile):
 		return r
 
 
-def rs5_file_decoder_factory(data):
+def rs5_file_decoder_factory(data, pk2=False):
+	if isinstance(data, file):
+		pos = data.tell()
 	try:
-		return Rs5ChunkedFileDecoder(data)
+		return Rs5ChunkedFileDecoder(data, pk2=pk2)
 	except:
-		return Rs5FileDecoder(data)
+		if isinstance(data, file):
+			data.seek(pos)
+		return Rs5FileDecoder(data, pk2=pk2)
 
 def create_header_chunk(magic, name):
 	# NOTE: This will create a header with a filesize of 0, which is ok

@@ -24,10 +24,6 @@ import os
 import collections
 import rs5file
 
-chunk_extensions = {
-	('IMAG', 'DATA'): '.dds',
-}
-
 def progress(percent=None, msg=None):
 	if msg is not None:
 		print(msg)
@@ -42,16 +38,6 @@ def from_win_time(win_time):
 	return win_time / 10000000 + win_epoch
 def to_win_time(unix_time):
 	return (unix_time - win_epoch) * 10000000
-
-def mkdir_recursive(path):
-	if path == '':
-		return
-	(head, tail) = os.path.split(path)
-	mkdir_recursive(head)
-	if not os.path.exists(path):
-		os.mkdir(path)
-	elif not os.path.isdir(path):
-		raise OSError(17, '%s exists but is not a directory' % path)
 
 class NotAFile(Exception): pass
 
@@ -79,6 +65,8 @@ class Rs5CompressedFileDecoder(Rs5CompressedFile):
 
 		self.u2 = self.uncompressed_size & 0x1
 		if not self.u2:
+			assert(self.data_off == 0)
+			assert(self.compressed_size == 0)
 			raise NotAFile()
 		self.uncompressed_size >>= 1
 
@@ -92,7 +80,7 @@ class Rs5CompressedFileDecoder(Rs5CompressedFile):
 			print>>sys.stderr, 'Skipping %s - file exists.' % dest
 			return
 		(dir, file) = os.path.split(dest)
-		mkdir_recursive(dir)
+		rs5file.mkdir_recursive(dir)
 		f = open(dest, 'wb')
 		try:
 			data = self.decompress()
@@ -111,7 +99,6 @@ class Rs5CompressedFileDecoder(Rs5CompressedFile):
 		os.utime(dest, (self.modtime, self.modtime))
 
 	def extract_chunks(self, base_path, overwrite):
-		dest = os.path.join(base_path, self.filename.replace('\\', os.path.sep))
 		data = self.decompress()
 
 		try:
@@ -119,29 +106,7 @@ class Rs5CompressedFileDecoder(Rs5CompressedFile):
 		except:
 			# print>>sys.stderr, 'NOTE: %s does not contain chunks, extracting whole file...' % dest
 			return self.extract(base_path, False, overwrite)
-
-		if os.path.exists(dest) and not os.path.isdir(dest):
-			print>>sys.stderr, 'WARNING: %s exists, but is not a directory, skipping!' % dest
-			return
-		mkdir_recursive(dest)
-
-		path = os.path.join(dest, '00-HEADER')
-		if os.path.isfile(path) and not overwrite: # and size != 0
-			print>>sys.stderr, 'Skipping %s - file exists.' % dest
-		else:
-			f = open(path, 'wb')
-			f.write(chunks.header())
-			f.close()
-
-		for (i, chunk) in enumerate(chunks.itervalues(), 1):
-			extension = (self.type, chunk.name)
-			path = os.path.join(dest, '%.2i-%s%s' % (i, chunk.name, chunk_extensions.get(extension, '')))
-			if os.path.isfile(path) and not overwrite: # and size != 0
-				print>>sys.stderr, 'Skipping %s - file exists.' % dest
-				continue
-			f = open(path, 'wb')
-			f.write(chunk.data)
-			f.close()
+		chunks.extract_chunks(base_path, overwrite, self.type)
 
 class Rs5CompressedFileEncoder(Rs5CompressedFile):
 	def __init__(self, fp, filename = None, buf = None, seek_cb = None):
