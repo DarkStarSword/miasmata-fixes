@@ -10,6 +10,7 @@ neu_phollick_alpha_c2 = Font('Neu Phollick Alpha', 40.0, True, -4.0)
 neu_phollick_alpha_c3 = Font('Neu Phollick Alpha', 40.0, True, -7.0)
 neu_phollick_alpha_c4 = Font('Neu Phollick Alpha', 40.0, True, -8.0)
 neu_phollick_alpha_l = Font('Neu Phollick Alpha', 45.0, True)
+neu_phollick_alpha_poem = Font('Neu Phollick Alpha', 42.0, True, line_spacing = 64)
 neu_phollick_alpha_lc = Font('Neu Phollick Alpha Bold', 45.0, False, -7.0)
 neu_phollick_alpha_lc2 = Font('Neu Phollick Alpha Bold', 45.0, False, -10.0)
 neu_phollick_alpha_lc3 = Font('Neu Phollick Alpha Bold', 45.0, False, -5.0)
@@ -527,8 +528,9 @@ def compose_note_mm(image, note_name):
     place_text(layer, 1158, 570, 1815)
 
 def compose_note_nn(image, note_name):
-    font = neu_phollick_alpha_l
+    font = neu_phollick_alpha_poem
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
+    pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_CENTER)
     place_text(layer, 1470, 510, xalign=CENTER, yalign=CENTER)
 
 def compose_note_oo(image, note_name):
