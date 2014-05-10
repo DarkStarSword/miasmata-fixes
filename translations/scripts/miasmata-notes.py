@@ -531,7 +531,7 @@ def compose_note_nn(image, note_name):
     font = neu_phollick_alpha_poem
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_CENTER)
-    place_text(layer, 1470, 510, xalign=CENTER, yalign=CENTER)
+    place_text(layer, 1475, 475, xalign=CENTER, yalign=CENTER)
 
 def compose_note_oo(image, note_name):
     font = neu_phollick_alpha_lc3
