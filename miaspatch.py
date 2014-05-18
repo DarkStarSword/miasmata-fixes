@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+# Fix print function for Python 2 deficiency regarding non-ascii encoded text files:
+from __future__ import print_function
+import utf8file
+print = utf8file.print
+
 import sys, os
 from glob import glob
 import ConfigParser
@@ -389,7 +394,7 @@ class MiasPatch(QtGui.QDialog):
 		if percent is not None:
 			self.ui.progress.setValue(percent)
 		if msg is not None:
-			print msg.encode('utf8')
+			print(msg)
 			self.ui.lbl_progress.setText(msg)
 			self.ui.lbl_progress.repaint()
 			self.repaint()
@@ -457,19 +462,19 @@ class MiasPatch(QtGui.QDialog):
 		except:
 			pass
 		else:
-			print 'Prefixing mod order with: {0}'.format(prefix_order).encode('utf8')
+			print('Prefixing mod order with: {0}'.format(prefix_order))
 			try:
 				order = rs5mod.ModOrderDecoder(self.main_rs5)
 			except Exception as e:
 				order = []
-			print 'Old mod order: {0}'.format(order).encode('utf8')
+			print('Old mod order: {0}'.format(order))
 			for mod in reversed(prefix_order):
 				try:
 					order.remove(mod)
 				except ValueError:
 					pass
 				order.insert(0, mod)
-			print 'New mod order: {0}'.format(order).encode('utf8')
+			print('New mod order: {0}'.format(order))
 			rs5mod.do_order_mods(self.main_rs5, order)
 
 		progress(msg=self.tr('Applying main.rs5 mod order...'))
@@ -569,15 +574,15 @@ class MiasPatch(QtGui.QDialog):
 			# enable the mods we are installing now (if the user
 			# wants any more they can use miasmod), so explictly
 			# disable all installed mods.
-			print 'No alocalmod.rs5 - disabling all installed miasmods'.encode('utf8')
-			print 'Old mod states:', mod_states.encode('utf8')
+			print('No alocalmod.rs5 - disabling all installed miasmods')
+			print('Old mod states:', mod_states)
 			mod_states.update(dict(zip(mods.keys(), [False]*len(mods))))
 
 			# Keep alocalmod.miasmod if it exists - it should
 			# always be enabled and we don't want to wipe out any
 			# local changes.
 			del mod_states['alocalmod']
-			print 'New mod states:', mod_states.encode('utf8')
+			print('New mod states:', mod_states)
 			if 'alocalmod' in mods:
 				mods = {'alocalmod': mods['alocalmod']}
 			else:
@@ -605,9 +610,9 @@ class MiasPatch(QtGui.QDialog):
 
 		order = self.miasmod_order(mods)
 
-		print 'Using these miasmod files:'.encode('utf8')
-		print '\n'.join(map(str, mods.itervalues())).encode('utf8')
-		print 'In this order: %s' % ' '.join(order).encode('utf8')
+		print('Using these miasmod files:')
+		print('\n'.join(map(str, mods.itervalues())))
+		print('In this order: %s' % ' '.join(order))
 
 		(env, installed) = self.process_miasmods(mods, order, True, progress)
 		environment.encode_to_archive(env, os.path.join(self.install_path, 'alocalmod.rs5'))
@@ -654,8 +659,8 @@ def start_gui_process(pipe=None):
 	global config
 
 	# HACK TO WORK AROUND CRASH ON CONSOLE OUTPUT WITH BBFREEZE GUI_ONLY
-	sys.stdout = sys.stderr = open('miaspatch.log', 'a')
-	print time.asctime().encode('utf8')
+	sys.stdout = sys.stderr = utf8file.UTF8File('miaspatch.log', 'a')
+	print(time.asctime())
 
 	# Try to get some more useful info on crashes:
 	import faulthandler

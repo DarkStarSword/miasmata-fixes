@@ -6,6 +6,11 @@
 # so I could examine the format for myself. Don't expect this to be feature
 # complete for a while
 
+# Fix print function for Python 2 deficiency regarding non-ascii encoded text files:
+from __future__ import print_function
+import utf8file
+print = utf8file.print
+
 try:
 	from PySide import QtCore
 except ImportError:
@@ -89,7 +94,7 @@ class Rs5CompressedFileDecoder(Rs5CompressedFile):
 	def extract(self, base_path, strip, overwrite):
 		dest = os.path.join(base_path, self.filename.replace('\\', os.path.sep))
 		if os.path.isfile(dest) and not overwrite: # and size != 0
-			print>>sys.stderr, 'Skipping %s - file exists.' % dest
+			print('Skipping %s - file exists.' % dest, file=sys.stderr)
 			return
 		(dir, file) = os.path.split(dest)
 		mkdir_recursive(dir)
@@ -105,7 +110,7 @@ class Rs5CompressedFileDecoder(Rs5CompressedFile):
 			else:
 				f.write(data)
 		except zlib.error as e:
-			print>>sys.stderr, 'ERROR EXTRACTING %s: %s. Skipping decompression!' % (dest, str(e))
+			print('ERROR EXTRACTING %s: %s. Skipping decompression!' % (dest, str(e)), file=sys.stderr)
 			f.write(self.read())
 		f.close()
 		os.utime(dest, (self.modtime, self.modtime))
@@ -117,17 +122,17 @@ class Rs5CompressedFileDecoder(Rs5CompressedFile):
 		try:
 			chunks = rs5file.Rs5ChunkedFileDecoder(data)
 		except:
-			# print>>sys.stderr, 'NOTE: %s does not contain chunks, extracting whole file...' % dest
+			# print('NOTE: %s does not contain chunks, extracting whole file...' % dest, file=sys.stderr)
 			return self.extract(base_path, False, overwrite)
 
 		if os.path.exists(dest) and not os.path.isdir(dest):
-			print>>sys.stderr, 'WARNING: %s exists, but is not a directory, skipping!' % dest
+			print('WARNING: %s exists, but is not a directory, skipping!' % dest, file=sys.stderr)
 			return
 		mkdir_recursive(dest)
 
 		path = os.path.join(dest, '00-HEADER')
 		if os.path.isfile(path) and not overwrite: # and size != 0
-			print>>sys.stderr, 'Skipping %s - file exists.' % dest
+			print('Skipping %s - file exists.' % dest, file=sys.stderr)
 		else:
 			f = open(path, 'wb')
 			f.write(chunks.header())
@@ -137,7 +142,7 @@ class Rs5CompressedFileDecoder(Rs5CompressedFile):
 			extension = (self.type, chunk.name)
 			path = os.path.join(dest, '%.2i-%s%s' % (i, chunk.name, chunk_extensions.get(extension, '')))
 			if os.path.isfile(path) and not overwrite: # and size != 0
-				print>>sys.stderr, 'Skipping %s - file exists.' % dest
+				print('Skipping %s - file exists.' % dest, file=sys.stderr)
 				continue
 			f = open(path, 'wb')
 			f.write(chunk.data)
@@ -254,7 +259,7 @@ class Rs5ArchiveEncoder(Rs5CentralDirectoryEncoder):
 		self[entry.filename] = entry
 
 	def add_chunk_dir(self, path, seek_cb=None):
-		print "Adding chunks from {0}...".format(path)
+		print("Adding chunks from {0}...".format(path))
 		files = sorted(os.listdir(path))
 		files.remove('00-HEADER')
 		header = open(os.path.join(path, '00-HEADER'), 'rb')
@@ -263,10 +268,10 @@ class Rs5ArchiveEncoder(Rs5CentralDirectoryEncoder):
 		for filename in files:
 			chunk_path = os.path.join(path, filename)
 			if not os.path.isfile(chunk_path) or '-' not in filename:
-				print 'Skipping {0}: not a valid chunk'.format(chunk_path)
+				print('Skipping {0}: not a valid chunk'.format(chunk_path))
 				continue
 			chunk_name = filename.split('-', 1)[1]
-			print '  {0}'.format(filename)
+			print('  {0}'.format(filename))
 			chunk = open(chunk_path, 'rb')
 			chunk = rs5file.Rs5ChunkEncoder(chunk_name, chunk.read())
 			chunks[chunk.name] = chunk

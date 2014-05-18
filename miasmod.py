@@ -7,14 +7,15 @@
 #
 # - Play nice with rs5 archives that have other files inside them
 # - Detect if saves.dat has been modified externally & ask to reload
-# - Figure out why the dirty bold indicator isn't always being cleared on save.
-#   Just rendering (no dataChanged emitted), or flag actually not cleared?
-#   Could it be related to the undo deep copy?
-#
 #
 # Raw data
 #  - save/load file
 #  - Various ways to interpret it
+
+# Fix print function for Python 2 deficiency regarding non-ascii encoded text files:
+from __future__ import print_function
+import utf8file
+print = utf8file.print
 
 import sys, os
 from glob import glob
@@ -377,7 +378,7 @@ class MiasMod(QtGui.QMainWindow):
 			return
 		if not self.busy:
 			QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-		print msg
+		print(msg)
 		self.busy = True
 		self.statusBar().showMessage(msg)
 		self.repaint()
@@ -848,8 +849,8 @@ class MiasMod(QtGui.QMainWindow):
 
 def start_gui_process(pipe=None):
 	# HACK TO WORK AROUND CRASH ON CONSOLE OUTPUT WITH BBFREEZE GUI_ONLY
-	sys.stdout = sys.stderr = open('miasmod.log', 'a')
-	print time.asctime()
+	sys.stdout = sys.stderr = utf8file.UTF8File('miasmod.log', 'a')
+	print(time.asctime())
 
 	# Try to get some more useful info on crashes:
 	import faulthandler

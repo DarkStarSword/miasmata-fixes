@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
+# Fix print function for Python 2 deficiency regarding non-ascii encoded text files:
 from __future__ import print_function
+import utf8file
+print = utf8file.print
 
 from PySide import QtGui
 from mmap import *
