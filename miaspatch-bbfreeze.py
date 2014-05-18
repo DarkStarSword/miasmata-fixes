@@ -7,7 +7,7 @@ import argparse
 
 binary_patches = ['botanical']
 delete = ['communitypatch.rs5']
-copy_language_src = True
+copy_language_src = False
 order = ['communitypatch']
 
 parser = argparse.ArgumentParser()
