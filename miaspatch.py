@@ -489,7 +489,7 @@ class MiasPatch(QtGui.QDialog):
 
 		# Disregard ignored mods in miasmod.conf if it exists
 		mod_states_path = miasmod.conf_path(self.install_path)
-		mod_states = None
+		mod_states = {}
 		try:
 			mod_states = json.load(open(mod_states_path, 'rb'))
 		except:
