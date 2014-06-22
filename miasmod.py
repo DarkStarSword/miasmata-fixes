@@ -408,11 +408,13 @@ class MiasMod(QtGui.QMainWindow):
 		try:
 			path = miasutil.find_miasmata_save()
 		except Exception as e:
-			path = 'saves.dat'
-		try:
-			saves = data.parse_data(open(path, 'rb'))
-		except Exception as e:
-			return
+			path = QtGui.QFileDialog.getOpenFileName(self,
+					"Select Miasmata Save Location...",
+					None, 'Miasmata save files (*.dat)')[0]
+			if not path:
+				return
+
+		saves = data.parse_data(open(path, 'rb'))
 
 		saves.name = data.null_str('saves.dat')
 		view = miasmod_data.MiasmataDataView(saves, sort=True, save_path = path, name='saves.dat')
