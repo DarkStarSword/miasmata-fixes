@@ -1,3 +1,3 @@
-Si un point de repère est représenté par un icône sur la carte, alors il est considéré comme connu. Dans le diagramme ci-dessus, le point de repère A et C sont connus, mais pas le point de repère B.
+Si un point de repère est représenté par une icône sur la carte, alors il est considéré comme connu. Dans le diagramme ci-dessus, le point de repère A et C sont connus, mais pas le point de repère B.
 
 Étape 3: Dessinez des lignes de visibilité vers 2 points de repère connus en pressant [Activer] lorsque vous les observez. Votre position sur la carte se trouve à l'intersection de ces deux lignes de visibilité.

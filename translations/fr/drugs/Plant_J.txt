@@ -4,4 +4,4 @@ Ce stimulant vous apporte une amélioration permanente à l'acuité de vos sens,
 
 1. Restez appuyé sur Furtif et ne bougez pas. Votre tête va se tourner automatiquement pour regarder dans la direction de la créature.
 
-2. Lorsque vous restez appuyé sur Furtif, une image va apparaître dans votre champs de vision. L'opacité de celle-ci est proportionnelle à la proximité de la créature par-rapport à vous. Si l'image passe du blanc au rouge, vous n'êtes pas suffisamment bien caché, et la créature sera capable de vous voir.
+2. Lorsque vous restez appuyé sur Furtif, une image va apparaître dans votre champ de vision. L'opacité de celle-ci est proportionnelle à la proximité de la créature par-rapport à vous. Si l'image passe du blanc au rouge, vous n'êtes pas suffisamment bien caché, et la créature sera capable de vous voir.
