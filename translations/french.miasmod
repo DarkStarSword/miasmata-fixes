@@ -44,7 +44,7 @@
                 "text"
             ], 
             "[\"s\",\"You have become fatigued by sprinting excessively. To recover from fatigue, move slowly for a short while. Drinking water will also help you recover. While you are fatigued, you will not be able to sprint effectively.\"]", 
-            "[\"s\",\"Vous êtes fatigué parce que vous avez avez sprinté excessivement. Pour récupérer vos forces, marchez pendant un moment. Boire de l'eau va aussi vous aider à récupérer. Lorsque vous êtes fatigué, vous ne serez pas capable de sprinter efficacement.\"]"
+            "[\"s\",\"Vous êtes fatigué parce que vous avez sprinté excessivement. Pour récupérer vos forces, marchez pendant un moment. Boire de l'eau va aussi vous aider à récupérer. Lorsque vous êtes fatigué, vous ne serez pas capable de sprinter efficacement.\"]"
         ], 
         [
             [
@@ -124,7 +124,7 @@
                 "text"
             ], 
             "[\"s\",\"Research Stations allow you to discover any important medicinal characteristic a specimin may have. To use a Research Station, place your specimin on the tray using {ACTIVATE}. If you have more than 1 item in your hand, you may need to press it multiple times to cycle to your desired specimin. Now look at the microscope and press {ACTIVATE} for a second time. The research will be performed and results will be documented in your journal.\"]", 
-            "[\"s\",\"Les Stations de Recherche vous permettent de découvrir les caractéristique qu'un spécimen possède. Pour utiliser une Station de Recherche, placez votre spécimen sur le plateau en utilisant {ACTIVATE}. Si vous en avez plusieurs en main, répétez l'opération jusqu'au résultat escompté. Puis, regardez à travers le microscope en appuyant sur {ACTIVATE}. La recherche sera effectuée et les résultats seront documentés dans votre journal.\"]"
+            "[\"s\",\"Les Stations de Recherche vous permettent de découvrir les caractéristiques qu'un spécimen possède. Pour utiliser une Station de Recherche, placez votre spécimen sur le plateau en utilisant {ACTIVATE}. Si vous en avez plusieurs en main, répétez l'opération jusqu'au résultat escompté. Puis, regardez à travers le microscope en appuyant sur {ACTIVATE}. La recherche sera effectuée et les résultats seront documentés dans votre journal.\"]"
         ], 
         [
             [
@@ -264,7 +264,7 @@
                 "text"
             ], 
             "[\"s\",\"You can create simple torches out of sticks. When you are standing over a pile of sticks, look down. A Torch icon should appear. Press {LMB}.\\\\n\\\\nA Simple Torch can be used to illuminate the night, as well as provide protection. You can toss your torch into a firepit or Urn. You can also swing your torch by tapping {LMB}. Finally, You can throw your torch by holding {LMB} for more than 1 second, then releasing. The longer you hold the button before release, the further your torch will fly.\"]", 
-            "[\"s\",\"Vous pouvez créer une simple torche avec des brindilles. Lorsque vous trouvez des brindilles à vos pieds, regardez les. L'icone d'une Torche devrait apparaître. Appuyez sur {LMB}.\\n\\nUne simple torche peux être utilisée pour vous illuminer durant la nuit, elle peux aussi vous servir de protection. Vous pouvez jeter votre torche dans un feux de camps ou une Urne. Vous pouvez aussi lancer votre torche en restant appuyé sur {LMB} pendant plus d'1 seconde avant de lâcher. Plus vous garderez le bouton appuyé, plus votre torche ira loin.\"]"
+            "[\"s\",\"Vous pouvez créer une simple torche avec des brindilles. Lorsque vous trouvez des brindilles à vos pieds, regardez les. L'icone d'une Torche devrait apparaître. Appuyez sur {LMB}.\\n\\nUne simple torche peux être utilisée pour vous illuminer durant la nuit, elle peut aussi vous servir de protection. Vous pouvez jeter votre torche dans un feu de camps ou une Urne. Vous pouvez aussi lancer votre torche en restant appuyé sur {LMB} pendant plus d'1 seconde avant de lâcher. Plus vous garderez le bouton appuyé, plus votre torche ira loin.\"]"
         ], 
         [
             [
@@ -294,7 +294,7 @@
                 "text"
             ], 
             "[\"s\",\"When you hear your heart beat, The Creature is nearby. To elude him, find some tall grass or bushes in which to duck. You can also try hiding behind trees or rocks.\\\\n\\\\nIf the Creature discovers you, you may need to defend yourself until you find an opportunity to flee. The enemy can be distracted or fazed by throwing an object such as a rock, stick or knife.\"]", 
-            "[\"s\",\"Quand vous entendez votre cœur battre, la Créature est proche. Pour lui échapper, trouvez des haute herbes, des buissons où vous accroupir en appuyant sur la touche {STEALTH}. Vous pouvez aussi essayer de vous cacher derrière des arbres ou des rochers.\\n\\n Si la créature vous découvre, il se peux que vous soyez obligé de vous défendre jusqu'à trouver une opportunité de fuir. La Créature peux être distraite ou déconcertée en lui envoyant des objets tels que des rocs, un bâton ou un couteau.\"]"
+            "[\"s\",\"Quand vous entendez votre cœur battre, la Créature est proche. Pour lui échapper, trouvez des hautes herbes, des buissons où vous accroupir en appuyant sur la touche {STEALTH}. Vous pouvez aussi essayer de vous cacher derrière des arbres ou des rochers.\\n\\n Si la créature vous découvre, il se peut que vous soyez obligé de vous défendre jusqu'à trouver une opportunité de fuir. La Créature peut être distraite ou déconcertée en lui envoyant des objets tels que des rocs, un bâton ou un couteau.\"]"
         ], 
         [
             [
@@ -304,7 +304,7 @@
                 "icon_text"
             ], 
             "[\"s\",\"The Creature is near! Press {HELP} to learn more.\"]", 
-            "[\"s\",\"La Créature est proche! Appuyez sur {HELP} pour en savoir plus.\"]"
+            "[\"s\",\"La Créature est proche ! Appuyez sur {HELP} pour en savoir plus.\"]"
         ], 
         [
             [
@@ -314,7 +314,7 @@
                 "icon_text"
             ], 
             "[\"s\",\"There is a note on the table in the shed. Take it with {ACTIVATE} \"]", 
-            "[\"s\",\"Il y a une note sur la table dans le cabanon. Prenez la avec {ACTIVATE} \"]"
+            "[\"s\",\"Il y a une note sur la table dans le cabanon. Prenez-la avec {ACTIVATE} \"]"
         ], 
         [
             [
@@ -500,7 +500,7 @@
                 "text"
             ], 
             "[\"s\",\"Are you sure you want to delete this save game?\"]", 
-            "[\"s\",\"Êtes-vous sûr de vouloir supprimer cette sauvegarde?\"]"
+            "[\"s\",\"Êtes-vous sûr de vouloir supprimer cette sauvegarde ?\"]"
         ], 
         [
             [
@@ -686,7 +686,7 @@
                 "text"
             ], 
             "[\"s\",\"  Field of View\"]", 
-            "[\"s\",\"  Champs de Vision\"]"
+            "[\"s\",\"  Champ de Vision\"]"
         ], 
         [
             [

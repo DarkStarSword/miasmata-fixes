@@ -1,8 +1,8 @@
 <u>Comment Créer des Médicaments:</u>
 
-Des médicaments peuvent être développé grâce aux nombreuses plantes trouvable sur cette île.
+Des médicaments peuvent être développés grâce aux nombreuses plantes trouvables sur cette île.
 
-Certains médicaments peuvent être crées d'une seule plante. D'autres sont développés à travers la combinaison de deux différents types de plantes.
+Certains médicaments peuvent être créés d'une seule plante. D'autres sont développés à travers la combinaison de deux différents types de plantes.
 
 <u>Étape 1:</u>
 
