@@ -214,7 +214,7 @@
                 "text"
             ], 
             "[\"s\",\"Cartography tables provide instructions for triangulating your location and constructing a map of the island.\"]", 
-            "[\"s\",\"Les tables de Cartographie vous offre des instructions pour trianguler votre location et créer une carte de l'île.\"]"
+            "[\"s\",\"Les tables de Cartographie vous offrent des instructions pour trianguler votre position et créer une carte de l'île.\"]"
         ], 
         [
             [
@@ -234,7 +234,7 @@
                 "text"
             ], 
             "[\"s\",\"With your map and compass in-hand, you can determine your location by using Triangulation. To do this, click on 2 known landmarks. A landmark can be a statue or structure of some kind. It is considered 'known' if it is already  represented on your map. Your crosshair will turn into a Triangle if the landmark you are looking at is known. \\\\n \\\\n Additionally, your location will automatically be revealed whenever you are standing next to a known landmark.\"]", 
-            "[\"s\",\"Carte et compas en main, vous pouvez déterminer votre location en utilisant la Triangulation. Pour se faire, cliquez sur 2 points de repère connu. Un point de repère peut être une statue ou une structure humaine. Ceux-ci sont considérés comme connu si ils apparaissent déjà sur votre carte. Votre réticule va devenir un triangle si le point de repère que vous regardez est connu. \\n \\n De plus, votre location sera automatiquement révélée lorsque vous serez à côté d'un point de repère connu.\"]"
+            "[\"s\",\"Carte et compas en main, vous pouvez déterminer votre position en utilisant la Triangulation. Pour ce faire, cliquez sur 2 points de repère connu. Un point de repère peut être une statue ou une structure humaine. Ceux-ci sont considérés comme connu si ils apparaissent déjà sur votre carte. Votre réticule va devenir un triangle si le point de repère que vous regardez est connu. \\n \\n De plus, votre position sera automatiquement révélée lorsque vous serez à côté d'un point de repère connu.\"]"
         ], 
         [
             [
