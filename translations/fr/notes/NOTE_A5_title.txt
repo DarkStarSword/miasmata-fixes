@@ -1,2 +1,2 @@
 Cartographie Document B:
-Comment révéler la location de points de repère inconnus.
+Comment révéler la position de points de repère inconnus.
