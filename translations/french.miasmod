@@ -264,7 +264,7 @@
                 "text"
             ], 
             "[\"s\",\"You can create simple torches out of sticks. When you are standing over a pile of sticks, look down. A Torch icon should appear. Press {LMB}.\\\\n\\\\nA Simple Torch can be used to illuminate the night, as well as provide protection. You can toss your torch into a firepit or Urn. You can also swing your torch by tapping {LMB}. Finally, You can throw your torch by holding {LMB} for more than 1 second, then releasing. The longer you hold the button before release, the further your torch will fly.\"]", 
-            "[\"s\",\"Vous pouvez créer une simple torche avec des brindilles. Lorsque vous trouvez des brindilles à vos pieds, regardez les. L'icone d'une Torche devrait apparaître. Appuyez sur {LMB}.\\n\\nUne simple torche peux être utilisée pour vous illuminer durant la nuit, elle peut aussi vous servir de protection. Vous pouvez jeter votre torche dans un feu de camps ou une Urne. Vous pouvez aussi lancer votre torche en restant appuyé sur {LMB} pendant plus d'1 seconde avant de lâcher. Plus vous garderez le bouton appuyé, plus votre torche ira loin.\"]"
+            "[\"s\",\"Vous pouvez créer une simple torche avec des brindilles. Lorsque vous trouvez des brindilles à vos pieds, regardez les. L'icône d'une Torche devrait apparaître. Appuyez sur {LMB}.\\n\\nUne simple torche peux être utilisée pour vous illuminer durant la nuit, elle peut aussi vous servir de protection. Vous pouvez jeter votre torche dans un feu de camps ou une Urne. Vous pouvez aussi lancer votre torche en restant appuyé sur {LMB} pendant plus d'1 seconde avant de lâcher. Plus vous garderez le bouton appuyé, plus votre torche ira loin.\"]"
         ], 
         [
             [
@@ -334,7 +334,7 @@
                 "text"
             ], 
             "[\"s\",\"Storage Bins allow you to preserve up to 6 plant/fungal specimins at a time. You'll be able to access these specimins from any other Storage Bins you encounter on the island. To use a Storage Bin, look at one of the 6 slots and press {ACTIVATE}. This will place a specimin in the slot and/or take a specimin from it.  \\\\n\\\\n You'll notice that you can only carry 3 specimins in your hand at a time, so Storage Bins are a great way to transport these important items.\"]", 
-            "[\"s\",\"Les Bacs de Stockage vous permettent de préserver jusqu'à 6 spécimens à la fois. Vous pourrez accéder à ces spécimens dans tous les Bacs de Stockage que vous rencontrerez sur l'île. Pour utiliser un Bac de Stockage, regardez le et appuyez sur {ACTIVATE}.  \\n\\n Vous remarquerez que vous ne pouvez transporter que 3 spécimens dans votre main, les Bacs de Stockage sont un excellent moyen de les transporter.\"]"
+            "[\"s\",\"Les Bacs de Stockage vous permettent de préserver jusqu'à 6 spécimens à la fois. Vous pourrez accéder à ces spécimens dans tous les Bacs de Stockage que vous rencontrerez sur l'île. Pour utiliser un Bac de Stockage, regardez-le et appuyez sur {ACTIVATE}.  \\n\\n Vous remarquerez que vous ne pouvez transporter que 3 spécimens dans votre main, les Bacs de Stockage sont un excellent moyen de les transporter.\"]"
         ], 
         [
             [
@@ -560,7 +560,7 @@
                 "text"
             ], 
             "[\"s\",\"Graphics\"]", 
-            "[\"s\",\"Graphisme\"]"
+            "[\"s\",\"Graphismes\"]"
         ], 
         [
             [
@@ -602,7 +602,7 @@
                 "text"
             ], 
             "[\"s\",\"Texture Detail\"]", 
-            "[\"s\",\"Qualité des Textures\"]"
+            "[\"s\",\"Qualité des textures\"]"
         ], 
         [
             [
@@ -616,7 +616,7 @@
                 "text"
             ], 
             "[\"s\",\"  Windowed Mode\"]", 
-            "[\"s\",\"  Mode Fenêtre\"]"
+            "[\"s\",\"  Mode fenêtre\"]"
         ], 
         [
             [
@@ -630,7 +630,7 @@
                 "text"
             ], 
             "[\"s\",\"Lightshaft Quality\"]", 
-            "[\"s\",\"Qualité des Torches\"]"
+            "[\"s\",\"Qualité des torches\"]"
         ], 
         [
             [
@@ -658,7 +658,7 @@
                 "text"
             ], 
             "[\"s\",\"Shadow Filtering\"]", 
-            "[\"s\",\"Filtrage des Ombres\"]"
+            "[\"s\",\"Filtrage des ombres\"]"
         ], 
         [
             [
@@ -672,7 +672,7 @@
                 "text"
             ], 
             "[\"s\",\"Model Detail\"]", 
-            "[\"s\",\"Qualité des Modèles\"]"
+            "[\"s\",\"Qualité des modèles\"]"
         ], 
         [
             [
@@ -686,7 +686,7 @@
                 "text"
             ], 
             "[\"s\",\"  Field of View\"]", 
-            "[\"s\",\"  Champ de Vision\"]"
+            "[\"s\",\"  Champ de vision\"]"
         ], 
         [
             [
@@ -700,7 +700,7 @@
                 "text"
             ], 
             "[\"s\",\"Sky Quality\"]", 
-            "[\"s\",\"Qualité du Ciel\"]"
+            "[\"s\",\"Qualité du ciel\"]"
         ], 
         [
             [
@@ -712,7 +712,7 @@
                 "text"
             ], 
             "[\"s\",\"Control Keys\"]", 
-            "[\"s\",\"Contrôle\"]"
+            "[\"s\",\"Contrôles\"]"
         ], 
         [
             [
@@ -810,7 +810,7 @@
                 "text"
             ], 
             "[\"s\",\"Step Left\"]", 
-            "[\"s\",\"Pas à Gauche\"]"
+            "[\"s\",\"Pas à gauche\"]"
         ], 
         [
             [
@@ -894,7 +894,7 @@
                 "text"
             ], 
             "[\"s\",\"Step Right\"]", 
-            "[\"s\",\"Pas à Droite\"]"
+            "[\"s\",\"Pas à droite\"]"
         ], 
         [
             [
@@ -962,7 +962,7 @@
                 "text"
             ], 
             "[\"s\",\"Master Volume\"]", 
-            "[\"s\",\"Volume Principal\"]"
+            "[\"s\",\"Volume principal\"]"
         ], 
         [
             [
@@ -976,7 +976,7 @@
                 "text"
             ], 
             "[\"s\",\"Mouse Speed\"]", 
-            "[\"s\",\"Sensibilité de la Souris\"]"
+            "[\"s\",\"Sensibilité de la souris\"]"
         ], 
         [
             [
@@ -990,7 +990,7 @@
                 "text"
             ], 
             "[\"s\",\"Music Volume\"]", 
-            "[\"s\",\"Volume de la Musique\"]"
+            "[\"s\",\"Volume de la musique\"]"
         ], 
         [
             [
@@ -999,7 +999,7 @@
                 "text_description"
             ], 
             "[\"s\",\"New Game\"]", 
-            "[\"s\",\"Nouvelle Partie\"]"
+            "[\"s\",\"Nouvelle partie\"]"
         ], 
         [
             [
@@ -1008,7 +1008,7 @@
                 "text_description"
             ], 
             "[\"s\",\"New Game\"]", 
-            "[\"s\",\"Nouvelle Partie\"]"
+            "[\"s\",\"Nouvelle partie\"]"
         ], 
         [
             [
