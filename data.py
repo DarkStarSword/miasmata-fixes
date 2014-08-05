@@ -453,6 +453,15 @@ def diff_data(tree1, tree2):
 	(added, removed, changed) = tree1.diff(tree2, root=tree1, other_root=tree2)
 	return {'added': added, 'removed': removed, 'changed': changed}
 
+def diff_data_files((f1, f2), output, pretty=False):
+	data1 = parse_data(f1)
+	data2 = parse_data(f2)
+	diff = diff_data(data1, data2)
+	if pretty:
+		pretty_print_diff(diff)
+	else:
+		json_encode_diff(diff, output)
+
 def null_diff():
 	return {'added': [], 'removed': [], 'changed': []}
 
@@ -602,6 +611,13 @@ def parse_args():
 			type=argparse.FileType('rb'),
 			help='Encode a JSON formatted database')
 
+	group.add_argument('--diff-pretty', nargs=2, metavar='FILE',
+			type=argparse.FileType('rb'),
+			help='Display the differences between two environment files in a human readable format')
+	group.add_argument('--diff-json', nargs=2, metavar='FILE',
+			type=argparse.FileType('rb'),
+			help='Write the differences between two environment files suitable for use with --apply-diff')
+
 	parser.add_argument('-o', '--output',
 			type=argparse.FileType('wb'), default=sys.stdout,
 			help='Store the result in OUTPUT')
@@ -634,6 +650,11 @@ def main():
 
 	if args.encode_file:
 		return write_data(args.encode_file, args.output)
+
+	if args.diff_pretty:
+		return diff_data_files(args.diff_pretty, args.output, pretty=True)
+	if args.diff_json:
+		return diff_data_files(args.diff_pretty, args.output, pretty=True)
 
 if __name__ == '__main__':
 	main()
