@@ -382,6 +382,7 @@ class MiasMod(QtGui.QMainWindow):
 		self.busy = True
 		self.statusBar().showMessage(msg)
 		self.repaint()
+		app.processEvents()
 
 	def done(self):
 		QtGui.QApplication.restoreOverrideCursor()
@@ -850,6 +851,8 @@ class MiasMod(QtGui.QMainWindow):
 
 
 def start_gui_process(pipe=None):
+	global app
+
 	# HACK TO WORK AROUND CRASH ON CONSOLE OUTPUT WITH BBFREEZE GUI_ONLY
 	sys.stdout = sys.stderr = utf8file.UTF8File('miasmod.log', 'a')
 	print(time.asctime())
