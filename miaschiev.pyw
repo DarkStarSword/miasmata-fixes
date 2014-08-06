@@ -458,7 +458,7 @@ class Miaschiev(QtGui.QMainWindow):
 		self.progress('Removing sight lines...')
 		statue = self.find_victim_head_statue()
 		if statue is None:
-			warn_unmatched_statue(backup)
+			self.warn_unmatched_statue(backup)
 		else:
 			statue['nsightings'] = data.data_int(1)
 			try:
