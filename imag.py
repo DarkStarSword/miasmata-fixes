@@ -147,12 +147,12 @@ def open_dds(fp, mipmap=None, mode='RGBA'):
 	out = np.empty([height, width, channels], np.uint16)
 	for y in range(4):
 		for x in range(4):
-			print y, x
+			# print y, x
 
 			# I feel like there's probably a more efficient way to do this...
 
 			# Look up the value
-			l = (cl & 0x3)
+			l = np.int32(cl & 0x3)
 			cl >>= 2
 
 			# Lookup the value of each of the pixels we are working on:

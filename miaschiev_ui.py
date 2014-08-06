@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'miaschiev.ui'
 #
-# Created: Tue Jan 21 15:56:49 2014
+# Created: Wed Aug 06 14:48:18 2014
 #      by: pyside-uic 0.2.15 running on PySide 1.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -12,7 +12,7 @@ from PySide import QtCore, QtGui
 class Ui_Miaschiev(object):
     def setupUi(self, Miaschiev):
         Miaschiev.setObjectName("Miaschiev")
-        Miaschiev.resize(1215, 793)
+        Miaschiev.resize(1333, 860)
         self.horizontalLayout_2 = QtGui.QHBoxLayout(Miaschiev)
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
         self.verticalLayout = QtGui.QVBoxLayout()
@@ -151,8 +151,14 @@ class Ui_Miaschiev(object):
         self.coast.setObjectName("coast")
         self.formLayout.setWidget(1, QtGui.QFormLayout.FieldRole, self.coast)
         self.verticalLayout.addLayout(self.formLayout)
-        spacerItem6 = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
+        spacerItem6 = QtGui.QSpacerItem(20, 32, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Maximum)
         self.verticalLayout.addItem(spacerItem6)
+        self.save_map = QtGui.QPushButton(Miaschiev)
+        self.save_map.setEnabled(False)
+        self.save_map.setObjectName("save_map")
+        self.verticalLayout.addWidget(self.save_map)
+        spacerItem7 = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
+        self.verticalLayout.addItem(spacerItem7)
         self.progress = QtGui.QLabel(Miaschiev)
         self.progress.setFrameShape(QtGui.QFrame.Panel)
         self.progress.setFrameShadow(QtGui.QFrame.Sunken)
@@ -206,4 +212,5 @@ class Ui_Miaschiev(object):
         self.lbl_notes.setText(QtGui.QApplication.translate("Miaschiev", "Notes Found:", None, QtGui.QApplication.UnicodeUTF8))
         self.reset_notezz.setText(QtGui.QApplication.translate("Miaschiev", "Reset missing Sanchez #1 note...", None, QtGui.QApplication.UnicodeUTF8))
         self.lbl_plants.setText(QtGui.QApplication.translate("Miaschiev", "Plants Found:", None, QtGui.QApplication.UnicodeUTF8))
+        self.save_map.setText(QtGui.QApplication.translate("Miaschiev", "Save current map to file...", None, QtGui.QApplication.UnicodeUTF8))
 
