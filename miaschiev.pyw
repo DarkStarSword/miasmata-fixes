@@ -82,7 +82,7 @@ hide_head_statue_mask = (
 	(0, 0, 0, 1, 1, 1, 0, 0, 0),
 )
 
-class Miaschiev(QtGui.QWidget):
+class Miaschiev(QtGui.QMainWindow):
 	def __init__(self, parent=None):
 		super(Miaschiev, self).__init__(parent)
 
@@ -111,14 +111,13 @@ class Miaschiev(QtGui.QWidget):
 		if not hasattr(self, 'busy') or not self.busy:
 			QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
 		self.busy = True
-		self.ui.progress.setText(msg)
-		self.ui.progress.repaint()
+		self.statusBar().showMessage(msg)
 		self.repaint()
 
 	def done(self, msg='Done'):
 		QtGui.QApplication.restoreOverrideCursor()
 		self.busy = False
-		self.ui.progress.setText(msg)
+		self.statusBar().showMessage(msg)
 
 	def process_install_path(self, path):
 		import rs5archive, rs5file, imag, environment
