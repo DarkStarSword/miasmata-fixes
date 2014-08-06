@@ -116,6 +116,8 @@ class Miaschiev(QtGui.QMainWindow):
 		app.processEvents()
 
 	def done(self, msg='Done'):
+		if msg != 'Done':
+			print msg
 		QtGui.QApplication.restoreOverrideCursor()
 		self.busy = False
 		self.statusBar().showMessage(msg)
