@@ -117,6 +117,7 @@ class Rs5CompressedFileDecoder(Rs5CompressedFile):
 
 	def extract_chunks(self, base_path, overwrite):
 		dest = os.path.join(base_path, self.filename.replace('\\', os.path.sep))
+		dest = dest.rstrip() # "TEX/Rock_Set2_Moss " ends in a space, which Windows can't handle, so strip it.
 		data = self.decompress()
 
 		try:
