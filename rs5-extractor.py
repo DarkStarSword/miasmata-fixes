@@ -138,7 +138,8 @@ def analyse(filename):
 		assert(file.u2 == 1)
 		assert(file.uncompressed_size == size)
 		assert(file.type == contents.magic)
-		assert(file.filename == contents.filename)
+		if not file.filename.startswith(r'MIASMOD\MODS'):
+			assert(file.filename == contents.filename)
 
 		# ALIGNMENT CONSTRAINT FOUND - FILE IS PADDED TO 8 BYTES BEFORE COMPRESSION
 		assert(file.uncompressed_size % 8 == 0)
