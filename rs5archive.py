@@ -300,7 +300,7 @@ class Rs5ArchiveEncoder(Rs5CentralDirectoryEncoder):
 		# can and cannot accept, so force everything to a known working
 		# time
 		import time
-		fake_time = 1424019900
+		fake_time = time.mktime((2015, 2, 16, 4, 5, 0, 0, 0, -1))
 		# fake_time = time.time - (30 * 60)
 		progress(msg=RS5Patcher.tr("Setting timestamp on %s to %s to workaround for v2.0.0.4 bug" % \
 				(self.fp.name, time.asctime(time.localtime(fake_time)))))
