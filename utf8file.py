@@ -14,10 +14,12 @@ import sys
 # be overridden).
 
 _orig_print = print
-def print(value, *args, **kwargs):
+def print(value = None, *args, **kwargs):
 	file = sys.stdout
 	if 'file' in kwargs:
 		file = kwargs['file']
+	if value is None:
+		_orig_print(**kwargs)
 	if isinstance(value, unicode):
 		value = value.encode(file.encoding)
 	_orig_print(value, *args, **kwargs)
