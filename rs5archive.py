@@ -291,6 +291,20 @@ class Rs5ArchiveEncoder(Rs5CentralDirectoryEncoder):
 		self.write_header(progress=progress)
 		self.fp.flush()
 		progress(msg=RS5Patcher.tr("RS5 Written"))
+		self.do_timestamp_workaround(progress)
+
+	def do_timestamp_workaround(self, progress=progress):
+		# Miasmata v2.0.0.4 has a bizzare bug where the menu is blank
+		# other than the 'created by...' if the main.rs5 timestamp is
+		# certain values. I do not yet fully understand what values it
+		# can and cannot accept, so force everything to a known working
+		# time
+		import time
+		fake_time = 1424019900
+		# fake_time = time.time - (30 * 60)
+		progress(msg=RS5Patcher.tr("Setting timestamp on %s to %s to workaround for v2.0.0.4 bug" % \
+				(self.fp.name, time.asctime(time.localtime(fake_time)))))
+		os.utime(self.fp.name, (fake_time, fake_time))
 
 class Rs5ArchiveUpdater(Rs5ArchiveEncoder, Rs5ArchiveDecoder):
 	def __init__(self, fp):
@@ -323,5 +337,6 @@ class Rs5ArchiveUpdater(Rs5ArchiveEncoder, Rs5ArchiveDecoder):
 		self.write_header(progress=progress)
 		self.fp.flush()
 		progress(msg=RS5Patcher.tr("RS5 Written"))
+		self.do_timestamp_workaround(progress)
 
 # vi:noexpandtab:sw=8:ts=8

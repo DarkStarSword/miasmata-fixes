@@ -60,6 +60,7 @@ class UndoMeta(dict):
 		rs5.fp.flush()
 		rs5.holes = None
 		rs5.fp.truncate(self['filesize'])
+		rs5.do_timestamp_workaround()
 
 class UndoMetaEncoder(UndoMeta, rs5file.Rs5FileEncoder):
 	def __init__(self, rs5):
