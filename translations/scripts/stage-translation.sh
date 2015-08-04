@@ -1,8 +1,8 @@
 #!/bin/sh -e
 
 headers=$PWD/miasmata-headers
-translation=/var/www/html/miasmata/fr
-staging=$PWD/miasmata-fr
+translation=/var/www/html/miasmata/ita
+staging=$PWD/miasmata-ita
 miasmata_fixes_top=$(readlink -f $(dirname $(readlink -f "$0"))/../../)
 mod_name="$1"
 mod_version="$2"
