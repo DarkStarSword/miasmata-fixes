@@ -5,6 +5,7 @@ from miasmata_gimp import *
 
 indent_a = 114
 indent_b = 156
+objective_x2 = 865
 font_a = Font('Neu Phollick Alpha', 40.0, True, -8.0)
 font_b = Font('Neu Phollick Alpha', 38.0, True)
 
@@ -13,12 +14,12 @@ objnote_x1 = 57
 objnote_x2 = 200
 
 class Objective(object):
-    def __init__(self, indent=indent_a, y=5, wrap=None, font=font_a):
-        self.indent, self.y, self.wrap, self.font = indent, y, wrap, font
+    def __init__(self, indent=indent_a, y=5, y2=None, font=font_a):
+        self.indent, self.y, self.y2, self.font = indent, y, y2, font
 
 objectives = {
     'OBJECTIVE_A_Placeholder': Objective(),
-    'OBJECTIVE_A': Objective(wrap=865),
+    'OBJECTIVE_A': Objective(y2=80),
     'OBJECTIVE_B': Objective(indent=indent_b),
     'OBJECTIVE_C': Objective(indent=indent_b),
     'OBJECTIVE_D': Objective(indent=indent_b),
@@ -31,8 +32,16 @@ objectives = {
 def compose_objective_image(objective_name, source_blank_image, output_basename):
     objective = objectives[objective_name]
     image = pdb.gimp_file_load(source_blank_image, source_blank_image)
-    text_layer = add_text_layer_from_file(image, '%s.txt' % objective_name, objective.font)
-    place_text(text_layer, objective.indent, objective.y, objective.wrap)
+    text = read_text('%s.txt' % objective_name)
+    text_layer = add_text(image, text, objective.font)
+
+    if objective.y2:
+        reduce_and_wrap_text_to_fit(text_layer, text, objective.font,
+                objective.indent, objective_x2, objective.y, objective.y2)
+    else:
+        orig_height = text_layer.height
+        reduce_text_to_fit(text_layer, objective.indent, objective_x2)
+        place_text(text_layer, objective.indent, objective.y + orig_height/2, yalign=CENTER)
 
     save(image, output_basename)
 
