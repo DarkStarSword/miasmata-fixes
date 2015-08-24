@@ -1,0 +1,3 @@
+Ho sintetizzato con successo:
+
+<span color="#ff0000">Agente Z: L'Adiuvante</span>

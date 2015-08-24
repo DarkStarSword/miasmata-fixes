@@ -1,0 +1,3 @@
+Ho sintetizzato con successo:
+
+<span color="#ff0000">Agente Y: L'Anti-Tossina</span>

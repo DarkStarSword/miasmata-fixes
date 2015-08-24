@@ -1,0 +1,1 @@
+Salute: <span color="#008000">Curato</span>

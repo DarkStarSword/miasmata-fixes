@@ -1,0 +1,3 @@
+Ho sintetizzato con successo:
+
+<span color="#0000c0">Tonico Erculeo</span>
