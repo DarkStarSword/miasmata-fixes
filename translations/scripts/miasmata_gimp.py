@@ -136,6 +136,19 @@ def reduce_text_to_fit(layer, x1, x2):
         font_size -= 1
         pdb.gimp_text_layer_set_font_size(layer, font_size, units)
 
+def reduce_and_wrap_text_to_fit(layer, text, font, x1, x2, y1, y2):
+    (font_size, units) = pdb.gimp_text_layer_get_font_size(layer)
+    while True:
+        if font.bold:
+            remaining = bold_word_wrap(layer, text, x2 - x1, max_height = y2 - y1)
+        else:
+            remaining = word_wrap(layer, text, x2 - x1, max_height = y2 - y1)
+        if not remaining:
+            break
+        font_size -= 1
+        pdb.gimp_text_layer_set_font_size(layer, font_size, units)
+    place_text(layer, x1, y1)
+
 def reduce_text_line_spacing_to_fit(layer, height):
     line_spacing = pdb.gimp_text_layer_get_line_spacing(layer)
     while layer.height > height:
