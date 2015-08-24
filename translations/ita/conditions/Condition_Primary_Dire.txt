@@ -1,1 +1,1 @@
-Salute: <span color="#800000">Moribondo</span> text.
+Salute: <span color="#800000">Moribondo</span>
