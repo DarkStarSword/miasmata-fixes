@@ -1,0 +1,3 @@
+He sintetizado con éxito:
+
+<span color="#e00000">La cura</span>

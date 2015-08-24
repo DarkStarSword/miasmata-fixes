@@ -1,0 +1,1 @@
+Salud: <span color="#008000">Curado</span>

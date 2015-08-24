@@ -1,0 +1,3 @@
+He sintetizado con éxito:
+
+<span color="#008000">Intensificador de resistencia</span>
