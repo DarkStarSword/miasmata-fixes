@@ -1,1 +1,1 @@
-Salud: <span color="#800000">Mala</span>
+Salud: <span color="#800000">Pésima</span>
