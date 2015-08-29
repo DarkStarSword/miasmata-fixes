@@ -7,11 +7,15 @@ font_l = Font('Neu Phollick Alpha', 42.0, True)
 font_s = Font('Neu Phollick Alpha', 38.0, True)
 font_s1 = Font('Neu Phollick Alpha', 33.0, True)
 
+# Aligned to center column
 lx, rx = 491, 526
+# Minimum allowed x (for page conditions heading):
+min_x = 278
 
 def compose_condition_page(source_txt_file, source_blank_image, output_basename):
     image = pdb.gimp_file_load(source_blank_image, source_blank_image)
     layer = add_text_layer_from_file(image, source_txt_file, font_l)
+    reduce_text_to_fit(layer, min_x, lx)
     place_text(layer, lx, 275, xalign=RIGHT)
 
     save(image, output_basename)
