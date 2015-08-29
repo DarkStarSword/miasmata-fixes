@@ -12,6 +12,7 @@ order = ['communitypatch']
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-l', '--language', help='Language pack to include and enable')
+parser.add_argument('-x', '--exe-translation', help='Translations for hard coded strings to binary patch')
 parser.add_argument('-d', '--dest', '--dist', default='miaspatch', help='Destination directory')
 parser.add_argument('mods', nargs='*', help='Extra mods (asside from the community patch) to include')
 args = parser.parse_args()
@@ -21,6 +22,10 @@ if args.language is not None:
 		if not os.path.isfile(os.path.join('miaspatch_i18n', '%s.qm' % args.language)):
 			print '%s language pack does not exist, exiting!' % args.language
 			sys.exit(1)
+
+if args.exe_translation is not None:
+	binary_patches.append('translate_exe')
+	args.mods.append(args.exe_translation)
 
 for file in args.mods:
 	if not os.path.isfile(file):
@@ -73,6 +78,8 @@ if delete:
 	config.set('DEFAULT', 'delete', ' '.join(delete))
 if args.language is not None:
 	config.set('DEFAULT', 'language', args.language)
+if args.exe_translation:
+	config.set('DEFAULT', 'exe_translation', os.path.basename(args.exe_translation))
 if order:
 	config.set('DEFAULT', 'prefix_order', ' '.join(order))
 with open(dst, 'wb') as configfile:
