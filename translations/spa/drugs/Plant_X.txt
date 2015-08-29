@@ -1,4 +1,4 @@
-Agente X - Antibiótico primario
+Agente X - AntibiÃ³tico primario
 El agente X es el primer componente de los tres necesarios para sintetizar la cura.
 
-Se necesitan también los agentes Y y Z: la antitoxina y el adyuvante.
+Se necesitan tambiÃ©n los agentes Y y Z: la antitoxina y el adyuvante.

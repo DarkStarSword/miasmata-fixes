@@ -1,4 +1,4 @@
-Investigación bioquímica
-Nombre: Medicina básica
-Función:
-La medicina básica reduce la fiebre por un corto periodo de tiempo.
+InvestigaciÃ³n bioquÃ­mica
+Nombre: Medicina bÃ¡sica
+FunciÃ³n:
+La medicina bÃ¡sica reduce la fiebre por un corto periodo de tiempo.

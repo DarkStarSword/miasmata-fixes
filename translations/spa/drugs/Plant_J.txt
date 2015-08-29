@@ -1,6 +1,6 @@
 Intensificador cerebral
 El intensificador cerebral proporciona una mejora permanente de la agudeza, lo que supone los siguientes beneficios a la hora de lidiar con la Bestia:
 
-1. Permanece agachado y no te muevas. Tu punto de mira apuntar· autom·ticamente en la direcciÛn de la Bestia.
+1. Permanece agachado y no te muevas. Tu punto de mira apuntar√° autom√°ticamente en la direcci√≥n de la Bestia.
 
-2. Mientras permanezcas agachado y sin moverte, aparecer· un sÌmbolo indicador blanco delante de ti. La opacidad del sÌmbolo es proporcional a la proximidad de la Bestia. Si el sÌmbolo se vuelve rojo, significa que no est·s bien escondido y la Bestia puede verte si mira en tu direcciÛn.
+2. Mientras permanezcas agachado y sin moverte, aparecer√° un s√≠mbolo indicador blanco delante de ti. La opacidad del s√≠mbolo es proporcional a la proximidad de la Bestia. Si el s√≠mbolo se vuelve rojo, significa que no est√°s bien escondido y la Bestia puede verte si mira en tu direcci√≥n.

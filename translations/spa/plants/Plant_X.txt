@@ -1,6 +1,6 @@
-Investigación bioquímica
-Nombre: Agente X - Antibiótico primario
-Función:
+InvestigaciÃ³n bioquÃ­mica
+Nombre: Agente X - AntibiÃ³tico primario
+FunciÃ³n:
 El agente X es el primer componente de los tres necesarios para sintetizar la cura.
 
-Se necesitan también los agentes Y y Z: la antitoxina y el adyuvante.
+Se necesitan tambiÃ©n los agentes Y y Z: la antitoxina y el adyuvante.

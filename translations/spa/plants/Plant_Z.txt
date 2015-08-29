@@ -1,6 +1,6 @@
-Investigación bioquímica
+InvestigaciÃ³n bioquÃ­mica
 Nombre: Agente Z - Adyuvante
-Función:
+FunciÃ³n:
 El agente Z es el tercer componente de los tres necesarios para sintetizar la cura.
 
-Se necesitan también los agentes X e Y: el antibiótico y la antitoxina.
+Se necesitan tambiÃ©n los agentes X e Y: el antibiÃ³tico y la antitoxina.
