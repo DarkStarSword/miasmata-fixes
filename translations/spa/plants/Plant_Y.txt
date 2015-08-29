@@ -1,0 +1,6 @@
+Investigación bioquímica
+Nombre: Agente Y - Antitoxina
+Función:
+El agente Y es el segundo componente de los tres necesarios para sintetizar la cura.
+
+Se necesitan también los agentes X y Z: el antibiótico y el adyuvante.

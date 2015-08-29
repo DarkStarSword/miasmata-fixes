@@ -1,0 +1,6 @@
+Investigación bioquímica
+Nombre: Estimulante de la energía
+Función:
+El estimulante de la energía mejora la resistencia temporalmente.
+
+Mientras dure el efecto, podrás correr durante más tiempo sin fatigarte.

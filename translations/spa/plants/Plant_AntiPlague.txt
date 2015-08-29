@@ -1,0 +1,5 @@
+Agente antipeste principal
+
+Este es el primer componente de los tres necesarios para sintetizar la cura.
+
+Los otros componentes son la antitoxina y el adyuvante.
