@@ -202,12 +202,25 @@ def compose_research_image(template_txt_file, source_txt_file, source_conclusion
             line_spacing -= 1
             pdb.gimp_text_layer_set_line_spacing(text, line_spacing)
 
+    # Place conclusion, using mask again for Spanish RESEARCH_27:
     y = lines[1] + 10
     conclusion = read_text(source_conclusion_txt_file)
     layer = add_text(image, '%s\n\n%s' % (conclusion_templ_txt, conclusion), research_font)
-    word_wrap(layer, None, research_x2 - research_x1)
+    height = lines[0] - y - 10
+
+    # word_wrap(layer, None, research_x2 - research_x1)
+    # place_text(layer, research_x1, y)
+    # reduce_text_line_spacing_to_fit(layer, height)
+
     place_text(layer, research_x1, y)
-    reduce_text_line_spacing_to_fit(layer, lines[0] - y - 10)
+    line_spacing = pdb.gimp_text_layer_get_line_spacing(layer)
+    while True:
+        group = masked_word_wrap(layer, mask, research_x2 - research_x1, channel=channel, test=test)
+        if group.height < height:
+            break
+        pdb.gimp_image_remove_layer(image, group)
+        line_spacing -= 1
+        pdb.gimp_text_layer_set_line_spacing(layer, line_spacing)
 
     save(image, output_basename)
 
