@@ -315,3 +315,5 @@ register(
 )
 
 main()
+
+# vi:et:sw=4:ts=4

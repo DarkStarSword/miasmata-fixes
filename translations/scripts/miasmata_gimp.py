@@ -176,6 +176,31 @@ def underline_text(layer):
     markup = '<u>%s</u>' % markup
     pdb.gimp_text_layer_set_markup(layer, markup)
 
+# Brackets in the regex make this partition instead of split:
+tag_partitions_re = re.compile(r'(\<[^\>]*\>)')
+tag_re = re.compile(r'\<([^\> ]+)[^\>]*\>')
+def tag_preserving_split(text, sep):
+    tags = []
+    ret = []
+    partitions = tag_partitions_re.split(text)
+    for partition in partitions:
+        if partition.startswith('</'):
+            #FIXME: Check popping expected tag
+            tags.pop()
+            continue
+        match = tag_re.match(partition)
+        if match:
+            tags.append((partition, '</%s>' % match.group(1)))
+            continue
+        for word in partition.split(sep):
+            ret = word
+            for (pre, post) in tags:
+                ret = '%s%s%s' % (pre, ret, post)
+            # FIXME: Rejoin everything, then split only on spaces that aren't
+            # inside tags - do deal with e.g. punctuation immediately after a span
+            if ret:
+                yield ret
+
 def masked_word_wrap(layer, mask, max_width, channel = VALUE_MODE, threshold = 128, test = -1, hpad = 5, vpad = -2):
     import struct
 
@@ -259,7 +284,8 @@ def masked_word_wrap(layer, mask, max_width, channel = VALUE_MODE, threshold = 1
             x += text.width + word_spacing
 
     for paragraph in text.split('\n'):
-        words = paragraph.split(' ')
+        #words = paragraph.split(' ')
+        words = tag_preserving_split(paragraph, ' ')
         if justification == TEXT_JUSTIFY_RIGHT:
             x = min_x + max_width
         else:
@@ -272,6 +298,8 @@ def masked_word_wrap(layer, mask, max_width, channel = VALUE_MODE, threshold = 1
                 continue
 
             text = pdb.gimp_text_fontname(image, None, x, y, word, 0, True, font_size, font_units, font)
+            pdb.gimp_text_layer_set_markup(text, word)
+
             paragraph_spacing = paragraph_spacing or text.height
             pdb.gimp_image_reorder_item(image, text, group, 0)
 
@@ -537,3 +565,5 @@ def save(image, output_basename, alpha=False, png=False, mipmaps=False):
         save_png(image2, '%s.png' % output_basename)
     else:
         save_jpg(image2, '%s.jpg' % output_basename)
+
+# vi:et:sw=4:ts=4
