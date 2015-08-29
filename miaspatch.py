@@ -313,6 +313,8 @@ class MiasPatch(QtGui.QDialog):
 		exe_path = os.path.join(self.install_path, 'Miasmata.exe')
 		for patch in patches.split():
 			mod = __import__(patch)
+			if hasattr(mod, 'init'):
+				mod.init(config)
 			patch_list.append(BinMod(mod, exe_path))
 		return patch_list
 

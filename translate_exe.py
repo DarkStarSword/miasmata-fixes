@@ -9,9 +9,9 @@ from PySide import QtGui
 import pefile
 import json
 
-# FIXME: Read these from the translation file
-name = 'fixme'
-version = 'fixme'
+# These will be loaded from the translation file
+name = 'Unnamed Translation'
+version = '0.0'
 
 txt_scanning = QtGui.QApplication.translate('exe patcher', 'Scanning Miasmata.exe...', None, QtGui.QApplication.UnicodeUTF8)
 txt_success = QtGui.QApplication.translate('exe patcher', 'Patch successful', None, QtGui.QApplication.UnicodeUTF8)
@@ -181,10 +181,16 @@ patch_hunks = (
 )
 
 def load_translation(translation):
+    global name, version
+
     (meta, patch) = json.load(translation, encoding='cp1252')
     for translatable in all_translatables:
         translatable.load_translation(patch)
-    # FIXME: Load name + version information
+
+    if 'name' in meta:
+        name = meta['name']
+    if 'version' in meta:
+        version = meta['version']
 
 def get_rdata(pe):
     return filter(lambda x: x.Name == '.rdata\0\0', pe.sections)[0]
@@ -265,6 +271,10 @@ def check_status(filename):
     if all([ x.translated for x in hunks ]):
         return miaspatch.STATUS_INSTALLED
     return miaspatch.STATUS_OLD_VERSION
+
+def init(config):
+    translation = config.get('DEFAULT', 'exe_translation')
+    load_translation(open(translation, 'r'))
 
 def dump_pe_strings(pe):
     rdata = get_rdata(pe)
