@@ -13,9 +13,9 @@ import json
 name = 'Unnamed Translation'
 version = '0.0'
 
-txt_scanning = QtGui.QApplication.translate('exe patcher', 'Scanning Miasmata.exe...', None, QtGui.QApplication.UnicodeUTF8)
+txt_scanning = QtGui.QApplication.translate('exe patcher', 'Scanning Miasmata.exe for translatable strings...', None, QtGui.QApplication.UnicodeUTF8)
 txt_success = QtGui.QApplication.translate('exe patcher', 'Patch successful', None, QtGui.QApplication.UnicodeUTF8)
-txt_err = QtGui.QApplication.translate('exe patcher', '%s occured writing to Miasmata.exe: %s', None, QtGui.QApplication.UnicodeUTF8)
+txt_err = QtGui.QApplication.translate('exe patcher', '%s occurred writing to Miasmata.exe: %s', None, QtGui.QApplication.UnicodeUTF8)
 
 all_translatables = []
 
@@ -200,15 +200,22 @@ def next_aligned(off):
 
 def iter_pe_strings(rdata):
     off = 0
-    while off < len(rdata.data):
-        string = rdata.data[off:rdata.data.find('\0', off)]
+    data = rdata.get_data()
+    while off < len(data):
+        string = data[off:data.find('\0', off)]
 
         # Check padding is NULL to eliminate any UTF16 strings and other garbage
         end = off + len(string)
         next_off = next_aligned(end)
-        padding = rdata.data[end:next_off]
-        if string and padding == '\0'*len(padding):
-            yield (off, next_off - off - 1, next_off - end - 1, string)
+        padding = data[end:next_off]
+
+        try:
+            ustring = string.decode('cp1252')
+        except UnicodeDecodeError:
+            pass
+        else:
+            if string and padding == '\0'*len(padding):
+                yield (off, next_off - off - 1, next_off - end - 1, ustring)
 
         off = next_off
 
@@ -218,7 +225,7 @@ def find_hunks(pe, print=print):
     possible_hunks = []
     found_hunks = []
     for off, mx, padding, string in iter_pe_strings(rdata):
-        #print('%08x (%i, %i): %s' % (off, mx, padding, string))
+        # print('%08x (%i, %i): %s' % (off, mx, padding, string))
 
         last_hunks, possible_hunks = possible_hunks, []
 
@@ -261,6 +268,8 @@ def remove_patch(filename, print=print):
     return _apply_patch(filename, HunkMatch.remove_patch, print=print)
 
 def check_status(filename):
+    import miaspatch
+
     try:
         hunks = find_hunks(pefile.PE(filename), print=print)
     except IOError as e:
@@ -297,3 +306,5 @@ if __name__ == '__main__':
     #apply_patch(exe)
 
     #remove_patch(exe)
+
+# vi:noexpandtab:sw=4:ts=4
