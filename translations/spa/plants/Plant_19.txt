@@ -1,5 +1,3 @@
-Información sobre el espécimen
-Nombre: Seta de sombrero azul
-Género: <i>Amanita</i>
-Observaciones:
+Seta de sombrero azul
+<i>Amanita</i>
 Un hongo del género <i>Amanita</i> con un sombrero de color azul ceroso salpicado de pequeñas protuberancias blancas.

@@ -1,5 +1,3 @@
-Información sobre el espécimen
-Nombre: Champiñón común
-Género: <i>Agaricus</i>
-Observaciones:
+Champiñón común
+<i>Agaricus</i>
 Un <i>Agaricus bisporus</i> común: sombrero convexo, himenio laminado, etc.

@@ -1,5 +1,3 @@
-Información sobre el espécimen
-Nombre: Planta carnívora odre
-Género: <i>Nepenthes</i>
-Observaciones:
+Planta carnívora odre
+<i>Nepenthes</i>
 Una planta carnívora tipo odre del género <i>Nepenthes</i>.

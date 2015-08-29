@@ -1,0 +1,4 @@
+Agente Z - Adyuvante
+El agente Z es el tercer componente de los tres necesarios para sintetizar la cura.
+
+Se necesitan también los agentes X e Y: el antibiótico y la antitoxina.

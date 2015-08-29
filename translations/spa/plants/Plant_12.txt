@@ -1,5 +1,3 @@
-Información sobre el espécimen
-Nombre: Flor morada y blanca de la pradera
-Género: <i>Lupinus</i>
-Observaciones:
+Flor morada y blanca de la pradera
+<i>Lupinus</i>
 Una abundante especie dentro del género <i>Lupinus</i>. De color morado y blanco.

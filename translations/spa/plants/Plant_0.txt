@@ -1,5 +1,3 @@
-Información sobre el espécimen
-Nombre: Nopal
-Género: <i>Opuntia</i>
-Observaciones:
+Nopal
+<i>Opuntia</i>
 Un cactus común. Su fruto está cubierto de espinas.

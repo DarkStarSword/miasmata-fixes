@@ -1,5 +1,3 @@
-Información sobre el espécimen
-Nombre: Lirio rosa moteado
-Género: <i>Lilium</i>
-Observaciones:
+Lirio rosa moteado
+<i>Lilium</i>
 Parece tratarse de una flor común del género <i>Lilium</i>. Sus pétalos son rosas con motas blancas.
