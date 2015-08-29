@@ -13,6 +13,10 @@ import json
 name = 'fixme'
 version = 'fixme'
 
+txt_scanning = QtGui.QApplication.translate('exe patcher', 'Scanning Miasmata.exe...', None, QtGui.QApplication.UnicodeUTF8)
+txt_success = QtGui.QApplication.translate('exe patcher', 'Patch successful', None, QtGui.QApplication.UnicodeUTF8)
+txt_err = QtGui.QApplication.translate('exe patcher', '%s occured writing to Miasmata.exe: %s', None, QtGui.QApplication.UnicodeUTF8)
+
 all_translatables = []
 
 class TranslatedStringTooLong(Exception): pass
@@ -202,7 +206,8 @@ def iter_pe_strings(rdata):
 
         off = next_off
 
-def find_hunks(pe):
+def find_hunks(pe, print=print):
+    print(txt_scanning)
     rdata = get_rdata(pe)
     possible_hunks = []
     found_hunks = []
@@ -231,22 +236,30 @@ def find_hunks(pe):
                 possible_hunks.append(match)
     return found_hunks
 
+def _apply_patch(filename, fn, print=print):
+    try:
+        hunks = find_hunks(pefile.PE(filename), print=print)
+        fd = open(filename, 'rb+')
+        for hunk in hunks:
+            fn(hunk, fd)
+        fd.close()
+    except IOError as e:
+        print(txt_err % (e.__class__.__name__, str(e)))
+    else:
+        print(txt_success)
+
 def apply_patch(filename, print=print):
-    hunks = find_hunks(pefile.PE(filename))
-    fd = open(filename, 'rb+')
-    for hunk in hunks:
-        hunk.apply_patch(fd)
-    fd.close()
+    return _apply_patch(filename, HunkMatch.apply_patch, print=print)
 
 def remove_patch(filename, print=print):
-    hunks = find_hunks(pefile.PE(filename))
-    fd = open(filename, 'rb+')
-    for hunk in hunks:
-        hunk.remove_patch(fd)
-    fd.close()
+    return _apply_patch(filename, HunkMatch.remove_patch, print=print)
 
 def check_status(filename):
-    hunks = find_hunks(pefile.PE(filename))
+    try:
+        hunks = find_hunks(pefile.PE(filename), print=print)
+    except IOError as e:
+        print(txt_err % (e.__class__.__name__, str(e)))
+        return miaspatch.STATUS_NOT_INSTALLABLE
     if all([ x.english for x in hunks ]):
         return miaspatch.STATUS_NOT_INSTALLED
     if all([ x.translated for x in hunks ]):
@@ -264,13 +277,13 @@ if __name__ == '__main__':
     if len(sys.argv) > 2:
         load_translation(open(sys.argv[2], 'r'))
     else:
-        load_translation(open('spanish_exe_patch.json', 'r'))
+        load_translation(open('translate_exe_template.json', 'r'))
 
-    #dump_pe_strings(pefile.PE(exe))
+    dump_pe_strings(pefile.PE(exe))
 
     #hunks = find_hunks(pefile.PE(exe))
     #print([(x.english, x.translated) for x in hunks])
 
     #apply_patch(exe)
 
-    remove_patch(exe)
+    #remove_patch(exe)
