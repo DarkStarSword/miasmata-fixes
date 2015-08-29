@@ -16,7 +16,7 @@ def compose_tags(image, item_name, output_basename):
     tags = read_text('%s.txt' % item_name).split('\n')
     tag_h = 97
     tag_x = (140, 400)
-    tag_w = 180
+    tag_w = 190
 
     for y in range(4):
         for x in range(2):
