@@ -1,0 +1,5 @@
+Información sobre el espécimen
+Nombre: Violeta blanca y rosa
+Género: <i>Viola</i>
+Observaciones:
+Un ejemplo típico del género <i>Viola</i>. Esta flor es de color blanco y rosa.
