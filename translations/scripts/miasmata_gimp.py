@@ -179,17 +179,6 @@ def underline_text(layer):
 # Brackets in the regex make this partition instead of split:
 tag_partitions_re = re.compile(r'(\<[^\>]*\>)')
 tag_re = re.compile(r'\<([^\> ]+)[^\>]*\>')
-tag_re_final_split = re.compile(r'''
-    (                               (?# Group to make re.split do a partition)
-        [^\<\s]*                    (?# Any text other than spaces and tags)
-        (?:                         (?# Non-grouping brackets to avoid extra output from re.split)
-            \<[^\>\s]+[^\>]*\>*     (?# Opening tag)
-            [^\<\s]*                (?# Contents of tag)
-            \<\/[^\>\s]+[^\>]*\>*   (?# Closing tag)
-            [^\<\s]*                (?# Any text after tag, e.g. punctuation)
-        )?                          (?# Tags are optional)
-    )
-''', re.VERBOSE)
 def tag_preserving_split(text, sep=' '):
     tags = []
     ret = []
@@ -205,33 +194,28 @@ def tag_preserving_split(text, sep=' '):
             continue
         match = tag_re.match(partition)
         if match:
-            assert(tags == []) # Likely have a bug in this case. Fail now
+            #assert(tags == []) # Likely have a bug in this case. Fail now
             tags.append((partition, '</%s>' % match.group(1)))
             continue
 
         # Not a tag. Split text by sep and add tags around each individual word
-        tmp = []
-        for word in partition.split(sep):
-            for (pre, post) in tags:
-                word = '%s%s%s' % (pre, word, post)
-            tmp.append(word)
+        for (i, word) in enumerate(partition.split(sep)):
+            # If word is an empty string, it will be joined with a word from
+            # another partition. Therefore, only apply tags to actual words:
+            if word:
+                for (pre, post) in reversed(tags):
+                    word = '%s%s%s' % (pre, word, post)
 
-        # Rejoin words into partition, but with tags around each word
-        ret.append(' '.join(tmp))
-
-    # Rejoin partitions together
-    ret = ''.join(ret)
-
-    # This regular expression matches all text we want to return, which is the
-    # inverse of what we would usually "split" on. We do it this way because
-    # writing a regular expression to only match spaces that aren't in tags is
-    # harder. Grouping brackets are necessary to return the matched text in
-    # re.split, but it also means the result will also contain spaces, which we
-    # filter out.
-    # FIXME: this regular expression assumes sep=\s
-    # FIXME: This probably won't work if a word is contained in multiple tags
-    ret = tag_re_final_split.split(ret)
-    return filter(lambda x: x and x!= sep, ret)
+            if i == 0 and ret:
+                # First word in a partition is concatenated with the last word
+                # of the previous parititon. This allows punctuation outside of
+                # tags to be joined with the <i>final word in the tag</i>. If
+                # there was a space one of partitions will have an empty
+                # string, so this still works.
+                ret[-1] += word
+            else:
+                ret.append(word)
+    return ret
 
 def masked_word_wrap(layer, mask, max_width, channel = VALUE_MODE, threshold = 128, test = -1, hpad = 5, vpad = -2):
     import struct
