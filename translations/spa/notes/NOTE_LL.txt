@@ -1,4 +1,4 @@
-<u>Cómo elaborar medicamentos:</u>
+<u>CÃ³mo elaborar medicamentos:</u>
 
 Se pueden elaborar medicamentos a partir de muchas de las plantas y los hongos que se encuentran en la isla.
 
@@ -6,4 +6,4 @@ Algunos medicamentos se elaboran con una sola planta. Otros se elaboran combinan
 
 <u>Paso 1:</u>
 
-Pon una planta en la «bandeja A».
+Pon una planta en la Â«bandeja AÂ».

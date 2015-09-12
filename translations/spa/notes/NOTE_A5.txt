@@ -1,9 +1,9 @@
-Paso 1: Usa la triangulación para determinar tu posición en el mapa como se describe en el Documento sobre cartografía A.
+Paso 1: Usa la triangulaciÃ³n para determinar tu posiciÃ³n en el mapa como se describe en el Documento sobre cartografÃ­a A.
 
-Paso 2: Mira a tu alrededor. Trata de visualizar puntos de referencia que todavía NO están representados como iconos en el mapa: puntos de referencia «desconocidos».
+Paso 2: Mira a tu alrededor. Trata de visualizar puntos de referencia que todavÃ­a NO estÃ¡n representados como iconos en el mapa: puntos de referencia Â«desconocidosÂ».
 
-Paso 3: Mientras diriges la mirada hacia un punto de referencia «desconocido», pulsa [Activar] para dibujar una línea de visión en el mapa que vaya en esa dirección.
+Paso 3: Mientras diriges la mirada hacia un punto de referencia Â«desconocidoÂ», pulsa [Activar] para dibujar una lÃ­nea de visiÃ³n en el mapa que vaya en esa direcciÃ³n.
 
-Paso 4: Guarda el mapa y la brújula y camina hacia otro punto con buena visibilidad. Ahora repite los pasos 1, 2 y 3.
+Paso 4: Guarda el mapa y la brÃºjula y camina hacia otro punto con buena visibilidad. Ahora repite los pasos 1, 2 y 3.
 
-Cuando hayas trazado dos líneas de visión diferentes que apunten al mismo punto de referencia, se revelará su posición en la intersección de las dos líneas. Entonces se convertirá en «conocido».
+Cuando hayas trazado dos lÃ­neas de visiÃ³n diferentes que apunten al mismo punto de referencia, se revelarÃ¡ su posiciÃ³n en la intersecciÃ³n de las dos lÃ­neas. Entonces se convertirÃ¡ en Â«conocidoÂ».

@@ -1,3 +1,3 @@
-Si el punto de referencia está representado por un icono en el mapa, se considera «conocido». En el dibujo de arriba, los puntos A y C son «conocidos», mientras que el punto B no lo es.
+Si el punto de referencia estÃ¡ representado por un icono en el mapa, se considera Â«conocidoÂ». En el dibujo de arriba, los puntos A y C son Â«conocidosÂ», mientras que el punto B no lo es.
 
-Paso 3: Dibuja líneas de visión en la dirección de dos puntos de referencia. Para hacerlo, mira hacia cada uno de los puntos y pulsa [Àctivar]. La intersección de estas dos líneas representa tu posición exacta.
+Paso 3: Dibuja lÃ­neas de visiÃ³n en la direcciÃ³n de dos puntos de referencia. Para hacerlo, mira hacia cada uno de los puntos y pulsa [Ã€ctivar]. La intersecciÃ³n de estas dos lÃ­neas representa tu posiciÃ³n exacta.
