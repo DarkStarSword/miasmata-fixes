@@ -1,0 +1,5 @@
+Potenciador
+
+Hemos encontrado varias plantas en esta isla que funcionan como potenciadores.
+
+Se pueden combinar con plantas medicinales durante la síntesis para elaborar medicina extrafuerte.
