@@ -466,7 +466,7 @@ def compose_note_kk(image, note_name):
     place_text(header, x1 + (x2-x1)/2, 390, xalign=CENTER)
     add_layer_mask_from_other_layer_alpha(header, clip_1_mask)
     txt = read_text('%s_clip1.txt' % note_name)
-    layer = add_text(image, '%s %s' % (txt, '.'*20), newspaper_body)
+    layer = add_text(image, '%s %s' % (txt, '.'*40), newspaper_body)
     pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_FILL)
     place_text(layer, x1, header.offsets[1]+header.height + gap, x2)
     add_layer_mask_from_other_layer_alpha(layer, clip_1_mask)
