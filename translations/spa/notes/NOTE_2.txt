@@ -1,5 +1,5 @@
 Dagless:
 
-Creo que estamos avanzando bastante en la síntesis del agente Y: la antitoxina. Herbert ha descubierto un alga bioluminiscente en una charca que está cerca de aquí, cerca del puesto avanzado Vega. El alga ha servido de base estabilizadora para el extracto de Orchadae que consiguió Cornelius.
+Creo que estamos avanzando bastante en la síntesis del <span underline="single" underline_color="#ff0000">agente Y: la antitoxina</span>. Herbert ha descubierto un <span underline="single" underline_color="#ff0000">alga bioluminiscente</span> en una charca que está cerca de aquí, cerca del puesto avanzado Vega. El alga ha servido de base estabilizadora para el extracto de <span underline="single" underline_color="#ff0000">Orchadae</span> que consiguió Cornelius.
 
 Sánchez
