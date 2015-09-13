@@ -115,12 +115,19 @@ def compose_note_5(image, note_name):
 # There is no note 6...
 
 def compose_note_7(image, note_name):
-    layer = add_text_layer_from_file(image, '%s.txt' % note_name, neu_phollick_alpha)
+    font = neu_phollick_alpha
+    layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 1130, 90, 1830)
+    layer = add_text_layer_from_file(image, 'sirius.txt', font)
+    place_text(layer, 623, 331, xalign=RIGHT)
 
 def compose_note_8(image, note_name):
-    layer = add_text_layer_from_file(image, '%s.txt' % note_name, flute)
+    font = flute
+    layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 1457, 250, xalign=CENTER, yalign=CENTER)
+    txt = read_text('sirius.txt').upper()
+    layer = add_text(image, txt, font)
+    place_text(layer, 1837, 903, xalign=RIGHT)
 
 def compose_note_9(image, note_name):
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, arch_daughter)
