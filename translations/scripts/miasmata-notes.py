@@ -164,7 +164,9 @@ def compose_note_12(image, note_name):
 def compose_note_13(image, note_name):
     font = neu_phollick_alpha_c
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
-    place_text(layer, 210, 60, 970)
+    word_wrap(layer, None, 970 - 210)
+    place_text(layer, 210, 60)
+    reduce_text_line_spacing_to_fit(layer, 1000 - 60)
 
 def compose_note_14(image, note_name):
     font = neu_phollick_alpha_l
@@ -246,7 +248,9 @@ def compose_note_a5(image, note_name):
     font_t = neu_phollick_alpha_lc
     font2 = neu_phollick_alpha_s
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
-    place_text(layer, 195, 175, 973)
+    word_wrap(layer, None, 973 - 195)
+    place_text(layer, 195, 175)
+    reduce_text_line_spacing_to_fit(layer, 1000 - 175)
 
     layer = add_text_layer_from_file(image, '%s_title.txt' % note_name, font_t)
     pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_CENTER)
