@@ -20,7 +20,7 @@ OS2Version: 0
 OS2_WeightWidthSlopeOnly: 0
 OS2_UseTypoMetrics: 1
 CreationTime: -2082844800
-ModificationTime: 1395816636
+ModificationTime: 1442133239
 PfmFamily: 17
 TTFWeight: 400
 TTFWidth: 5
@@ -696,10 +696,10 @@ NameList: Adobe Glyph List
 DisplaySize: -24
 AntiAlias: 1
 FitToEm: 1
-WinInfo: 63 63 25
+WinInfo: 0 48 15
 BeginPrivate: 0
 EndPrivate
-BeginChars: 65539 101
+BeginChars: 65539 105
 
 StartChar: .notdef
 Encoding: 65536 -1 0
@@ -9489,6 +9489,60 @@ Fore
 Refer: 57 94 N 1 0 0 1 124.5 -1275 2
 Refer: 18 101 N 1 0 0 1 0 0 3
 Validated: 1
+EndChar
+
+StartChar: oacute
+Encoding: 243 243 101
+Width: 1806
+VWidth: 0
+LayerCount: 2
+Fore
+Refer: 98 769 S 1 0 0 1 351 -1164 2
+Refer: 24 111 N 1 0 0 1 0 0 3
+EndChar
+
+StartChar: aacute
+Encoding: 225 225 102
+Width: 1847
+VWidth: 0
+LayerCount: 2
+Fore
+Refer: 98 769 S 1 0 0 1 247 -1148 2
+Refer: 29 97 N 1 0 0 1 0 0 3
+EndChar
+
+StartChar: lacute
+Encoding: 314 314 103
+Width: 1249
+VWidth: 0
+LayerCount: 2
+Fore
+Refer: 98 769 S 1 0 0 1 -80 798 2
+Refer: 37 108 N 1 0 0 1 0 0 3
+EndChar
+
+StartChar: iacute
+Encoding: 237 237 104
+Width: 1303
+VWidth: 0
+Flags: WO
+LayerCount: 2
+Fore
+SplineSet
+856 66 m 1
+ 1073 66 l 1
+ 1073 0 l 1
+ 233 0 l 1
+ 233 66 l 1
+ 446 66 l 1
+ 446 1192 l 1
+ 233 1192 l 1
+ 233 1266 l 1
+ 295 1266 295 1266 336 1257 c 1
+ 623 1270 623 1270 856 1319 c 1
+ 856 66 l 1
+EndSplineSet
+Refer: 98 769 S 1 0 0 1 53.5 -1227 2
 EndChar
 EndChars
 EndSplineFont
