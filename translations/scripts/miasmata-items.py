@@ -60,6 +60,22 @@ def compose_lab_darkbottle(image, item_name, output_basename):
 
     save(image, output_basename, False, mipmaps=True)
 
+def compose_lab_bluebottle(image, item_name, output_basename):
+    labels = map(unicode.strip, read_text('%s.txt' % item_name).split('\n'))
+
+    label_x = (64, 192)
+    label_h = 24
+    label_y = (image.height - 3*label_h/2, image.height - label_h/2 + 2)
+
+    y = 0
+    for x in range(2):
+        layer = add_text(image, labels.pop(0), bottle_font)
+        pdb.gimp_text_layer_set_hint_style(layer, TEXT_HINT_STYLE_FULL)
+        reduce_text_to_fit(layer, 0, 124)
+        place_text(layer, label_x[x], label_y[y], xalign=CENTER, yalign=CENTER)
+
+    save(image, output_basename, False, mipmaps=True)
+
 def compose_item_image(item_name, source_blank_image, output_basename):
     image = pdb.gimp_file_load(source_blank_image, source_blank_image)
 
