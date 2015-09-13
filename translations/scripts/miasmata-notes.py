@@ -153,6 +153,8 @@ def compose_note_11(image, note_name):
     font = flute_l
     layer = add_text_layer_from_file(image, '%s.txt' % note_name, font)
     place_text(layer, 1563, 710)
+    layer = add_text_layer_from_file(image, '%s_to_sirius.txt' % note_name, font)
+    place_text(layer, 1590, 60, xalign=CENTER)
 
 def compose_note_12(image, note_name):
     font = arch_daughter
