@@ -481,7 +481,8 @@ def compose_note_kk(image, note_name):
     place_text(header, x1 + (x2-x1)/2, 390, xalign=CENTER)
     add_layer_mask_from_other_layer_alpha(header, clip_1_mask)
     txt = read_text('%s_clip1.txt' % note_name)
-    layer = add_text(image, '%s %s' % (txt, 'x'*20), newspaper_body)
+    # Add no breaking spaces to force final line to justify as well:
+    layer = add_text(image, '%s %s' % (txt, u'\u00a0'*100), newspaper_body)
     pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_FILL)
     place_text(layer, x1, header.offsets[1]+header.height + gap, x2)
     add_layer_mask_from_other_layer_alpha(layer, clip_1_mask)
@@ -577,7 +578,10 @@ def compose_note_pp(image, note_name):
     place_text(header, x1 + (x2-x1)/2, 375, xalign=CENTER)
     y = header.offsets[1] + header.height
 
-    layer = add_text_layer_from_file(image, '%s_clip.txt' % note_name, newspaper_body)
+    txt = read_text('%s_clip.txt' % note_name)
+    # Add no breaking spaces to force final line to justify as well:
+    layer = add_text(image, '%s %s' % (txt, u'\u00a0'*100), newspaper_body)
+
     pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_FILL)
     place_text(layer, x1, y  + gap, x2)
     add_layer_mask_from_other_layer_alpha(layer, clip_mask)
@@ -610,7 +614,11 @@ def compose_note_qq(image, note_name):
     pdb.gimp_text_layer_set_justification(header, TEXT_JUSTIFY_CENTER)
     reduce_text_to_fit(header, x1, x2)
     place_text(header, x1 + (x2-x1)/2, 305, xalign=CENTER, yalign=CENTER)
-    layer = add_text_layer_from_file(image, '%s_clip.txt' % note_name, newspaper_body)
+
+    txt = read_text('%s_clip.txt' % note_name)
+    # Add no breaking spaces to force final line to justify as well:
+    layer = add_text(image, '%s %s' % (txt, u'\u00a0'*100), newspaper_body)
+
     pdb.gimp_text_layer_set_justification(layer, TEXT_JUSTIFY_FILL)
     place_text(layer, x1, 875, x2)
     add_layer_mask_from_other_layer_alpha(layer, clip_mask)
