@@ -1,5 +1,4 @@
-Ricerca Biochimica
-Nome: Agente X: Antibiotico Primario
-Funzione: L'Agente X è il primo componente di tre necessario per la creazione della Cura.
+Agente X: Antibiotico Primario
+L'Agente X è il primo componente di tre necessario per la creazione della Cura.
 
 Gli altri elementi necessari sono gli Agenti Y e Z: L'Anti-Tossina e L'Adiuvante.

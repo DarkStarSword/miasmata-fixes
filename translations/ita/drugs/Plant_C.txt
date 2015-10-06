@@ -1,3 +1,2 @@
-Ricerca Biochimica
-Nome: Medicina Basica
-Funzione: Questa medicina riduce la febbre per un breve periodo.
+Medicina Basica
+Questa medicina riduce la febbre per un breve periodo.

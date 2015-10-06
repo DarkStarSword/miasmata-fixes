@@ -1,6 +1,5 @@
-Ricerca Biochimica
-Nome: Farmaco di Potenziamento Cerebrale
-Funzione: Questo farmaco fornisce un incremento permanente alla tua acutezza, dandoti i seguenti vantaggi nelle tue interazioni con la creatura:
+Farmaco di Potenziamento Cerebrale
+Questo farmaco fornisce un incremento permanente alla tua acutezza, dandoti i seguenti vantaggi nelle tue interazioni con la creatura:
 
 1. Tieni premuto il tasto Abbassati e non muoverti, il tuo sguardo seguirà automaticamente la posizione della creatura.
 

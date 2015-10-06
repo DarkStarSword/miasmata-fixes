@@ -1,5 +1,4 @@
-Ricerca Biochimica
-Nome: Agente Y: L'Anti-Tossina
-Funzione: L'Agente Y è il secondo componete di tre necessario per la creazione della Cura.
+Agente Y: L'Anti-Tossina
+L'Agente Y è il secondo componete di tre necessario per la creazione della Cura.
 
 Gli altri elementi necessari sono gli Agenti X e Z: L'Antibiotico e L'Adiuvante.

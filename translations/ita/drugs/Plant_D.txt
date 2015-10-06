@@ -1,3 +1,2 @@
-Ricerca Biochimica
-Nome: Medicina Ultra-Forte
-Funzione: Questa medicina riduce la febbre per un lungo periodo.
+Medicina Ultra-Forte
+Questa medicina riduce la febbre per un lungo periodo.

@@ -1,5 +1,4 @@
-Ricerca Biochimica
-Nome: Farmaco di Potenziamento Muscolare
-Funzione: Questo farmaco fornisce un miglioramento permanente alla tua Forza.
+Farmaco di Potenziamento Muscolare
+Questo farmaco fornisce un miglioramento permanente alla tua Forza.
 
 Sarai in grado di nuotare più a lungo e correre più velocemente.

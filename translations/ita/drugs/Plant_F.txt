@@ -1,5 +1,4 @@
-Ricerca Biochimica
-Nome: Stimolante Energetico
-Funzione: Lo Stimolante energetico fornisce un miglioramento temporaneo della tua Resistenza.
+Stimolante Energetico
+Lo Stimolante energetico fornisce un miglioramento temporaneo della tua Resistenza.
 
 Mentre è attivo sarai in grado di correre più al lungo prima di diventare affaticato.
