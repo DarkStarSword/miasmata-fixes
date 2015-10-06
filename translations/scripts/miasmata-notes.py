@@ -488,8 +488,9 @@ def compose_note_kk(image, note_name):
     add_layer_mask_from_other_layer_alpha(layer, clip_1_mask)
 
     layer = add_text_layer_from_file(image, '%s_under.txt' % note_name, newspaper_body)
-    place_text(layer, 604, 558)
-    add_layer_mask_from_other_layer_alpha(layer, clip_1_mask)
+    if layer is not None:
+        place_text(layer, 604, 558)
+        add_layer_mask_from_other_layer_alpha(layer, clip_1_mask)
 
     x1, x2 = 607, 935
     y2 = 572
