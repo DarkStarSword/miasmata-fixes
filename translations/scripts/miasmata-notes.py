@@ -422,10 +422,16 @@ def compose_note_gg(image, note_name):
     place_text(layer, 1105, 50, 1865)
 
     layer = add_text(image, get_plant_name('sunflower'), font)
-    # place_text(layer, 1430, 715, xalign=RIGHT, yalign=CENTER)
-    place_text(layer, 1662, 910, yalign=CENTER)
+    place_text(layer, 1430, 715, xalign=RIGHT, yalign=CENTER)
+    # French translation used different position:
+    # place_text(layer, 1662, 910, yalign=CENTER)
+
+    x1 = 520
+    x2 = 1005
     layer = add_text(image, get_plant_name('orange prairie flower'), font)
-    place_text(layer, 545, 320, yalign=CENTER)
+    word_wrap_balanced(layer, x2 - x1)
+    place_text(layer, (x1 + x2) / 2, 320, xalign=CENTER, yalign=CENTER)
+
     # TODO - MASK WORD WRAP
     layer = add_text(image, get_plant_name('red and yellow hibiscus'), font)
     place_text(layer, 640, 885, xalign=RIGHT, yalign=CENTER)
