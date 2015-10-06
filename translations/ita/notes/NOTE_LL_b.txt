@@ -1,0 +1,5 @@
+Posiziona una pianta sul "Vassoio A" E una pianta differente sul "Vassoio B"
+
+<u>Passo 2:</u>
+
+Inizia la sintesi del farmaco usando "L'Impianto di Distillazione"

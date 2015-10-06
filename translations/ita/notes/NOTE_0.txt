@@ -1,0 +1,16 @@
+Da: Professor Dagless
+A: Dr. Sanchez
+Oggetto: Cura della Piaga
+
+Caro Harlo,
+
+I miei test sono stati un successo. Abbiamo una cura!
+Inizia immediatamente la sintesi della Tricordrazina
+combinando i seguenti Agenti:
+
+ <span color="#102080">Agente X: Antibiotico Primario</span>
+ <span color="#102080">Agente Y: L'Anti-Tossina</span>
+ <span color="#102080">Agente Z: L'Adiuvante</span>
+
+Una singola iniezione eliminerà con sicurezza tutte le tracce
+della piaga in un tempo stimato tra le 4 e le 12 ore.

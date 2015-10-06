@@ -1,0 +1,9 @@
+Passo 1: Usa la triangolazione per segnare la tua posizione sulla mappa come descritto nel Documento Mappatura A.
+
+Passo 2: Guardati attorno. Prova a scorgere punti di riferimento che NON sono correntemente indicati come icona nella mappa: Riferimenti Sconosciuti.
+
+Passo 3: Traccia linee di vista da questi riferimenti sconosciuti premendo [Attiva] quando li osservi.
+
+Passo 4: Riponi mappa e bussola e cammina verso un nuovo punto di vantaggio. Adesso ripeti i punti 1-3.
+
+Quando hai tracciato 2 distinte linee di vista verso un riferimento sconosciuto, la sua posizione sarà rivelata dall'intersezione tra le 2 linee. A quel punto diventerà "conosciuto".

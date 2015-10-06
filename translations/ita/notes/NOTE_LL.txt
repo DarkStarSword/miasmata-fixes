@@ -1,0 +1,9 @@
+ <u>Come Creare Farmaci:</u>
+
+I farmaci possono essere sviluppati grazie a molte delle piante e dei funghi presenti sull'isola.
+
+Alcuni farmaci possono essere creati da una singola pianta. Altri richiedono l'utilizzo contemporaneo di due differenti tipi di pianta.
+
+<u>Passo 1:</u>
+
+Posiziona una pianta sul "Vassoio A"

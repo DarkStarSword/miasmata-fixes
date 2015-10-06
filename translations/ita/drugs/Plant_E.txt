@@ -1,0 +1,7 @@
+Ricerca Biochimica
+Nome: Stimolante Mentale
+Funzione: Lo Stimolante Mentale fornisce un incremento temporaneo alla tua acutezza, dandoti i seguenti vantaggi nelle tue interazioni con la creatura:
+
+1. Tieni premuto il tasto Abbassati e non muoverti, il tuo sguardo seguirà automaticamente la posizione della creatura.
+
+2. Sempre tenendo premuto il tasto Abbassati, una sovrimpressione apparirà sullo schermo, l'opacità di questa è proporzionale alla vicinanza della creatura a te. Se la sovrimpressione diventa rossa significa che sei visibile alla creatura.

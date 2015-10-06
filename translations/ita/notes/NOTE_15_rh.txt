@@ -1,0 +1,4 @@
+Materiali Primari:
+
+ <span color="#f00000">1. Inonotus Caeruleus (fungo blu)</span>
+ <span color="#f00000">2. Pianta X (pianta da frutta)</span>

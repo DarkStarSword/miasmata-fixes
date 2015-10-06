@@ -1,0 +1,5 @@
+Ricerca Biochimica
+Nome: Agente Z: L'Adiuvante
+Funzione: L'Agente Z è il terzo componete di tre necessario per la creazione della Cura.
+
+Gli altri elementi necessari sono gli Agenti X e Y: L'Antibiotico e L'Anti-Tossina.
