@@ -1,4 +1,3 @@
-Se quel punto di riferimento è rappresentato sulla mappa da un icona è considerato "conosciuto".
-Nel diagramma qua sopra i punti di riferimento A e C sono "conosciuti", il B non lo è.
+Se quel punto di riferimento è rappresentato sulla mappa da un icona è considerato "conosciuto". Nel diagramma qua sopra i punti di riferimento A e C sono "conosciuti", il B non lo è.
 
 Passo 3: Traccia linee di vista da 2 punti di riferimento "conosciuti" premendo [Attiva] mentre li stai osservando. L'intersezione tra questi 2 punti rappresenta la tua posizione.
