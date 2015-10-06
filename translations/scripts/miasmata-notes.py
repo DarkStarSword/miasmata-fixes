@@ -717,11 +717,26 @@ def compose_note_ww(image, note_name):
     x1, x2 = 220, 970
     y1, y2 = 35, 1000
     layer = add_text(image, txt, font)
-    place_text(layer, x1, y1)
-    txt = bold_word_wrap(layer, txt, x2-x1, y2-y1)
+    line_spacing = pdb.gimp_text_layer_get_line_spacing(layer)
+    while True:
+        place_text(layer, x1, y1)
+        txt_rh = bold_word_wrap(layer, txt, x2-x1, y2-y1)
 
-    layer = add_text(image, txt, font)
-    place_text(layer, 1110, y1, 1850)
+        layer_rh = add_text(image, txt_rh, font)
+        pdb.gimp_text_layer_set_line_spacing(layer_rh, line_spacing)
+        place_text(layer_rh, 1110, y1)
+        overflow = bold_word_wrap(layer_rh, txt_rh, 740, y2-y1)
+
+        if not overflow:
+            break
+
+        # try again with less line spacing:
+        line_spacing -= 1
+        image.remove_layer(layer)
+        image.remove_layer(layer_rh)
+        layer = add_text(image, txt, font)
+        pdb.gimp_text_layer_set_line_spacing(layer, line_spacing)
+
 
 def compose_note_xx(image, note_name):
     font = flute_ex_s
