@@ -216,7 +216,7 @@
                 "text"
             ], 
             "[\"s\",\"With your map and compass in-hand, you can determine your location by using Triangulation. To do this, click on 2 known landmarks. A landmark can be a statue or structure of some kind. It is considered 'known' if it is already  represented on your map. Your crosshair will turn into a Triangle if the landmark you are looking at is known. \\\\n \\\\n Additionally, your location will automatically be revealed whenever you are standing next to a known landmark.\"]", 
-            "[\"s\",\"Con el mapa y la brújula en las manos, puedes determinar tu posición usando la triangulación. Para ello, haz clic en dos puntos de referencia conocidos. Un punto de referencia puede ser una estatua o algún tipo de estructura. Se considera “conocido” si ya aparece en el mapa. El puntero se\\\\nvolverá un triángulo si el punto de referencia hacia el que estás mirando es\\\\nconocido.\\\\n\\\\nAdemás, tu posición se revelará automáticamente cuando estés al lado de un punto de referencia conocido.\"]"
+            "[\"s\",\"Con el mapa y la brújula en las manos, puedes determinar tu posición usando la triangulación. Para ello, haz clic en dos puntos de referencia conocidos. Un punto de referencia puede ser una estatua o algún tipo de estructura. Se considera «conocido» si ya aparece en el mapa. El puntero se\\\\nvolverá un triángulo si el punto de referencia hacia el que estás mirando es\\\\nconocido.\\\\n\\\\nAdemás, tu posición se revelará automáticamente cuando estés al lado de un punto de referencia conocido.\"]"
         ], 
         [
             [
@@ -366,7 +366,7 @@
                 "text"
             ], 
             "[\"s\",\"You are starting to drown. Your strength is currently 'poor' and you cannot swim.\"]", 
-            "[\"s\",\"Estás empezando a ahogarte. Tu fuerza ahora es “pobre” y no puedes nadar.\"]"
+            "[\"s\",\"Estás empezando a ahogarte. Ahora tu fuerza es «baja» y no puedes nadar.\"]"
         ], 
         [
             [
