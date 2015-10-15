@@ -19,7 +19,7 @@ link_dds_files()
 	pattern="$3"
 	[ -z "$pattern" ] && pattern="*.dds"
 
-	for file in $(find "$src" -name "$pattern"); do
+	for file in $(find "$src" -maxdepth 1 -name "$pattern"); do
 		name=$(basename "$file" .dds)
 		mkdir -vp "$staging/$dst/$name"
 		ln -sfv "$headers/$dst/$name/"* "$staging/$dst/$name/"
