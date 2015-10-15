@@ -1,2 +1,2 @@
 Documento sobre cartografía B:
-Como revelar la posición de puntos de referencia "desconocidos"
+Cómo revelar la posición de puntos de referencia «desconocidos»
