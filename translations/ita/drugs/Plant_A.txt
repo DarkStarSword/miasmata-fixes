@@ -1,4 +1,5 @@
-Farmaco di Potenziamento della Resistenza
-Questo farmaco fornisce un miglioramento permanente alla tua Resistenza.
+Ricerca Biochimica
+Nome: Farmaco di Potenziamento della Resistenza
+Funzione: Questo farmaco fornisce un miglioramento permanente alla tua Resistenza.
 
-Sarai in grado di correre più al lungo prima di diventare affaticato.
+Sarai in grado di correre più a lungo prima di diventare affaticato.
