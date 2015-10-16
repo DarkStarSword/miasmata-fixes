@@ -178,7 +178,7 @@ def underline_text(layer):
 
 # Brackets in the regex make this partition instead of split:
 tag_partitions_re = re.compile(r'(\<[^\>]*\>)')
-tag_re = re.compile(r'\<([^\> ]+)[^\>]*\>')
+tag_re = re.compile(r'\</?([^\> ]+)[^\>]*\>')
 def tag_preserving_split(text, sep=' '):
     tags = []
     ret = []
@@ -216,6 +216,42 @@ def tag_preserving_split(text, sep=' '):
             else:
                 ret.append(word)
     return ret
+
+def tag_preserving_join(text_lh, text_rh, sep=''):
+    making_progress = True
+    while making_progress:
+        making_progress = False
+        match_rh = tag_re.match(text_rh)
+        if not match_rh or text_rh.startswith('</'):
+            break
+        if not text_lh.endswith('</%s>' % match_rh.group(1)):
+            break
+
+        # Found a pair of tags that are a candidate for joining. Since the end
+        # tag doesn't include the attributes we can't be sure it's the same tag
+        # - scan the left hand string backwards to find the corresponding start
+        # tag and check that instead:
+        tags = []
+        partitions = tag_partitions_re.split(text_lh)
+        trim_lh = 0
+        for partition in reversed(partitions):
+            trim_lh += len(partition)
+            match_lh = tag_re.match(partition)
+            if match_lh:
+                if partition.startswith('</'):
+                    tags.append(partition)
+                elif partition.startswith('<'):
+                    #FIXME: Check popping expected tag
+                    tags.pop()
+                    if tags == []:
+                        # No tags left on stack, so whatever tag we just popped
+                        # should match the closed tag - check it:
+                        if match_lh.group(0) == match_rh.group(0):
+                            text_lh = text_lh[:text_lh.rfind('</')]
+                            text_rh = text_rh[match_rh.end():]
+                            making_progress = True
+                        break
+    return '%s%s%s' % (text_lh, sep, text_rh)
 
 def masked_word_wrap(layer, mask, max_width, channel = VALUE_MODE, threshold = 128, test = -1, hpad = 5, vpad = -2):
     import struct
