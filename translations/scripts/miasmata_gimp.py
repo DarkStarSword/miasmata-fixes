@@ -433,12 +433,13 @@ def word_wrap(layer, text, width, max_height = None, start_tag='', end_tag=''):
         else:
             word = words.pop(0)
             txt1 = '%s\n%s' % (txt, word)
-            markup = '%s%s%s' % (start_tag, txt1, end_tag)
-            pdb.gimp_text_layer_set_markup(layer, markup) # FIXME: Handle split markup
-            if max_height is not None and layer.height > max_height:
-                markup = '%s%s%s' % (start_tag, txt, end_tag)
-                pdb.gimp_text_layer_set_markup(layer, markup)
-                return ('\n%s\n%s' % (' '.join([word] + words).strip(), '\n'.join(lines))).strip()
+            if max_height is not None: # Don't bother checking for overflow (saves us dealing with markup in some notes)
+                markup = '%s%s%s' % (start_tag, txt1, end_tag)
+                pdb.gimp_text_layer_set_markup(layer, markup) # FIXME: Handle split markup
+                if layer.height > max_height:
+                    markup = '%s%s%s' % (start_tag, txt, end_tag)
+                    pdb.gimp_text_layer_set_markup(layer, markup)
+                    return ('\n%s\n%s' % (' '.join([word] + words).strip(), '\n'.join(lines))).strip()
             txt = txt1
 
         while len(words):
