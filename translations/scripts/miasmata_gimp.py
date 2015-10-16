@@ -217,7 +217,7 @@ def tag_preserving_split(text, sep=' '):
                 ret.append(word)
     return ret
 
-def tag_preserving_join(text_lh, text_rh, sep=''):
+def _tag_preserving_join(text_lh, text_rh, sep=''):
     making_progress = True
     while making_progress:
         making_progress = False
@@ -252,6 +252,14 @@ def tag_preserving_join(text_lh, text_rh, sep=''):
                             making_progress = True
                         break
     return '%s%s%s' % (text_lh, sep, text_rh)
+
+def tag_preserving_join(sep, lst):
+    if lst == []:
+        return ''
+    ret = lst.pop(0)
+    while len(lst):
+        ret = _tag_preserving_join(ret, lst.pop(0), sep)
+    return ret
 
 def masked_word_wrap(layer, mask, max_width, channel = VALUE_MODE, threshold = 128, test = -1, hpad = 5, vpad = -2):
     import struct
@@ -469,20 +477,20 @@ def word_wrap(layer, text, width, max_height = None, start_tag='', end_tag=''):
             pdb.gimp_text_layer_set_markup(layer, txt)
         else:
             word = words.pop(0)
-            txt1 = '%s\n%s' % (txt, word)
+            txt1 = tag_preserving_join('\n', [txt, word])
             markup = '%s%s%s' % (start_tag, txt1, end_tag)
             pdb.gimp_text_layer_set_markup(layer, markup)
             if max_height is not None and layer.height > max_height:
                 markup = '%s%s%s' % (start_tag, txt, end_tag)
                 pdb.gimp_text_layer_set_markup(layer, markup)
-                return ('\n%s\n%s' % (' '.join([word] + words).strip(), '\n'.join(lines))).strip()
+                rem_line = tag_preserving_join(' ', [word] + words).strip()
+                rem_lines = tag_preserving_join('\n', lines)
+                return '\n' + tag_preserving_join('\n', [rem_line, rem_lines]).strip()
             txt = txt1
 
         while len(words):
             word = words.pop(0)
-            if word.lower() == '<span':
-                word = '%s %s' % (word, words.pop(0))
-            txt1 = '%s %s' % (txt, word)
+            txt1 = tag_preserving_join(' ', [txt, word])
             markup = '%s%s%s' % (start_tag, txt1, end_tag)
             # print '\n\nTrying text for word wrap:\n%s' % markup
             pdb.gimp_text_layer_set_markup(layer, markup)
@@ -493,7 +501,10 @@ def word_wrap(layer, text, width, max_height = None, start_tag='', end_tag=''):
                 if max_height is not None and layer.height > max_height:
                     markup = '%s%s%s' % (start_tag, txt, end_tag) # FIXME: Will break if splitting markup!
                     pdb.gimp_text_layer_set_markup(layer, markup)
-                    return ('%s\n%s' % (' '.join([word] + words).strip(), '\n'.join(lines))).strip()
+
+                    rem_line = tag_preserving_join(' ', [word] + words).strip()
+                    rem_lines = tag_preserving_join('\n', lines)
+                    return tag_preserving_join('\n', [rem_line, rem_lines]).strip()
                 width = max(width, layer.width)
             txt = txt1
     return ''
