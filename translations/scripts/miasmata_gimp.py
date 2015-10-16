@@ -420,43 +420,60 @@ def word_wrap(layer, text, width, max_height = None, start_tag='', end_tag=''):
         text = pdb.gimp_text_layer_get_text(layer)
     if not text:
         text = get_markup(layer)
-    words = text.split(' ')
-    if not len(words):
-        return ''
-    txt = words.pop(0)
-    while len(words):
-        word = words.pop(0)
-        if word.lower() == '<span':
-            word = '%s %s' % (word, words.pop(0))
-        txt1 = '%s %s' % (txt, word)
-        missing_tags = ''
-        fail = False
-        while True: # Hack to avoid splitting up <span> tags
-            markup = '%s%s%s%s' % (start_tag, txt1, missing_tags, end_tag)
-            # print '\n\nTrying text for word wrap:\n%s' % markup
-            try:
-                pdb.gimp_text_layer_set_markup(layer, markup)
-            except RuntimeError as e:
-                match = word_wrap_fail_re.search(e.args[0])
-                if not match:
-                    txt = txt1
-                    fail = True
-                    break
-                missing_tags += '</%s>' % match.group('elem')
-                continue
-            break
-        if fail:
-            continue
-        if layer.width > width:
+    txt = None
+    lines = text.split('\n')
+    while len(lines):
+        line = lines.pop(0)
+        words = line.split(' ')
+        if not len(words):
+            return ''
+
+        if txt is None:
+            txt = words.pop(0)
+        else:
+            word = words.pop(0)
             txt1 = '%s\n%s' % (txt, word)
-            markup = '%s%s%s%s' % (start_tag, txt1, missing_tags, end_tag)
-            pdb.gimp_text_layer_set_markup(layer, markup)
+            markup = '%s%s%s' % (start_tag, txt1, end_tag)
+            pdb.gimp_text_layer_set_markup(layer, markup) # FIXME: Handle split markup
             if max_height is not None and layer.height > max_height:
-                markup = '%s%s%s' % (start_tag, txt, end_tag) # FIXME: Will break if splitting markup!
+                markup = '%s%s%s' % (start_tag, txt, end_tag)
                 pdb.gimp_text_layer_set_markup(layer, markup)
-                return ' '.join([word] + words).strip()
-            width = max(width, layer.width)
-        txt = txt1
+                return ('\n%s\n%s' % (' '.join([word] + words).strip(), '\n'.join(lines))).strip()
+            txt = txt1
+
+        while len(words):
+            word = words.pop(0)
+            if word.lower() == '<span':
+                word = '%s %s' % (word, words.pop(0))
+            txt1 = '%s %s' % (txt, word)
+            missing_tags = ''
+            fail = False
+            while True: # Hack to avoid splitting up <span> tags
+                markup = '%s%s%s%s' % (start_tag, txt1, missing_tags, end_tag)
+                # print '\n\nTrying text for word wrap:\n%s' % markup
+                try:
+                    pdb.gimp_text_layer_set_markup(layer, markup)
+                except RuntimeError as e:
+                    match = word_wrap_fail_re.search(e.args[0])
+                    if not match:
+                        txt = txt1
+                        fail = True
+                        break
+                    missing_tags += '</%s>' % match.group('elem')
+                    continue
+                break
+            if fail:
+                continue
+            if layer.width > width:
+                txt1 = '%s\n%s' % (txt, word)
+                markup = '%s%s%s%s' % (start_tag, txt1, missing_tags, end_tag)
+                pdb.gimp_text_layer_set_markup(layer, markup)
+                if max_height is not None and layer.height > max_height:
+                    markup = '%s%s%s' % (start_tag, txt, end_tag) # FIXME: Will break if splitting markup!
+                    pdb.gimp_text_layer_set_markup(layer, markup)
+                    return ('%s\n%s' % (' '.join([word] + words).strip(), '\n'.join(lines))).strip()
+                width = max(width, layer.width)
+            txt = txt1
     return ''
 
 def word_wrap_balanced(layer,  width):
