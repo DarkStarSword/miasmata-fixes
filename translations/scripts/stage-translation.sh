@@ -1,16 +1,18 @@
 #!/bin/sh -e
 
-headers=$PWD/miasmata-headers
-translation=/var/www/html/miasmata/ita
-staging=$PWD/miasmata-ita
-miasmata_fixes_top=$(readlink -f $(dirname $(readlink -f "$0"))/../../)
 mod_name="$1"
-mod_version="$2"
+mod_dir="$2"
+mod_version="$3"
 
 if [ -z "$mod_version" ]; then
-	echo "usage: $0 name version"
+	echo "usage: $0 name directory version"
 	exit 1
 fi
+
+headers="$PWD/miasmata-headers"
+translation="/var/www/html/miasmata/${mod_dir}"
+staging="$PWD/miasmata-${mod_dir}"
+miasmata_fixes_top=$(readlink -f $(dirname $(readlink -f "$0"))/../../)
 
 link_dds_files()
 {
