@@ -1,0 +1,60 @@
+[{
+"name": "italian (exe)",
+"version": "0.1",
+
+"comment1": "Edit the below strings to enable patching hardcoded strings inside",
+"comment2": "the Miasmata executable.",
+
+"comment3": "In some cases you can add up to three extra characters - take the",
+"comment4": "length of the original string, round up to the next multiple of 4,",
+"comment5": "then subtract 1 - that is the maximum number of characters you can",
+"comment6": "use for that string. The patcher will refuse to apply the patch if",
+"comment7": "you use too many.",
+
+"comment8": "Be sure to save this file encoded as Windows-1252 (default in",
+"comment9": "many Windows text editors)"
+},{
+
+"%sOne Moment Please%s":
+"%sAttendere%s",
+
+"Day %d, %d%s":
+"Giorno %d, %d%s",
+
+"Empty":
+"Vuoto",
+
+"Saving...":
+"Salvataggio",
+
+"Inverted":
+"Invertito",
+
+"Normal":
+"Normale",
+
+"Low":
+"Basso",
+
+"Medium":
+"Medio",
+
+"High":
+"Alto",
+
+"Very High":
+"Molto Alto",
+
+"On":
+"Sí",
+
+"Off":
+"No",
+
+"Windowed":
+"Finestra",
+
+"Fullscreen":
+"Fullscreen"
+
+}]
