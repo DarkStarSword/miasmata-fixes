@@ -1,6 +1,24 @@
 {
     "removed": [], 
-    "added": [], 
+    "version": "0.1", 
+    "added": [
+        [
+            [
+                "endgame", 
+                "ENDING2", 
+                "page13"
+            ], 
+            "[\"T\",{\"I:duration\": [6,20],\"s:image\": \"TEX\\\\MENU\\\\End1_K\"}]"
+        ], 
+        [
+            [
+                "endgame", 
+                "ENDING2", 
+                "page14"
+            ], 
+            "[\"T\",{\"I:duration\": [4,6],\"s:image\": \"TEX\\\\MENU\\\\End1_L\"}]"
+        ]
+    ], 
     "changed": [
         [
             [
@@ -993,6 +1011,76 @@
             ], 
             "[\"s\",\"New Game\"]", 
             "[\"s\",\"Nuova Partita\"]"
+        ], 
+        [
+            [
+                "endgame", 
+                "ENDING2", 
+                "page8", 
+                "image"
+            ], 
+            "[\"s\",\"TEX\\\\MENU\\\\End1_H\"]", 
+            "[\"s\",\"TEX\\\\MENU\\\\End1_G_modA\"]"
+        ], 
+        [
+            [
+                "endgame", 
+                "ENDING2", 
+                "page9", 
+                "image"
+            ], 
+            "[\"s\",\"TEX\\\\MENU\\\\End1_I\"]", 
+            "[\"s\",\"TEX\\\\MENU\\\\End1_G_modB\"]"
+        ], 
+        [
+            [
+                "endgame", 
+                "ENDING2", 
+                "page10", 
+                "image"
+            ], 
+            "[\"s\",\"TEX\\\\MENU\\\\End1_J\"]", 
+            "[\"s\",\"TEX\\\\MENU\\\\End1_H\"]"
+        ], 
+        [
+            [
+                "endgame", 
+                "ENDING2", 
+                "page11", 
+                "duration"
+            ], 
+            "[\"I\",[6,20]]", 
+            "[\"I\",[10,10]]"
+        ], 
+        [
+            [
+                "endgame", 
+                "ENDING2", 
+                "page11", 
+                "image"
+            ], 
+            "[\"s\",\"TEX\\\\MENU\\\\End1_K\"]", 
+            "[\"s\",\"TEX\\\\MENU\\\\End1_I\"]"
+        ], 
+        [
+            [
+                "endgame", 
+                "ENDING2", 
+                "page12", 
+                "duration"
+            ], 
+            "[\"I\",[4,6]]", 
+            "[\"I\",[10,10]]"
+        ], 
+        [
+            [
+                "endgame", 
+                "ENDING2", 
+                "page12", 
+                "image"
+            ], 
+            "[\"s\",\"TEX\\\\MENU\\\\End1_L\"]", 
+            "[\"s\",\"TEX\\\\MENU\\\\End1_J\"]"
         ]
     ]
 }
