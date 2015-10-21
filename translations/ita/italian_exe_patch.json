@@ -1,6 +1,6 @@
 [{
 "name": "italian (exe)",
-"version": "0.1",
+"version": "1.0",
 
 "comment1": "Edit the below strings to enable patching hardcoded strings inside",
 "comment2": "the Miasmata executable.",

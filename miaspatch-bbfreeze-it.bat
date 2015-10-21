@@ -1,1 +1,1 @@
-c:\Python27\python.exe miaspatch-bbfreeze.py -d miasmata-italian --language it_IT -x translations/ita/italian_exe_patch.json translations/ita/Italian.miasmod translations/ita/miasmata-ita-0.05.rs5mod
+c:\Python27\python.exe miaspatch-bbfreeze.py -d miasmata-italian --language it_IT -x translations/ita/italian_exe_patch.json translations/ita/Italian.miasmod translations/ita/miasmata-italian.rs5mod translations/ita/LEGGIMI.txt
