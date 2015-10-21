@@ -199,7 +199,7 @@
     <message>
         <location filename="miaspatch.py" line="40"/>
         <source>Old version installed</source>
-        <translation>Versione precendente installata</translation>
+        <translation>Versione precedente installata</translation>
     </message>
     <message>
         <location filename="miaspatch.py" line="46"/>
@@ -242,7 +242,7 @@
     <message>
         <location filename="miaspatch.py" line="194"/>
         <source>Status</source>
-        <translation>Statut</translation>
+        <translation>Stato</translation>
     </message>
 </context>
 <context>

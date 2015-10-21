@@ -1,0 +1,28 @@
+﻿Per installare la traduzione:
+
+-Unzippate i file
+-cliccate su miaspatch.exe
+-Cliccate su Installa i mod
+-Avviate il gioco
+
+Notare come nella patch è inclusa anche la community patch che corregge svariati bug del gioco.
+
+
+Note sulla traduzione:
+
+Alcune parti del testo sono rimaste in inglese per limiti dei nostri mezzi tecnici:
+
+LMB = Bottone sinistro del mouse
+RMB = Bottone destro del mouse
+Low = Basso
+
+Note riguardo testi che potete trovare sull'isola:
+
+L'uso della maiuscola nel testo inglese è utilizzato anche per sottolineare piante o elementi importanti, questo è stato mantenuto nella traduzione italiana.
+
+*spoiler*
+I testi di Herbert presentano delle "particolarità" grammaticali, esse sono dovute alla follia dell'autore stesso.
+
+
+Per consigli, correzioni o altro contattatemi pure:
+andreabildostano@gmail.com
