@@ -105,7 +105,7 @@ class Rs5CompressedFileDecoder(Rs5CompressedFile):
 				contents = rs5file.Rs5FileDecoder(data)
 				assert(contents.magic == self.type)
 				assert(contents.filename == self.filename)
-				assert(len(contents.data) == filesize)
+				#assert(len(contents.data) == filesize) # Removed because it breaks --strip
 				f.write(contents.data)
 			else:
 				f.write(data)
