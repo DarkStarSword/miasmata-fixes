@@ -34,6 +34,39 @@
     </message>
 </context>
 <context>
+    <name>4GB patch</name>
+    <message>
+        <location filename="4gb.py" line="18"/>
+        <source>4GB patch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="4gb.py" line="19"/>
+        <source>Scanning Miasmata.exe...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="4gb.py" line="20"/>
+        <source>The game is already patched</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="4gb.py" line="21"/>
+        <source>Invalid PE header</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="4gb.py" line="22"/>
+        <source>Patch successful</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="4gb.py" line="23"/>
+        <source>Error writing to Miasmata.exe</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>Dialog</name>
     <message>
         <location filename="miaspatch_ui.py" line="277"/>

@@ -5,7 +5,7 @@ extractor = __import__('rs5-extractor')
 import ConfigParser
 import argparse
 
-binary_patches = ['botanical']
+binary_patches = ['botanical', '4gb']
 delete = ['communitypatch.rs5']
 copy_language_src = False
 order = ['communitypatch']
