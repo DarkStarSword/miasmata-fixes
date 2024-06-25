@@ -1,0 +1,5 @@
+pyside
+git+https://github.com/vstinner/faulthandler.git@faulthandler-3.0
+bbfreeze
+pefile
+pywin32==228

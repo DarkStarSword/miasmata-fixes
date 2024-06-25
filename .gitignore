@@ -3,3 +3,6 @@
 *.pyc
 *.rs5
 *.log
+miaspatch/
+miaschiev/
+miasmod/

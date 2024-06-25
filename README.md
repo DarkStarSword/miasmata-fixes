@@ -1,13 +1,27 @@
 Miasmata Fixes
 ==============
 
-BotanicalBadAssPatcher
+Requirements:
 ----------------------
-This is a small C# program that automates the process of patching Miasmata.exe
-to fix the broken Botanical Bad A\*\* achievement.
+- Python 2.7.x
+- [Microsoft Visual C++ Compiler for Python 2.7](https://web.archive.org/web/20170210071654/https://download.microsoft.com/download/7/9/6/796EF2E4-801B-4FC4-AB28-B59FBF6D907B/VCForPython27.msi)
+- [Microsoft Visual C++ 2008 Redistributable Package (x86) ](https://web.archive.org/web/20171019151356/http://download.microsoft.com/download/1/1/1/1116b75a-9ec3-481a-a3c8-1777b5381140/vcredist_x86.exe)
 
-Refer to this thread for more info:
-<http://steamcommunity.com/app/223510/discussions/0/648812305304655075/>
+Installation
+----------------------
+- Add the location of MSVCP90.dll (installed with the C++ 2008 Redistributable Package) to your system path
+- ``pip install -r requirements.txt``
+
+---------
+
+- To build **Miaschiev**, **Miasmod**, and **Miaspatch**, run:
+    - ``miaschiev-bbfreeze.py``
+    - ``miasmod-bbfreeze.py``
+    - ``miaspatch-bbfreeze.py``
+
+Builds are output to the ``miaschiev``, ``miasmod``, and ``miaspatch`` directories.
+
+---------
 
 Miaschiev
 ---------
@@ -21,9 +35,54 @@ This Python application can show the progress towards several achievements:
 - Shows how many notes have been collected.
 - Shows the number of unique plants/fungi that have been collected.
 - If it detects that the glitched Sanchez #1 note has been picked up but was
-  not added to the journal (a bug fixed by the community patch), it also gives
+  not added to the journal (a bug fixed by Miaspatch), it also gives
   the option to reset the note so it can be picked up again from the camp where
   it was originally found.
+
+Miasmod
+---------
+A Python application for creating game mods. Example mods are available in the ``mods`` directory.   
+
+Can modify:
+- ``environment.rs5``
+- ``main.rs5``
+- ``saves.dat``   
+
+
+See <https://steamcommunity.com/app/223510/discussions/0/630800445647188169/> for more information.
+### Example mods ###
+- ``ailurophobia.miasmod``
+  - Removes the creature
+- ``cartographobia.miasmod``
+  - Prevents  map from being filled in when picking up notes
+  - Removes the effect of the mental clarity tonic (does not remove the tonic itself, only its effect)
+  - Does not clear any existing map data (requires a new save)
+- ``dehydrated.miasmod``
+  - Disables water jugs
+  - Only allows a single drink of water to be carried in the canteen at a time
+- ``insomnia.miasmod``
+  - Disables sleeping in beds
+  - Removes tiredness
+  - Has not been tested enough to fully confirm functionality
+
+Miaspatch
+---------
+A Python application for applying the unofficial community patch.
+### Changes: ###
+- Fixes broken achievements: 
+  - ``Botanical Bad A**``
+  - ``Just doing some light reading?``
+  - ``Oh, my glorious brain...``
+  - ``The Bored Cartographer``
+- Fixes broken ``Sanchez #1`` note that incorrectly registers as ``Sanchez #3``
+- Fixes cut off Pitcher plant research link on the objectives page
+- Fixes missing Titan plant research link on the objectives page
+- Fixes mislabeled ``document on the muscle emphasis drug`` in the notes index to read ``endurance emphasis drug``
+- Hammock is now usable as a bed
+- Removes five urn icons from the map that didn't actually exist in game
+- Removes unused ``glance left/right`` options from the settings menu
+- Restores missing camp icons that were not present on the map
+- Ruin near the apple tree can now be used for triangulation
 
 Miasmata Analysis/Modding Tools
 -------------------------------
@@ -107,3 +166,14 @@ bored cartographer achievement smap to track down any missing pixels.
 
 _Currently it requires certain files to have already been extracted into
 specific locations - TODO is the ability to read them directly from main.rs5._
+
+----------------------
+
+DEPRECATED
+----------------------
+### BotanicalBadAssPatcher ###
+This is a small C# program that automates the process of patching Miasmata.exe
+to fix the broken Botanical Bad A\*\* achievement. This fix can now be performed by Miaspatch.
+
+Refer to this thread for more info:
+<http://steamcommunity.com/app/223510/discussions/0/648812305304655075/>
