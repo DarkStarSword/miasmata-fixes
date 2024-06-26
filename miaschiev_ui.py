@@ -12,6 +12,7 @@ from PySide import QtCore, QtGui
 class Ui_Miaschiev(object):
     def setupUi(self, Miaschiev):
         Miaschiev.setObjectName("Miaschiev")
+        Miaschiev.setWindowIcon(QtGui.QIcon('imageformats/miasmod.ico'))
         Miaschiev.resize(1333, 860)
         self.centralwidget = QtGui.QWidget(Miaschiev)
         self.centralwidget.setObjectName("centralwidget")

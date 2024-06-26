@@ -12,6 +12,7 @@ from PySide import QtCore, QtGui
 class Ui_MiasmataData(object):
     def setupUi(self, MiasmataData):
         MiasmataData.setObjectName("MiasmataData")
+        MiasmataData.setWindowIcon(QtGui.QIcon('imageformats/miasmod.ico'))
         MiasmataData.resize(713, 490)
         self.verticalLayout_3 = QtGui.QVBoxLayout(MiasmataData)
         self.verticalLayout_3.setObjectName("verticalLayout_3")

@@ -37,12 +37,19 @@ for file in args.mods:
 print 'Mod order:', order
 
 from bbfreeze import Freezer
+from shutil import copyfile
+from site import getsitepackages
+from os import mkdir
 f = Freezer(args.dest)
+f.setIcon("miasmod.ico")
 f.include_py = False
 f.addScript("miaspatch.py", gui_only=True)
 for patch in binary_patches:
 	f.addModule(patch)
 f()
+mkdir("./miaspatch/imageformats")
+copyfile("./miasmod.ico", "./miaspatch/imageformats/miasmod.ico")
+copyfile(getsitepackages()[1] + "\\PySide\\plugins\\imageformats\\qico4.dll", "./miaspatch/imageformats/qico4.dll")
 
 src = os.path.join('communitypatch', 'communitypatch.miasmod')
 dst = os.path.join(args.dest, 'communitypatch.miasmod')
