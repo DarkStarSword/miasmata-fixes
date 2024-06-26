@@ -79,6 +79,7 @@ A Python application for applying the unofficial community patch.
 - Fixes missing Titan plant research link on the objectives page
 - Fixes mislabeled ``document on the muscle emphasis drug`` in the notes index to read ``endurance emphasis drug``
 - Hammock is now usable as a bed
+- Patch allowing the game to use 4 GB of memory, fixing some crashes
 - Removes five urn icons from the map that didn't actually exist in game
 - Removes unused ``glance left/right`` options from the settings menu
 - Restores missing camp icons that were not present on the map
