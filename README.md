@@ -3,7 +3,7 @@ Miasmata Fixes
 
 Requirements:
 ----------------------
-- Python 2.7.x
+- Python 2.7.x (32bit)
 - [Microsoft Visual C++ Compiler for Python 2.7](https://web.archive.org/web/20170210071654/https://download.microsoft.com/download/7/9/6/796EF2E4-801B-4FC4-AB28-B59FBF6D907B/VCForPython27.msi)
 - [Microsoft Visual C++ 2008 Redistributable Package (x86) ](https://web.archive.org/web/20171019151356/http://download.microsoft.com/download/1/1/1/1116b75a-9ec3-481a-a3c8-1777b5381140/vcredist_x86.exe)
 
@@ -20,6 +20,8 @@ Installation
     - ``miaspatch-bbfreeze.py``
 
 Builds are output to the ``miaschiev``, ``miasmod``, and ``miaspatch`` directories.
+
+If you get no output, double check you installed the 32bit version of Python.
 
 ---------
 
