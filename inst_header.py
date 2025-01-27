@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
 import struct
-from PIL import Image
 
 import rs5file
-import miasmap
 
 def parse_inst_header_header(f):
 	assert(f.read(6) == '\0\x47\0\0\0\x46')
@@ -18,8 +16,14 @@ def get_points():
 	for i in range(nodes):
 		yield (i, struct.unpack('<6f', f.read(4*6)))
 
-def _get_name_list():
-	f = open('inst_header')
+def open_inst_header_from_rs5(main_rs5):
+	import StringIO
+	decompressed = main_rs5['inst_header'].decompress()
+	return StringIO.StringIO(decompressed)
+
+def _get_name_list(f = None):
+	if f is None:
+		f = open('inst_header')
 	filesize = rs5file.parse_raw_header(f)
 	nodes = parse_inst_header_header(f)
 	seek = nodes*6*4
@@ -28,13 +32,14 @@ def _get_name_list():
 	return f.read(filesize - 14 - seek).rstrip('\0').split('\0')
 
 names = None
-def get_name_list():
+def get_name_list(f = None):
 	global names
 	if names is None:
-		names = _get_name_list()
+		names = _get_name_list(f)
 	return names
 
 def plot_node(x1, y1, z1, x2, y2, z2, r=64, wierd=8, exists=64):
+	import miasmap
 	l1 = int((z1 - minz) * 255.0 / (maxz-minz))
 	l2 = int((z2 - minz) * 255.0 / (maxz-minz))
 

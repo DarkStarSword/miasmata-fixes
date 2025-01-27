@@ -4,7 +4,6 @@ import sys
 import struct
 
 import inst_header
-import miasmap
 
 def parse_inod_header(f):
 	# Basically the same as the RAW. header, looks like this is a common
@@ -25,16 +24,18 @@ def parse_inod_header(f):
 	assert(num_entries)
 	return (filesize, num_entries)
 
-def parse_inod(f):
-	names = inst_header.get_name_list()
+def parse_inod(f, name_list=None):
+	if name_list is None:
+		name_list = inst_header.get_name_list()
 	(filesize, num_entries) = parse_inod_header(f)
 	for i in range(num_entries):
 		(u1, idx, x, y, z, u2, u3, u4, u5, u6) = struct.unpack('<2I5fI2f', f.read(4*10))
-		yield (names[idx], idx, u1, x, y, z, u2, u3, u4, u5, u6)
+		yield (name_list[idx], idx, u1, x, y, z, u2, u3, u4, u5, u6)
 	assert(f.read(4) == '\0'*4)
 
 ## Find all objects within a node:
 #def main():
+#	import miasmap
 #	for filename in sys.argv[1:]:
 #		f = open(filename, 'r')
 #		for (name, idx, u1, x, y, z, u2, u3, u4, u5, u6) in parse_inod(f):
@@ -44,6 +45,7 @@ def parse_inod(f):
 
 # Search for objects matching a pattern in all nodes:
 def main():
+	import miasmap
 	nodes = map(str.rstrip, open('inst_list', 'r').readlines())
 	filters = sys.argv[1:]
 	colours = ((128, 0, 0), (0, 128, 0), (0, 0, 128), (128, 128, 0), (128, 0, 128), (0, 128, 128), (128, 128, 128))
