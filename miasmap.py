@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from PIL import Image
-import sys
+import sys, os
 
 width = 8238
 height = 8193
@@ -12,8 +12,12 @@ width = 4096
 height = 4096
 scale = 2
 
+map_filledin_path = 'Map_FilledIn.jpg'
+if not os.path.isfile(map_filledin_path):
+	# TODO: Extract from main.rs5
+	map_filledin_path = os.path.join(os.path.dirname(__file__), map_filledin_path)
 try:
-	image = Image.open('Map_FilledIn.jpg').transpose(Image.ROTATE_270).resize((width, height))
+	image = Image.open(map_filledin_path).transpose(Image.ROTATE_270).resize((width, height))
 except:
 	import traceback
 	traceback.print_exc()

@@ -24,6 +24,15 @@ def parse_inod_header(f):
 	assert(num_entries)
 	return (filesize, num_entries)
 
+def enc_inod_header(filename, filesize, num_entries):
+	filename_len = len(filename) + 1
+	r = struct.pack('<4s2sB1sI', 'INOD', '\0\0', filename_len, '\0', filesize)
+	r += filename + '\0'
+	pad = (8 - ((12 + filename_len) % 8)) % 8
+	r += '\0'*pad
+	r += struct.pack('<I', num_entries)
+	return r
+
 def parse_inod(f, name_list=None):
 	if name_list is None:
 		name_list = inst_header.get_name_list()
@@ -32,6 +41,15 @@ def parse_inod(f, name_list=None):
 		(u1, idx, x, y, z, u2, u3, u4, u5, u6) = struct.unpack('<2I5fI2f', f.read(4*10))
 		yield (name_list[idx], idx, u1, x, y, z, u2, u3, u4, u5, u6)
 	assert(f.read(4) == '\0'*4)
+
+def encode_inod(filename, entries):
+	r = ''
+	for entry in entries:
+		_node_name, idx, u1, x, y, z, u2, u3, u4, u5, u6 = entry
+		r += struct.pack('<2I5fI2f', u1, idx, x, y, z, u2, u3, u4, u5, u6)
+	r += '\0'*4
+	h = enc_inod_header(filename, len(r), len(entries))
+	return h + r
 
 ## Find all objects within a node:
 #def main():

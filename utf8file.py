@@ -20,7 +20,7 @@ def print(value = None, *args, **kwargs):
 		file = kwargs['file']
 	if value is None:
 		return _orig_print(**kwargs)
-	if isinstance(value, unicode):
+	if isinstance(value, unicode) and file.encoding is not None:
 		value = value.encode(file.encoding)
 	_orig_print(value, *args, **kwargs)
 
