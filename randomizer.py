@@ -15,11 +15,33 @@ import inst_header
 import inst_node
 import cterr_hmap
 
-# 1: Dumb random mode, all plants just selected at random. Way to easy to find goal items, while also not guaranteed that goal items will exist.
+# 1: Dumb round robin random mode, all items just selected at random.
+#    Way to easy to find goal items, so not recommended for plants.
+#    FIXME: The round robin assignment might tend to make this less random than
+#    it should be even for notes - may want to move where the shuffle happens
 # 2: Shuffle kinds of plants (all instances of x will now be instances of y)
 # 3: Unimplemented, planning to randomize groups of nearby plants together
-SHUFFLE_MODE_NOTES  = 1 # FIXME: Guarantee all notes spawn at least one instance
+SHUFFLE_MODE_NOTES  = 1
 SHUFFLE_MODE_PLANTS = 2
+
+# Keep these plants in a separate shuffle bucket to the others. This avoids the
+# Blue fungus being placed where the Rainbow Orchard was, which would otherwise
+# have ended up with it being just below the ground (TODO: Look for other cases
+# like this, we may need additional safeguards against it). It also hopefully
+# keeps fungi that grow out of trees separate from plants that grow out of the
+# ground
+FUNGI_BUCKET = (
+    # Grows out of upright trees:
+    'plant31', # Blue Scaly Tree Fungus
+    'plant10', # Trumpet Mushroom
+    'plant5',  # Yellow Mushrooms
+    'plant6',  # Grey Shelf Fungus
+    'plant9',  # Wood Gill Fungus
+    'plant20',  # Red-Green Tree Fungus
+    # Found on fallen logs, test if these need a separate bucket:
+    'plant4',  # Pearl-Blue Shelf Fungus
+    'plant7',  # Brown Shelf Fungus
+)
 
 # "randomizer.rs5mod" is causing the game to crash on launch if the rs5mod
 # is in the game directory, maybe that same issue with naming anything
@@ -29,35 +51,34 @@ randomizer_filename = 'randomizer.dss5mod'
 # Order used to make sure important plants on the spoiler map are drawn over
 # less important ones
 spoiler_plant_colours = collections.OrderedDict((
-    # Useless Prickly Pear
-    ('plant0', '001000'),
+    ('plant0',  '001000'), # Prickly Pear
     # MEDS_5_AntiPhychosisTonic
     # Not in game, but the orange plants are. Fun fact, the non-toxic versions
     # of the Clarity + Herculean tonics can still by synthesized with these
-    ('plant13', '301000'),
-    ('plant15', '301000'),
-    ('plant17', '301000'),
+    ('plant13', '301000'), # Orange Prairie Flower
+    ('plant15', '301000'), # Sunflower
+    ('plant17', '301000'), # Red and Yellow Hibiscus
     # MEDS_1_BasicMedicine
-    ('plant1',  '303030'),
-    ('plant2',  '303030'),
-    ('plant7',  '303030'),
-    ('plant9',  '303030'),
-    ('plant11', '303030'),
-    ('plant14', '303030'),
-    ('plant18', '303030'),
-    ('plant22', '303030'),
+    ('plant1',  '303030'), # Common White Mushroom
+    ('plant2',  '303030'), # Pawn Shaped Mushroom
+    ('plant7',  '303030'), # Brown Shelf Fungus
+    ('plant9',  '303030'), # Wood Gill Fungus
+    ('plant11', '303030'), # White Spiked Prairie Flower
+    ('plant14', '303030'), # White Bundle Prairie Flower
+    ('plant18', '303030'), # White/Pink Viola
+    ('plant22', '303030'), # Pink Spotted Lilly
     # MEDS_2_ExtraStrengthMedicine
-    ('plant00', '180030'),
-    ('plant12', '180030'),
-    ('plant16', '180030'),
-    ('plant33', '180030'),
+    ('plant00', '180030'), # Violet Cactus
+    ('plant12', '180030'), # Pink-White Prairie Flower
+    ('plant16', '180030'), # Indigo Asteraceae
+    ('plant33', '180030'), # Tropical Buttercup
     # MEDS_3_MentalStimulant
-    ('plant4', '002030'),
-    ('plant6', '002030'),
+    ('plant4',  '002030'), # Pearl-Blue Shelf Fungus
+    ('plant6',  '002030'), # Grey Shelf Fungus
     # MEDS_4_AdrenalineStimulant
-    ('plant20', '203000'),
-    ('plant21', '203000'),
-    ('plant28', '203000'),
+    ('plant20', '203000'), # Red-Green Tree Fungus
+    ('plant21', '203000'), # Fleshy Rooted Plant
+    ('plant28', '203000'), # Carnivorous Trap Plant
 
     # MEDS_6_clarityTonic
     ('plant3',  '400000'), # Red Toadstool
@@ -66,7 +87,7 @@ spoiler_plant_colours = collections.OrderedDict((
     ('plant5',  '808000'), # Yellow Mushrooms
 
     # MEDS_8_EnduranceEmphasisDrug
-    ('plant25', '8000b0'), # Giant Bloom
+    ('plant25', '8000b0'), # Giant Bloom (TEST IF THIS IS ACCESSIBLE ON AGENT Y ISLAND)
     ('plant19', '000080'), # Blue-Capped Toadstool
     # MEDS_9_MuscleEmphasisDrug
     ('plant32', '800080'), # Large Jungle Flower
@@ -97,9 +118,9 @@ cure_plants = (
 important_plants = cure_plants + (
     'plant25', 'plant19', # Endurance Emphasis
     'plant32', 'plant34', # Muscle Emphasis
-    'plant8', 'plant10', # Brain Emphasis
-    'plant3', 'plant29', # Clarity Tonic (Red)
-    'plant5', # Herculean Tonic (Yellow)
+    'plant8',  'plant10', # Brain Emphasis
+    'plant3',  'plant29', # Clarity Tonic (Red)
+    'plant5',             # Herculean Tonic (Yellow)
 )
 
 # Blacklist corrupt / inaccessible instance nodes:
@@ -191,11 +212,13 @@ def dump_bad_nodes():
             miasmap.plot_rect(int(x1), int(y1), colour, int(x2), int(y2), colour)
     #miasmap.save_image('bad_nodes.png') # Slow, but helps when drawing the instance node bounds
     miasmap.save_image('bad_nodes.jpg')
+    miasmap.image = tmp
 
 class ShuffleBucket():
-    def __init__(self, shuffle_mode, bucket):
+    def __init__(self, shuffle_mode, seed):
         self.shuffle_mode = shuffle_mode
-        self.bucket = bucket
+        self.bucket = {}
+        self.random = random.Random(seed)
         if shuffle_mode == 1:
             # Counter to ensure all items are given out at least once
             self.rr_counter = 0
@@ -251,7 +274,7 @@ def spoil(plants):
             miasmap.plot_square(int(x), int(y), 20, colour, additive=False)
     miasmap.save_image('spoiler.jpg')
 
-def generate_and_install_randomizer():
+def generate_and_install_randomizer(seed=None):
     randomizer_mod_name = os.path.splitext(randomizer_filename)[0]
     print('Removing previous %s from main.rs5...' % randomizer_mod_name) # FIXME: may add seed numbers to fname?
     rs5mod.rm_mod('main.rs5', [randomizer_mod_name])
@@ -274,13 +297,18 @@ def generate_and_install_randomizer():
     # actual terrain vertex data for more accurate tests.
     height_map = cterr_hmap.open_cterr_hmap_from_rs5(main_rs5)
 
-    search_inst_ids = {}
-    notes_bucket = {}
-    plants_bucket = {} # TODO: Smaller buckets that make sense to shuffle together, e.g. fungi separate from flowers
+    if seed is None:
+        seed = random.randrange(0, 2**32)
+    print('Using seed %u' % seed)
+    notes_bucket = ShuffleBucket(SHUFFLE_MODE_NOTES, seed)
+    plants_bucket = ShuffleBucket(SHUFFLE_MODE_PLANTS, seed+1)
+    fungi_bucket = ShuffleBucket(SHUFFLE_MODE_PLANTS, seed+2)
     shuffle_buckets = [
-            ShuffleBucket(SHUFFLE_MODE_NOTES, notes_bucket),
-            ShuffleBucket(SHUFFLE_MODE_PLANTS, plants_bucket)
+            notes_bucket,
+            plants_bucket,
+            fungi_bucket
     ]
+    search_inst_ids = {}
     for model,game_object in models.iteritems():
         if model not in inst_node_names:
             print('NOTE: %s referenced in environment.rs5 not found in inst_header (no instances of this game_object in the map)' % model)
@@ -290,19 +318,22 @@ def generate_and_install_randomizer():
         #search_inst_ids.append(inst_name_idx)
         search_inst_ids[inst_name_idx] = game_object
         if game_object.lower().startswith('note'):
-            shuffle_mode, bucket = SHUFFLE_MODE_NOTES, notes_bucket
+            bucket = notes_bucket
+        elif game_object in FUNGI_BUCKET:
+            bucket = fungi_bucket
         else:
-            shuffle_mode, bucket = SHUFFLE_MODE_PLANTS, plants_bucket
-        if shuffle_mode == 1:
-            bucket[inst_name_idx] = 0
-        elif shuffle_mode == 2:
-            bucket.setdefault(game_object, []).append(inst_name_idx)
+            bucket = plants_bucket
+
+        if bucket.shuffle_mode == 1:
+            bucket.bucket[inst_name_idx] = 0
+        elif bucket.shuffle_mode == 2:
+            bucket.bucket.setdefault(game_object, []).append(inst_name_idx)
 
     #print('DEBUG: Original buckets:', shuffle_buckets)
     for bucket in shuffle_buckets:
         if bucket.shuffle_mode == 2:
             keys,vals = map(list, zip(*bucket.bucket.items()))
-            random.shuffle(keys)
+            bucket.random.shuffle(keys)
             bucket.bucket.update(dict(zip(keys,vals)))
             print('DEBUG / SPOILER: Shuffled bucket:', bucket.bucket)
 
@@ -371,7 +402,7 @@ def generate_and_install_randomizer():
                 for bucket in shuffle_buckets:
                     if bucket.shuffle_mode == 1:
                         if node_name_idx in bucket.bucket:
-                            #node_name_idx = random.choice(bucket.keys())
+                            #node_name_idx = bucket.random.choice(bucket.keys())
                             rr_items = {}
                             while not rr_items:
                                 rr_items = [ k for k,v in bucket.bucket.items() if v == bucket.rr_counter ]
@@ -379,7 +410,7 @@ def generate_and_install_randomizer():
                                     print('All items in bucket given out for round %i, moving to next round' % bucket.rr_counter)
                                     bucket.rr_counter += 1
                             #print('RR items round %i' % bucket.rr_counter, rr_items)
-                            node_name_idx = random.choice(rr_items)
+                            node_name_idx = bucket.random.choice(rr_items)
                             bucket.bucket[node_name_idx] += 1
                             print('SPOILER: Replaced %s with %s, round %i' % (node_name, inst_node_names[node_name_idx], bucket.rr_counter))
                             node_name = '_replaced' # Not used, just setting to avoid confusion
@@ -387,7 +418,7 @@ def generate_and_install_randomizer():
                     elif bucket.shuffle_mode == 2:
                         game_object = models[node_name]
                         if game_object in bucket.bucket:
-                            node_name_idx = random.choice(bucket.bucket[game_object])
+                            node_name_idx = bucket.random.choice(bucket.bucket[game_object])
                             #print('SPOILER: Replaced %s with %s' % (node_name, inst_node_names[node_name_idx]))
                             #print('DEBUG: Replaced %s with %i' % (node_name, node_name_idx)) # Not printing replaced name to avoid spoilers. Even printing ID might be too much...
                             node_name = '_replaced' # Not used, just setting to avoid confusion
@@ -412,9 +443,20 @@ def generate_and_install_randomizer():
     #print('FIXME!!! miasmata is crashing if randomizer.rs5mod is in the game directory!!!!')
     #os.remove(randomizer_filename)
 
+    return seed
+
+def parse_args():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--seed', type=int)
+    return parser.parse_args()
+
 if __name__ == '__main__':
-    generate_and_install_randomizer()
+    args = parse_args()
+    seed = generate_and_install_randomizer(args.seed)
     # spoil('plant31')
     #spoil(cure_plants)
     #spoil(important_plants)
+    #spoil(FUNGI_BUCKET)
     spoil(None)
+    print('Miasmata Randomizer Seed: %u' % seed)
