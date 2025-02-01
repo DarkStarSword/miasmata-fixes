@@ -20,9 +20,16 @@ import cterr_hmap
 #    FIXME: The round robin assignment might tend to make this less random than
 #    it should be even for notes - may want to move where the shuffle happens
 # 2: Shuffle kinds of plants (all instances of x will now be instances of y)
-# 3: Unimplemented, planning to randomize groups of nearby plants together
+#    If you got the achievement for finding all the plants, this should be easy
+# 3: Shuffles clusters of plants around for a real challenge! In this mode the
+#    cure could be virtually anywhere, and you may have to thoroughly explore
+#    the island to find it! Areas that were previously insignificant that you
+#    have never bothered exploring or always just walked past may now hold the
+#    key - do you know where all the random fields of wild flowers or rare
+#    yellow mushrooms are?
 SHUFFLE_MODE_NOTES  = 1
-SHUFFLE_MODE_PLANTS = 2
+SHUFFLE_MODE_PLANTS = 3
+CLUSTER_DISTANCE = 100 # TODO: Experiment with this number
 
 # Keep these plants in a separate shuffle bucket to the others. This avoids the
 # Blue fungus being placed where the Rainbow Orchard was, which would otherwise
@@ -137,9 +144,6 @@ ADDITIONAL_MODELS = {
     #'Eggplant_Leaves1': 'plant34'
 }
 
-# TODO: Blue scaly fungus appears to be attached to a tree? Might limit what
-# we can safely swap it to. Needs testing.
-
 def find_install_path():
     # FIXME: Query registry / prompt user / GUI like miaspatch
     if os.path.isfile('miasmata.exe'):
@@ -214,7 +218,7 @@ def dump_bad_nodes():
     miasmap.save_image('bad_nodes.jpg')
     miasmap.image = tmp
 
-class ShuffleBucket():
+class ShuffleBucket(object):
     def __init__(self, shuffle_mode, seed):
         self.shuffle_mode = shuffle_mode
         self.bucket = {}
@@ -222,6 +226,33 @@ class ShuffleBucket():
         if shuffle_mode == 1:
             # Counter to ensure all items are given out at least once
             self.rr_counter = 0
+
+class PlantCluster(object):
+    def __init__(self, idx, x, y):
+        self.contents = []
+        self.x1 = self.x2 = x
+        self.y1 = self.y2 = y
+        self.add(idx, x, y)
+    def add(self, idx, x, y):
+        self.x1 = min(self.x1, x - CLUSTER_DISTANCE)
+        self.x2 = max(self.x2, x + CLUSTER_DISTANCE)
+        self.y1 = min(self.y1, y - CLUSTER_DISTANCE)
+        self.y2 = max(self.y2, y + CLUSTER_DISTANCE)
+        self.contents.append(idx)
+    def intersects(self, other):
+        return ((self.x1 >= other.x1 and self.x1 <= other.x2)  \
+             or (self.x2 >= other.x1 and self.x2 <= other.x2)  \
+             or (self.x1 <= other.x1 and self.x2 >= other.x2)) \
+           and ((self.y1 >= other.y1 and self.y1 <= other.y2)  \
+             or (self.y2 >= other.y1 and self.y2 <= other.y2)  \
+             or (self.y1 <= other.y1 and self.y2 >= other.y2))
+    def merge(self, other):
+        self.x1 = min(self.x1, other.x1)
+        self.x2 = max(self.x2, other.x2)
+        self.y1 = min(self.y1, other.y1)
+        self.y2 = max(self.y2, other.y2)
+        self.contents.extend(other.contents)
+
 
 def spoil(plants):
     import miasmap
@@ -245,7 +276,6 @@ def spoil(plants):
     main_rs5 = load_main_rs5(install_path)
     inst_header_fp = inst_header.open_inst_header_from_rs5(main_rs5)
     inst_node_names = inst_header.get_name_list(inst_header_fp)
-    #search_inst_ids = { inst_node_names.index(k): spoiler_plant_colours[v] for k,v in m.iteritems() }
     search_inst_ids = { inst_node_names.index(k): v for k,v in m.iteritems() }
 
     points = {}
@@ -255,17 +285,12 @@ def spoil(plants):
             continue
         inod_index = int(inod_fname[9:]) # strip "inst_node" from filename
         assert(inod_fname == 'inst_node%i' % inod_index)
-        #if inod_index in blacklist_inods:
-        #    print('Skipping blacklisted %s' % inod_fname)
-        #    continue
         decompressed = compressed_file.decompress()
         nodes = inst_node.parse_inod(StringIO(decompressed), inst_node_names)
         for node in nodes:
             node_name, node_name_idx, u1, x, y, z, u2, u3, u4, u5, u6 = node
             try:
-                #colour = search_inst_ids[node_name_idx]
                 plant = search_inst_ids[node_name_idx]
-                #miasmap.plot_square(int(x), int(y), 20, colour, additive=False)
                 points.setdefault(plant, []).append((int(x), int(y)))
             except KeyError:
                 pass
@@ -285,12 +310,10 @@ def generate_and_install_randomizer(seed=None):
     install_path = find_install_path()
     env_rs5 = load_environment_rs5(install_path)
     models = get_plants_notes_list(env_rs5)
-    #print(models)
 
     main_rs5 = load_main_rs5(install_path)
     inst_header_fp = inst_header.open_inst_header_from_rs5(main_rs5)
     inst_node_names = inst_header.get_name_list(inst_header_fp)
-    #print(inst_node_names)
 
     # Reading the height map to find any potentially underground/floating
     # items. TODO: This height map is only approximate. Might want to read the
@@ -314,8 +337,6 @@ def generate_and_install_randomizer(seed=None):
             print('NOTE: %s referenced in environment.rs5 not found in inst_header (no instances of this game_object in the map)' % model)
             continue
         inst_name_idx = inst_node_names.index(model)
-        #print(inst_name_idx, game_object, model)
-        #search_inst_ids.append(inst_name_idx)
         search_inst_ids[inst_name_idx] = game_object
         if game_object.lower().startswith('note'):
             bucket = notes_bucket
@@ -325,17 +346,9 @@ def generate_and_install_randomizer(seed=None):
             bucket = plants_bucket
 
         if bucket.shuffle_mode == 1:
-            bucket.bucket[inst_name_idx] = 0
-        elif bucket.shuffle_mode == 2:
+            bucket.bucket[inst_name_idx] = 0 # rr counter
+        elif bucket.shuffle_mode in (2, 3):
             bucket.bucket.setdefault(game_object, []).append(inst_name_idx)
-
-    #print('DEBUG: Original buckets:', shuffle_buckets)
-    for bucket in shuffle_buckets:
-        if bucket.shuffle_mode == 2:
-            keys,vals = map(list, zip(*bucket.bucket.items()))
-            bucket.random.shuffle(keys)
-            bucket.bucket.update(dict(zip(keys,vals)))
-            print('DEBUG / SPOILER: Shuffled bucket:', bucket.bucket)
 
     # Currently only using the bounds for debugging/insights. With
     # SHUFFLE_MODE_PLANTS=1 observed some plants in Draco changing types as
@@ -352,6 +365,7 @@ def generate_and_install_randomizer(seed=None):
     print('Total instance nodes in inst_header: %i' % len(inst_node_bounds))
 
     relevant_inodes = []
+    plant_clusters = {}
     for inod_fname,compressed_file in main_rs5.iteritems():
         if compressed_file.type != 'INOD':
             continue
@@ -363,7 +377,6 @@ def generate_and_install_randomizer(seed=None):
         decompressed = compressed_file.decompress()
         nodes = inst_node.parse_inod(StringIO(decompressed), inst_node_names)
         relevant = False
-        blacklist = False
         for node in nodes:
             node_name, node_name_idx, u1, x, y, z, u2, u3, u4, u5, u6 = node
             # u1 appears to be a unique object ID
@@ -372,24 +385,54 @@ def generate_and_install_randomizer(seed=None):
             relevant = True
             if z < 0:
                 print('WARNING: %s located %f below Ocean level' % (node_name, z), search_inst_ids[node_name_idx], inod_fname, node)
-                if z < min_z_blacklist_whole_node:
-                    print('WARNING: Bad nodes detected in %s, blacklisting' % inod_fname)
-                    blacklist = True
-                    break
-            #(n, (x1, y1, z1, x2, y2, z2)) = inst_node_bounds[inod_index]
-            #print(x, y, z, inod_index, node_name, u1, x1, y1, z1, x2, y2, z2)
             altitude = z - height_map[int(x/2.0), int(y/2.0)]
             if altitude < 0 or altitude > 5:
                 bad_nodes.append((node, altitude, inst_node_bounds[inod_index])) # TODO: Only add if actually bad, for now adding all for testing
-        if relevant and not blacklist:
-            #print('Relevant inst node %s' % inod_fname)
+            plant_clusters.setdefault(search_inst_ids[node_name_idx], []).append(PlantCluster(u1, x, y))
+        if relevant:
             relevant_inodes.append(inod_fname)
 
     dump_bad_nodes()
 
-    # TODO: Seed from time or user input
-    # TODO: Group nearby plants of same type
-    # TODO: Shuffle groups with similar attachments (on ground / fungus on side of tree / algae)
+    plant_id_map = {}
+    for bucket in shuffle_buckets:
+        if bucket.shuffle_mode == 2:
+            keys,vals = map(list, zip(*bucket.bucket.items()))
+            bucket.random.shuffle(keys)
+            bucket.bucket.update(dict(zip(keys,vals)))
+            print('DEBUG / SPOILER: Shuffled bucket:', bucket.bucket)
+        elif bucket.shuffle_mode == 3:
+            all_clusters_in_bucket = []
+            num_clusters_of_plant = {}
+            for game_object in bucket.bucket:
+                clusters = plant_clusters[game_object]
+                initial_len = len(clusters)
+                making_progress = True
+                while making_progress:
+                    making_progress = False
+                    i = 0
+                    while i < len(clusters):
+                        j = i + 1
+                        while j < len(clusters):
+                            if clusters[i].intersects(clusters[j]):
+                                clusters[i].merge(clusters.pop(j))
+                                making_progress = True
+                            else:
+                                j += 1
+                        i += 1
+                final_len = len(clusters)
+                print('%i instances of %s grouped into %i clusters' % (initial_len, game_object, final_len))
+                all_clusters_in_bucket.extend(clusters)
+                num_clusters_of_plant[game_object] = final_len
+            print('Shuffling clusters...')
+            bucket.random.shuffle(all_clusters_in_bucket)
+            for game_object in bucket.bucket:
+                num_clusters = num_clusters_of_plant[game_object]
+                for cluster in all_clusters_in_bucket[:num_clusters]:
+                    for plant_id in cluster.contents:
+                        plant_id_map[plant_id] = bucket.random.choice(bucket.bucket[game_object])
+                all_clusters_in_bucket = all_clusters_in_bucket[num_clusters:]
+            assert(len(all_clusters_in_bucket) == 0)
 
     randomizer_rs5 = rs5archive.Rs5ArchiveEncoder(randomizer_filename)
     for inod_fname in relevant_inodes:
@@ -424,9 +467,13 @@ def generate_and_install_randomizer(seed=None):
                             node_name = '_replaced' # Not used, just setting to avoid confusion
                             break
                     elif bucket.shuffle_mode == 3:
-                        # TODO: Advanced randomizer that will shuffle groups of nearby
-                        # plants. Should be the most challenging
-                        pass
+                        # Shuffling happened above, we just apply the
+                        # replacements specified in plant_id_map. TODO: Maybe
+                        # refactor other shuffle modes to use this map?
+                        if u1 in plant_id_map:
+                            node_name_idx = plant_id_map[u1]
+                            node_name = '_replaced'
+                            break
             new_nodes.append((node_name, node_name_idx, u1, x, y, z, u2, u3, u4, u5, u6))
         new_buf = inst_node.encode_inod(inod_fname, new_nodes)
         randomizer_rs5.add_from_buf(new_buf)
@@ -439,9 +486,6 @@ def generate_and_install_randomizer(seed=None):
     #print('rs5-extractor.py -f main.rs5 --add-mod %s' % randomizer_filename)
     print('Installing new randomizer to main.rs5...')
     rs5mod.add_mod('main.rs5', [randomizer_filename])
-
-    #print('FIXME!!! miasmata is crashing if randomizer.rs5mod is in the game directory!!!!')
-    #os.remove(randomizer_filename)
 
     return seed
 
