@@ -9,8 +9,9 @@ def parse_inst_header_header(f):
 	(nodes,) = struct.unpack('<I', f.read(4))
 	return nodes
 
-def get_points():
-	f = open('inst_header')
+def get_points(f = None):
+	if f is None:
+		f = open('inst_header')
 	filesize = rs5file.parse_raw_header(f)
 	nodes = parse_inst_header_header(f)
 	for i in range(nodes):

@@ -3,9 +3,21 @@
 import sys
 import struct
 import math
+import numpy as np
 from PIL import Image
 
 import rs5file
+
+def open_cterr_hmap_from_rs5(main_rs5):
+	import StringIO
+	f = StringIO.StringIO(main_rs5['cterr_hmap'].decompress())
+	(magic, filename, filesize, u2) = rs5file.parse_rs5file_header(f)
+	assert(magic == 'RAW.')
+	assert(filename == 'cterr_hmap')
+	assert(u2 == 0)
+	w = h = int(math.sqrt(filesize / 4))
+	heights = np.frombuffer(f.read(4*w*h), dtype='f').reshape(w,h).transpose()
+	return heights
 
 def main():
 	f = open('cterr_hmap', 'rb')

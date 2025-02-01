@@ -12,6 +12,7 @@ import rs5mod
 import environment
 import inst_header
 import inst_node
+import cterr_hmap
 
 # 1: Dumb random mode, all plants just selected at random. Way to easy to find goal items, while also not guaranteed that goal items will exist.
 # 2: Shuffle kinds of plants (all instances of x will now be instances of y)
@@ -24,12 +25,13 @@ SHUFFLE_MODE_PLANTS = 2
 # after "e"? I thought I tested the rs5mod extension avoiding that? Dangit
 randomizer_filename = 'randomizer.dss5mod'
 
-# TODO: Blacklist:
-# - Orbital launch site East of Rigel
-min_z_blacklist_whole_node = -1.0
-# - Developer area above river near spawn
-# - Milo island East of Desert
-# - Use cterr_hmap to verify nothing else underground / in air
+# Blacklist corrupt / inaccessible instance nodes:
+min_z_blacklist_whole_node = -1.0 # Detects orbital launch platform, now just explicitly blacklisting that
+blacklist_inods = (
+        64784, 64783, 16195, # Corrupt orbital launch site East of Rigel
+        36614, 36616, # Developer area in river West of spawn with hidden(?) notes, coords 2720x3456 - 2752x3520. Unclear why these notes don't show in game, but we don't want to include them in the randomizer.
+        19911) # Milo Island easter egg East of Desert. Coords 4852x6452 - 4940x6539
+# TODO: Use cterr_hmap to verify nothing else underground / in air
 
 # TODO: Eggplant model is in multiple parts - three takable fruit models +
 # leaves that remain. Will need special handling to randomize this later, but
@@ -86,16 +88,30 @@ def dump_bad_nodes():
     tmp = miasmap.image
     miasmap.image = tmp.copy()
     miasmap.pix = miasmap.image.load()
-    for node in bad_nodes:
+    plotted_instance_nodes = set()
+    for node, altitude, inst_node_bounds in bad_nodes:
         node_name, node_name_idx, u1, x, y, z, u2, u3, u4, u5, u6 = node
+        (node_idx, (x1, y1, z1, x2, y2, z2)) = inst_node_bounds
         if z < min_z_blacklist_whole_node: # Way too far below water, unreachable
             colour = (255,0,0)
         elif z <= 0: # Some legitimately below water level, but need to check
             colour = (0,255,0)
+        elif altitude < -1:
+            colour = (64 + int(-altitude), 0, 0)
+        elif altitude < 0:
+            #colour = (128,0,0)
+            colour = (0, 1 + int(-altitude), 0)
         else:
-            colour = (0,0,128+int(z))
-        miasmap.plot_square(int(x), int(y), 20, colour)
-    miasmap.save_image('bad_nodes.jpg')
+            #colour = (0,0,128) #+int(z))
+            colour = (0,0,32 + int(altitude))
+        if True: # Items shown as big fat easy to see square
+            miasmap.plot_square(int(x), int(y), 20, colour)
+        else: # Items as tiny points
+            miasmap.plot_point(int(x), int(y), (255,255,255), colour)
+        if node_idx not in plotted_instance_nodes: # Also show the XY boundaries of the corresponding instance nodes
+            plotted_instance_nodes.add(node_idx)
+            miasmap.plot_rect(int(x1), int(y1), colour, int(x2), int(y2), colour)
+    miasmap.save_image('bad_nodes.png')
 
 class ShuffleBucket():
     def __init__(self, shuffle_mode, bucket):
@@ -136,12 +152,12 @@ def spoil(plant):
     sys.exit(0)
 
 def generate_and_install_randomizer():
-    print('Removing previous randomizer from main.rs5...') # FIXME: may add seed numbers to fname?
-    rs5mod.rm_mod('main.rs5', [randomizer_filename])
-    try:
+    randomizer_mod_name = os.path.splitext(randomizer_filename)[0]
+    print('Removing previous %s from main.rs5...' % randomizer_mod_name) # FIXME: may add seed numbers to fname?
+    rs5mod.rm_mod('main.rs5', [randomizer_mod_name])
+    if os.path.exists(randomizer_filename):
+        print('Deleting old %s' % randomizer_filename)
         os.remove(randomizer_filename)
-    except:
-        pass
 
     install_path = find_install_path()
     env_rs5 = load_environment_rs5(install_path)
@@ -152,6 +168,11 @@ def generate_and_install_randomizer():
     inst_header_fp = inst_header.open_inst_header_from_rs5(main_rs5)
     inst_node_names = inst_header.get_name_list(inst_header_fp)
     #print(inst_node_names)
+
+    # Reading the height map to find any potentially underground/floating
+    # items. TODO: This height map is only approximate. Might want to read the
+    # actual terrain vertex data for more accurate tests.
+    height_map = cterr_hmap.open_cterr_hmap_from_rs5(main_rs5)
 
     search_inst_ids = {}
     notes_bucket = {}
@@ -185,15 +206,31 @@ def generate_and_install_randomizer():
             bucket.bucket.update(dict(zip(keys,vals)))
             print('DEBUG / SPOILER: Shuffled bucket:', bucket.bucket)
 
+    # Currently only using the bounds for debugging/insights. With
+    # SHUFFLE_MODE_PLANTS=1 observed some plants in Draco changing types as
+    # they are approached (FIXME), which I initially assumed was instance
+    # nodes of different sizes being used as a type of LOD mechanism (and I
+    # still think this is the case to some extent), but the bounds we are
+    # outputting doesn't look right for that theory - rather, it looks like
+    # these can be different sizes, and can overlap, and perhaps plants in two
+    # overlapping instance nodes are the problem? In thoery other shuffle
+    # modes should avoid this issue since nearby plants will be changed
+    # together, including overlaps, but needs further thought & testing.
+    inst_header_fp.seek(0)
+    inst_node_bounds = list(inst_header.get_points(inst_header_fp))
+    print('Total instance nodes in inst_header: %i' % len(inst_node_bounds))
+
     relevant_inodes = []
     for inod_fname,compressed_file in main_rs5.iteritems():
         if compressed_file.type != 'INOD':
             continue
-        #print(inod_fname)
+        inod_index = int(inod_fname[9:]) # strip "inst_node" from filename
+        assert(inod_fname == 'inst_node%i' % inod_index)
+        if inod_index in blacklist_inods:
+            print('Skipping blacklisted %s' % inod_fname)
+            continue
         decompressed = compressed_file.decompress()
         nodes = inst_node.parse_inod(StringIO(decompressed), inst_node_names)
-        # TODO: Only randomize most detailed inst node LODs, search for
-        # instances in less detailed LODs and make sure they match
         relevant = False
         blacklist = False
         for node in nodes:
@@ -202,13 +239,17 @@ def generate_and_install_randomizer():
             if node_name_idx not in search_inst_ids:
                 continue
             relevant = True
-            if z < min_z_blacklist_whole_node:
-                print('WARNING: Bad nodes detected in %s, blacklisting' % inod_fname)
-                blacklist = True
-                break
-            elif z < 0:
+            if z < 0:
                 print('WARNING: %s located %f below Ocean level' % (node_name, z), search_inst_ids[node_name_idx], inod_fname, node)
-            bad_nodes.append(node) # TODO: Only add if actually bad, for now adding all for testing
+                if z < min_z_blacklist_whole_node:
+                    print('WARNING: Bad nodes detected in %s, blacklisting' % inod_fname)
+                    blacklist = True
+                    break
+            #(n, (x1, y1, z1, x2, y2, z2)) = inst_node_bounds[inod_index]
+            #print(x, y, z, inod_index, node_name, u1, x1, y1, z1, x2, y2, z2)
+            altitude = z - height_map[int(x/2.0), int(y/2.0)]
+            if altitude < 0 or altitude > 5:
+                bad_nodes.append((node, altitude, inst_node_bounds[inod_index])) # TODO: Only add if actually bad, for now adding all for testing
         if relevant and not blacklist:
             #print('Relevant inst node %s' % inod_fname)
             relevant_inodes.append(inod_fname)
