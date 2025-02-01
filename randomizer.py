@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 from StringIO import StringIO
+import collections
 import random
 import os
 
@@ -25,6 +26,82 @@ SHUFFLE_MODE_PLANTS = 2
 # after "e"? I thought I tested the rs5mod extension avoiding that? Dangit
 randomizer_filename = 'randomizer.dss5mod'
 
+# Order used to make sure important plants on the spoiler map are drawn over
+# less important ones
+spoiler_plant_colours = collections.OrderedDict((
+    # Useless Prickly Pear
+    ('plant0', '001000'),
+    # MEDS_5_AntiPhychosisTonic
+    # Not in game, but the orange plants are. Fun fact, the non-toxic versions
+    # of the Clarity + Herculean tonics can still by synthesized with these
+    ('plant13', '301000'),
+    ('plant15', '301000'),
+    ('plant17', '301000'),
+    # MEDS_1_BasicMedicine
+    ('plant1',  '303030'),
+    ('plant2',  '303030'),
+    ('plant7',  '303030'),
+    ('plant9',  '303030'),
+    ('plant11', '303030'),
+    ('plant14', '303030'),
+    ('plant18', '303030'),
+    ('plant22', '303030'),
+    # MEDS_2_ExtraStrengthMedicine
+    ('plant00', '180030'),
+    ('plant12', '180030'),
+    ('plant16', '180030'),
+    ('plant33', '180030'),
+    # MEDS_3_MentalStimulant
+    ('plant4', '002030'),
+    ('plant6', '002030'),
+    # MEDS_4_AdrenalineStimulant
+    ('plant20', '203000'),
+    ('plant21', '203000'),
+    ('plant28', '203000'),
+
+    # MEDS_6_clarityTonic
+    ('plant3',  '400000'), # Red Toadstool
+    ('plant29', '600000'), # Fabacae
+    # MEDS_7_herculeanTonic
+    ('plant5',  '808000'), # Yellow Mushrooms
+
+    # MEDS_8_EnduranceEmphasisDrug
+    ('plant25', '8000b0'), # Giant Bloom
+    ('plant19', '000080'), # Blue-Capped Toadstool
+    # MEDS_9_MuscleEmphasisDrug
+    ('plant32', '800080'), # Large Jungle Flower
+    ('plant34', '400080'), # Fleshy Purple Fruit
+    # MEDS_10_BrainEmphasisDrug
+    ('plant8',  'c6b384'), # Sponge-Like Fungus
+    ('plant10', '875400'), # Trumpet Mushroom
+
+    # MEDS_14_AgentX
+    ('plant26', 'ff8000'), # Bulbous, Fruit Plant
+    ('plant31', '0000ff'), # Blue Scaly Tree Fungus
+    # MEDS_15_AgentY
+    ('plant23', 'bd69ad'), # Rainbow Orchard
+    ('plant30', '00ff00'), # Bio-Luminescent Algae
+    # MEDS_16_AgentZ
+    ('plant24', 'ffff00'), # Titan Plant
+    ('plant27', '8000ff'), # Carnivorous Pitcher Plant
+))
+# Convert hex strings to RGB tuples:
+for k,v in spoiler_plant_colours.items():
+    spoiler_plant_colours[k] = (int(v[:2],16), int(v[2:4],16), int(v[4:],16))
+
+cure_plants = (
+    'plant26', 'plant31', # Agent X
+    'plant23', 'plant30', # Agent Y
+    'plant24', 'plant27', # Agent Z
+)
+important_plants = cure_plants + (
+    'plant25', 'plant19', # Endurance Emphasis
+    'plant32', 'plant34', # Muscle Emphasis
+    'plant8', 'plant10', # Brain Emphasis
+    'plant3', 'plant29', # Clarity Tonic (Red)
+    'plant5', # Herculean Tonic (Yellow)
+)
+
 # Blacklist corrupt / inaccessible instance nodes:
 min_z_blacklist_whole_node = -1.0 # Detects orbital launch platform, now just explicitly blacklisting that
 blacklist_inods = (
@@ -34,9 +111,10 @@ blacklist_inods = (
 # TODO: Use cterr_hmap to verify nothing else underground / in air
 
 # TODO: Eggplant model is in multiple parts - three takable fruit models +
-# leaves that remain. Will need special handling to randomize this later, but
-# for now make sure that I cache the leaves models as well
-ADDITIONAL_MODELS = {'Eggplant_Leaves1': 'plant34'}
+# leaves that remain. Will need special handling to randomize this later:
+ADDITIONAL_MODELS = {
+    #'Eggplant_Leaves1': 'plant34'
+}
 
 # TODO: Blue scaly fungus appears to be attached to a tree? Might limit what
 # we can safely swap it to. Needs testing.
@@ -56,7 +134,7 @@ def load_environment_rs5(install_path):
     path = os.path.join(install_path, 'environment.rs5')
     return environment.parse_from_archive(path)
 
-def get_plants_notes_list(env_rs5):
+def get_plants_notes_list(env_rs5, skip_non_removable=True):
     ret = ADDITIONAL_MODELS.copy()
     for modelset,game_object in env_rs5['player']['pick_objects'].iteritems():
         if not modelset.startswith('modelsets\\'):
@@ -71,7 +149,7 @@ def get_plants_notes_list(env_rs5):
         game_object_cs = game_objects_case_sensitive[game_object.lower()]
         removal_mode = env_rs5['game_objects'][game_object_cs]['removal_mode']
         assert(removal_mode in (0,1,2))
-        if removal_mode == 0:
+        if skip_non_removable and removal_mode == 0:
             print('Skipping %s %s because removal mode is 0' % (game_object, model_name))
             continue
 
@@ -111,7 +189,8 @@ def dump_bad_nodes():
         if node_idx not in plotted_instance_nodes: # Also show the XY boundaries of the corresponding instance nodes
             plotted_instance_nodes.add(node_idx)
             miasmap.plot_rect(int(x1), int(y1), colour, int(x2), int(y2), colour)
-    miasmap.save_image('bad_nodes.png')
+    #miasmap.save_image('bad_nodes.png') # Slow, but helps when drawing the instance node bounds
+    miasmap.save_image('bad_nodes.jpg')
 
 class ShuffleBucket():
     def __init__(self, shuffle_mode, bucket):
@@ -121,7 +200,7 @@ class ShuffleBucket():
             # Counter to ensure all items are given out at least once
             self.rr_counter = 0
 
-def spoil(plant):
+def spoil(plants):
     import miasmap
     tmp = miasmap.image
     miasmap.image = tmp.copy()
@@ -130,26 +209,47 @@ def spoil(plant):
     install_path = find_install_path()
 
     env_rs5 = load_environment_rs5(install_path)
-    models = get_plants_notes_list(env_rs5)
-    m = [ k for (k,v) in models.items() if v == plant ]
-    print('Searching for', m)
+    models = get_plants_notes_list(env_rs5, skip_non_removable=False)
+
+    if plants is None:
+        plants = [ x for x in models.values() if x.startswith('plant') ]
+    elif not isinstance(plants, (list, tuple)):
+        plants = (plants,)
+
+    m = { k:v for (k,v) in models.items() if v in plants }
+    print('Searching for', ', '.join(m))
 
     main_rs5 = load_main_rs5(install_path)
     inst_header_fp = inst_header.open_inst_header_from_rs5(main_rs5)
     inst_node_names = inst_header.get_name_list(inst_header_fp)
-    search_inst_ids = [ inst_node_names.index(x) for x in m ]
+    #search_inst_ids = { inst_node_names.index(k): spoiler_plant_colours[v] for k,v in m.iteritems() }
+    search_inst_ids = { inst_node_names.index(k): v for k,v in m.iteritems() }
+
+    points = {}
 
     for inod_fname,compressed_file in main_rs5.iteritems():
         if compressed_file.type != 'INOD':
             continue
+        inod_index = int(inod_fname[9:]) # strip "inst_node" from filename
+        assert(inod_fname == 'inst_node%i' % inod_index)
+        #if inod_index in blacklist_inods:
+        #    print('Skipping blacklisted %s' % inod_fname)
+        #    continue
         decompressed = compressed_file.decompress()
         nodes = inst_node.parse_inod(StringIO(decompressed), inst_node_names)
         for node in nodes:
             node_name, node_name_idx, u1, x, y, z, u2, u3, u4, u5, u6 = node
-            if node_name_idx in search_inst_ids:
-                miasmap.plot_square(int(x), int(y), 20, (0, 255, 0))
+            try:
+                #colour = search_inst_ids[node_name_idx]
+                plant = search_inst_ids[node_name_idx]
+                #miasmap.plot_square(int(x), int(y), 20, colour, additive=False)
+                points.setdefault(plant, []).append((int(x), int(y)))
+            except KeyError:
+                pass
+    for plant, colour in spoiler_plant_colours.iteritems():
+        for x,y in points.get(plant, []):
+            miasmap.plot_square(int(x), int(y), 20, colour, additive=False)
     miasmap.save_image('spoiler.jpg')
-    sys.exit(0)
 
 def generate_and_install_randomizer():
     randomizer_mod_name = os.path.splitext(randomizer_filename)[0]
@@ -315,3 +415,6 @@ def generate_and_install_randomizer():
 if __name__ == '__main__':
     generate_and_install_randomizer()
     # spoil('plant31')
+    #spoil(cure_plants)
+    #spoil(important_plants)
+    spoil(None)

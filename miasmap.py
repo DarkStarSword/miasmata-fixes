@@ -29,12 +29,15 @@ def save_image(filename):
 	print>>sys.stderr, 'Saving %s...' % filename
 	image.transpose(Image.ROTATE_90).save(filename)
 
-def plot(x, y, (r, g, b)):
+def plot(x, y, (r, g, b), additive=True):
 	x = max(0, min(x / scale, width-1))
 	y = max(0, min(y / scale, height-1))
 
-	(r1, g1, b1) = pix[x, y]
-	pix[x, y] = (r1 + r, g1 + g, b1 + b)
+	if additive:
+		(r1, g1, b1) = pix[x, y]
+		pix[x, y] = (r1 + r, g1 + g, b1 + b)
+	else:
+		pix[x, y] = (r, g, b)
 
 def plot_rect(x1, y1, c1, x2, y2, c2):
 	xr = x2 - x1
@@ -69,9 +72,9 @@ def plot_cross(x, y, d = 20, rgb = (255, 255, 255)):
 	for (x1, y1) in zip(reversed(range(x-d, x+d)), range(y-d, y+d)):
 		plot(x1, y1, rgb)
 
-def plot_square(x, y, d = 20, rgb = (255, 255, 255)):
+def plot_square(x, y, d = 20, rgb = (255, 255, 255), additive=True):
 	for y1 in range(y-d, y+d, scale):
 		for x1 in range(x-d, x+d, scale):
-			plot(x1, y1, rgb)
+			plot(x1, y1, rgb, additive)
 
 # vi:noexpandtab:sw=8:ts=8
