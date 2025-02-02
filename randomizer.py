@@ -17,8 +17,6 @@ import cterr_hmap
 
 # 1: Dumb round robin random mode, all items just selected at random.
 #    Way to easy to find goal items, so not recommended for plants.
-#    FIXME: The round robin assignment might tend to make this less random than
-#    it should be even for notes - may want to move where the shuffle happens
 # 2: Shuffle kinds of plants (all instances of x will now be instances of y)
 #    If you got the achievement for finding all the plants, this should be easy
 # 3: Shuffles clusters of plants around for a real challenge! In this mode the
@@ -276,7 +274,7 @@ def spoil(plants):
     main_rs5 = load_main_rs5(install_path)
     inst_header_fp = inst_header.open_inst_header_from_rs5(main_rs5)
     inst_node_names = inst_header.get_name_list(inst_header_fp)
-    search_inst_ids = { inst_node_names.index(k): v for k,v in m.iteritems() }
+    search_inst_ids = { inst_node_names.index(k): v for k,v in m.iteritems() if k in inst_node_names }
 
     points = {}
 
@@ -297,6 +295,10 @@ def spoil(plants):
     for plant, colour in spoiler_plant_colours.iteritems():
         for x,y in points.get(plant, []):
             miasmap.plot_square(int(x), int(y), 20, colour, additive=False)
+    # Anything requested without a colour:
+    for plant in set(points).difference(spoiler_plant_colours):
+        for x,y in points[plant]:
+            miasmap.plot_square(int(x), int(y), 20, (255, 255, 255), additive=False)
     miasmap.save_image('spoiler.jpg')
 
 def generate_and_install_randomizer(seed=None):
@@ -344,11 +346,7 @@ def generate_and_install_randomizer(seed=None):
             bucket = fungi_bucket
         else:
             bucket = plants_bucket
-
-        if bucket.shuffle_mode == 1:
-            bucket.bucket[inst_name_idx] = 0 # rr counter
-        elif bucket.shuffle_mode in (2, 3):
-            bucket.bucket.setdefault(game_object, []).append(inst_name_idx)
+        bucket.bucket.setdefault(game_object, []).append(inst_name_idx)
 
     # Currently only using the bounds for debugging/insights. With
     # SHUFFLE_MODE_PLANTS=1 observed some plants in Draco changing types as
@@ -365,7 +363,8 @@ def generate_and_install_randomizer(seed=None):
     print('Total instance nodes in inst_header: %i' % len(inst_node_bounds))
 
     relevant_inodes = []
-    plant_clusters = {}
+    item_clusters = {}
+    item_ids = {}
     for inod_fname,compressed_file in main_rs5.iteritems():
         if compressed_file.type != 'INOD':
             continue
@@ -388,15 +387,49 @@ def generate_and_install_randomizer(seed=None):
             altitude = z - height_map[int(x/2.0), int(y/2.0)]
             if altitude < 0 or altitude > 5:
                 bad_nodes.append((node, altitude, inst_node_bounds[inod_index])) # TODO: Only add if actually bad, for now adding all for testing
-            plant_clusters.setdefault(search_inst_ids[node_name_idx], []).append(PlantCluster(u1, x, y))
+            item_clusters.setdefault(search_inst_ids[node_name_idx], []).append(PlantCluster(u1, x, y))
+            item_ids.setdefault(search_inst_ids[node_name_idx], []).append(u1)
         if relevant:
             relevant_inodes.append(inod_fname)
 
     dump_bad_nodes()
 
-    plant_id_map = {}
+    item_id_map = {}
     for bucket in shuffle_buckets:
-        if bucket.shuffle_mode == 2:
+        if bucket.shuffle_mode == 1:
+            all_items_in_bucket = []
+            valid_note_types = []
+            for game_object in bucket.bucket:
+                item_instances = item_ids.get(game_object, [])
+                if item_instances:
+                    all_items_in_bucket.extend(item_instances)
+                    valid_note_types.append(game_object)
+                    #print(game_object, item_instances)
+                else:
+                    print('Skipping %s with 0 instances in the map' % game_object)
+            print('Total notes:  %i' % len(all_items_in_bucket))
+            print('Unique notes: %i' % len(valid_note_types))
+            # Extend the list of unique notes so there is enough for the total
+            # notes. We want to ensure at least one of each note is given out,
+            # without making any specific note more or less likely to appear.
+            # The first shuffle before extending the list ensures that when we
+            # do remove notes it will be random which ones get removed, then we
+            # extend that list by repetition and cut it to match the number of
+            # total notes we need to give out, then shuffle again to ensure all
+            # is as random as possible
+            # TODO: We could alternatively not distribute duplicate notes at
+            # all? From the player's POV this would look pretty similar since
+            # picking up a note removes all duplicates according to the removal
+            # mode, but it might make some notes harder to find...
+            # TODO: Or, we could replace some of the duplicate notes with our
+            # own hints revealing some ingredient locations...
+            bucket.random.shuffle(valid_note_types)
+            note_bucket = (valid_note_types * (len(all_items_in_bucket) // len(valid_note_types) + 1))[:len(all_items_in_bucket)]
+            bucket.random.shuffle(note_bucket)
+            for item_id in all_items_in_bucket:
+                item_id_map[item_id] = bucket.random.choice(bucket.bucket[note_bucket.pop()])
+            assert(len(note_bucket) == 0)
+        elif bucket.shuffle_mode == 2:
             keys,vals = map(list, zip(*bucket.bucket.items()))
             bucket.random.shuffle(keys)
             bucket.bucket.update(dict(zip(keys,vals)))
@@ -405,7 +438,7 @@ def generate_and_install_randomizer(seed=None):
             all_clusters_in_bucket = []
             num_clusters_of_plant = {}
             for game_object in bucket.bucket:
-                clusters = plant_clusters[game_object]
+                clusters = item_clusters[game_object]
                 initial_len = len(clusters)
                 making_progress = True
                 while making_progress:
@@ -430,7 +463,7 @@ def generate_and_install_randomizer(seed=None):
                 num_clusters = num_clusters_of_plant[game_object]
                 for cluster in all_clusters_in_bucket[:num_clusters]:
                     for plant_id in cluster.contents:
-                        plant_id_map[plant_id] = bucket.random.choice(bucket.bucket[game_object])
+                        item_id_map[plant_id] = bucket.random.choice(bucket.bucket[game_object])
                 all_clusters_in_bucket = all_clusters_in_bucket[num_clusters:]
             assert(len(all_clusters_in_bucket) == 0)
 
@@ -443,22 +476,7 @@ def generate_and_install_randomizer(seed=None):
             node_name, node_name_idx, u1, x, y, z, u2, u3, u4, u5, u6 = node
             if node_name_idx in search_inst_ids:
                 for bucket in shuffle_buckets:
-                    if bucket.shuffle_mode == 1:
-                        if node_name_idx in bucket.bucket:
-                            #node_name_idx = bucket.random.choice(bucket.keys())
-                            rr_items = {}
-                            while not rr_items:
-                                rr_items = [ k for k,v in bucket.bucket.items() if v == bucket.rr_counter ]
-                                if not rr_items:
-                                    print('All items in bucket given out for round %i, moving to next round' % bucket.rr_counter)
-                                    bucket.rr_counter += 1
-                            #print('RR items round %i' % bucket.rr_counter, rr_items)
-                            node_name_idx = bucket.random.choice(rr_items)
-                            bucket.bucket[node_name_idx] += 1
-                            print('SPOILER: Replaced %s with %s, round %i' % (node_name, inst_node_names[node_name_idx], bucket.rr_counter))
-                            node_name = '_replaced' # Not used, just setting to avoid confusion
-                            break
-                    elif bucket.shuffle_mode == 2:
+                    if bucket.shuffle_mode == 2:
                         game_object = models[node_name]
                         if game_object in bucket.bucket:
                             node_name_idx = bucket.random.choice(bucket.bucket[game_object])
@@ -466,12 +484,11 @@ def generate_and_install_randomizer(seed=None):
                             #print('DEBUG: Replaced %s with %i' % (node_name, node_name_idx)) # Not printing replaced name to avoid spoilers. Even printing ID might be too much...
                             node_name = '_replaced' # Not used, just setting to avoid confusion
                             break
-                    elif bucket.shuffle_mode == 3:
+                    elif bucket.shuffle_mode in (1, 3):
                         # Shuffling happened above, we just apply the
-                        # replacements specified in plant_id_map. TODO: Maybe
-                        # refactor other shuffle modes to use this map?
-                        if u1 in plant_id_map:
-                            node_name_idx = plant_id_map[u1]
+                        # replacements specified in item_id_map.
+                        if u1 in item_id_map:
+                            node_name_idx = item_id_map[u1]
                             node_name = '_replaced'
                             break
             new_nodes.append((node_name, node_name_idx, u1, x, y, z, u2, u3, u4, u5, u6))
@@ -499,6 +516,7 @@ if __name__ == '__main__':
     args = parse_args()
     seed = generate_and_install_randomizer(args.seed)
     # spoil('plant31')
+    #spoil('note1')
     #spoil(cure_plants)
     #spoil(important_plants)
     #spoil(FUNGI_BUCKET)
