@@ -53,8 +53,10 @@ FUNGI_BUCKET = (
 # is in the game directory, maybe that same issue with naming anything
 # after "e"? I thought I tested the rs5mod extension avoiding that? Dangit
 # TODO: Maybe encode settings in seed/filename as well?
+randomizer_name_template     = 'randomizer_%u'
 randomizer_filename_template = 'randomizer_%u.dss5mod'
 randomizer_spoiler_template  = 'randomizer_%u_spoiler.jpg'
+randomizer_version           = '0.1'
 
 # Order used to make sure important plants on the spoiler map are drawn over
 # less important ones
@@ -317,6 +319,16 @@ def remove_previous_randomizer():
             print('Removing previous %s from main.rs5...' % old_mod_name)
             rs5mod.do_rm_mod(main_rs5, old_mod_name)
 
+# Required to install with miasmod without errors
+# REFACTORME: Move to rs5mod
+def add_mod_meta(rs5, name, version):
+    chunks = collections.OrderedDict((
+        ('NAME', rs5file.Rs5ChunkEncoder('NAME', name)),
+        ('VRSN', rs5file.Rs5ChunkEncoder('VRSN', version))
+    ))
+    chunks = rs5file.Rs5ChunkedFileEncoder('META', rs5mod.mod_meta_file, 1, chunks)
+    rs5.add_from_buf(chunks.encode())
+
 def generate_and_install_randomizer(seed=None):
     remove_previous_randomizer()
 
@@ -337,6 +349,7 @@ def generate_and_install_randomizer(seed=None):
         seed = random.randrange(0, 2**32)
     print('Using seed %u' % seed)
     randomizer_filename = randomizer_filename_template % seed
+    randomizer_name = randomizer_name_template % seed
 
     notes_bucket = ShuffleBucket(SHUFFLE_MODE_NOTES, seed)
     plants_bucket = ShuffleBucket(SHUFFLE_MODE_PLANTS, seed+1)
@@ -507,12 +520,11 @@ def generate_and_install_randomizer(seed=None):
             new_nodes.append((node_name, node_name_idx, u1, x, y, z, u2, u3, u4, u5, u6))
         new_buf = inst_node.encode_inod(inod_fname, new_nodes)
         randomizer_rs5.add_from_buf(new_buf)
-        #randomizer_rs5.add_from_buf(decompressed) # Test everything works without modifying the buffer
+    add_mod_meta(randomizer_rs5, randomizer_name, randomizer_version)
     randomizer_rs5.save()
     del randomizer_rs5 # Ensures file is closed
 
     print('Saved %s' % randomizer_filename)
-    print('FIXME!!! miasmod has ascii error installing this!!!!')
     #print('rs5-extractor.py -f main.rs5 --add-mod %s' % randomizer_filename)
     print('Installing new randomizer to main.rs5...')
     rs5mod.add_mod('main.rs5', [randomizer_filename])
