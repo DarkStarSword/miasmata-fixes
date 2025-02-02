@@ -98,7 +98,7 @@ spoiler_plant_colours = collections.OrderedDict((
     ('plant32', '800080'), # Large Jungle Flower
     ('plant34', '400080'), # Fleshy Purple Fruit
     # MEDS_10_BrainEmphasisDrug
-    ('plant8',  'c6b384'), # Sponge-Like Fungus
+    ('plant8',  '867344'), # Sponge-Like Fungus
     ('plant10', '875400'), # Trumpet Mushroom
 
     # MEDS_14_AgentX
