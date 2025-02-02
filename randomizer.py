@@ -6,6 +6,7 @@ from StringIO import StringIO
 import collections
 import random
 import os
+import re
 
 import rs5archive
 import rs5file
@@ -51,7 +52,9 @@ FUNGI_BUCKET = (
 # "randomizer.rs5mod" is causing the game to crash on launch if the rs5mod
 # is in the game directory, maybe that same issue with naming anything
 # after "e"? I thought I tested the rs5mod extension avoiding that? Dangit
-randomizer_filename = 'randomizer.dss5mod'
+# TODO: Maybe encode settings in seed/filename as well?
+randomizer_filename_template = 'randomizer_%u.dss5mod'
+randomizer_spoiler_template  = 'randomizer_%u_spoiler.jpg'
 
 # Order used to make sure important plants on the spoiler map are drawn over
 # less important ones
@@ -147,10 +150,10 @@ def find_install_path():
     if os.path.isfile('miasmata.exe'):
         return os.curdir
 
-def load_main_rs5(install_path):
+def load_main_rs5(install_path, cls=rs5archive.Rs5ArchiveDecoder):
     print('Loading main.rs5...')
     path = os.path.join(install_path, 'main.rs5')
-    return rs5archive.Rs5ArchiveDecoder(open(path, 'rb+'))
+    return cls(open(path, 'rb+'))
 
 def load_environment_rs5(install_path):
     print('Loading environment.rs5...')
@@ -252,7 +255,7 @@ class PlantCluster(object):
         self.contents.extend(other.contents)
 
 
-def spoil(plants):
+def spoil(plants, spoiler_filename='spoiler.jpg'):
     import miasmap
     tmp = miasmap.image
     miasmap.image = tmp.copy()
@@ -299,15 +302,23 @@ def spoil(plants):
     for plant in set(points).difference(spoiler_plant_colours):
         for x,y in points[plant]:
             miasmap.plot_square(int(x), int(y), 20, (255, 255, 255), additive=False)
-    miasmap.save_image('spoiler.jpg')
+    miasmap.save_image(spoiler_filename)
+
+def remove_previous_randomizer():
+    install_path = find_install_path()
+    main_rs5 = load_main_rs5(install_path, cls=rs5mod.Rs5ModArchiveUpdater)
+    rs5mod.do_add_undo(main_rs5)
+    installed_mods = list(rs5mod.rs5_mods(main_rs5))
+    print('Installed mods:\n  %s' % '\n  '.join(installed_mods))
+    for mod in installed_mods:
+        match = re.match(r'MIASMOD\\MODS\\(randomizer[_0-9]*)\.manifest', mod)
+        if match:
+            old_mod_name = match.group(1)
+            print('Removing previous %s from main.rs5...' % old_mod_name)
+            rs5mod.do_rm_mod(main_rs5, old_mod_name)
 
 def generate_and_install_randomizer(seed=None):
-    randomizer_mod_name = os.path.splitext(randomizer_filename)[0]
-    print('Removing previous %s from main.rs5...' % randomizer_mod_name) # FIXME: may add seed numbers to fname?
-    rs5mod.rm_mod('main.rs5', [randomizer_mod_name])
-    if os.path.exists(randomizer_filename):
-        print('Deleting old %s' % randomizer_filename)
-        os.remove(randomizer_filename)
+    remove_previous_randomizer()
 
     install_path = find_install_path()
     env_rs5 = load_environment_rs5(install_path)
@@ -325,6 +336,8 @@ def generate_and_install_randomizer(seed=None):
     if seed is None:
         seed = random.randrange(0, 2**32)
     print('Using seed %u' % seed)
+    randomizer_filename = randomizer_filename_template % seed
+
     notes_bucket = ShuffleBucket(SHUFFLE_MODE_NOTES, seed)
     plants_bucket = ShuffleBucket(SHUFFLE_MODE_PLANTS, seed+1)
     fungi_bucket = ShuffleBucket(SHUFFLE_MODE_PLANTS, seed+2)
@@ -514,11 +527,20 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
+    seed = None # So I can comment out the next line
     seed = generate_and_install_randomizer(args.seed)
-    # spoil('plant31')
-    #spoil('note1')
-    #spoil(cure_plants)
-    #spoil(important_plants)
-    #spoil(FUNGI_BUCKET)
-    spoil(None)
-    print('Miasmata Randomizer Seed: %u' % seed)
+
+    if seed is not None:
+        spoiler_filename = randomizer_spoiler_template % seed
+    else:
+        spoiler_filename = 'spoiler.jpg'
+
+    # spoil('plant31', spoiler_filename)
+    # spoil('note1', spoiler_filename)
+    # spoil(cure_plants, spoiler_filename)
+    # spoil(important_plants, spoiler_filename)
+    # spoil(FUNGI_BUCKET, spoiler_filename)
+    spoil(None, spoiler_filename)
+
+    if seed is not None:
+        print('Miasmata Randomizer Seed: %u' % seed)
