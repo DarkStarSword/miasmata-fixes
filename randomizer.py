@@ -241,12 +241,15 @@ def get_plants_notes_list(env_rs5, skip_non_removable=True):
     return ret
 
 bad_nodes = []
-def dump_bad_nodes():
+def dump_bad_nodes(main_rs5=None, install_path=None):
     try:
         import miasmap
     except Exception as e:
         print('Error importing miasmap, no spoiler maps for you', str(e))
         return
+    if main_rs5 is not None:
+        print('Extracting map texture from main.rs5...')
+        miasmap.load_from_rs5(main_rs5, install_path)
     tmp = miasmap.image
     miasmap.image = tmp.copy()
     miasmap.pix = miasmap.image.load()
@@ -318,23 +321,7 @@ def spoil(plants, install_path=None, spoiler_filename='spoiler.jpg'):
     if install_path is None:
         install_path = find_install_path()
 
-    # miasmap loads Map_FilledIn.jpg relative to the working directory at
-    # import time, so we must chdir to the install path before importing it.
-    old_cwd = os.getcwd()
-    os.chdir(install_path)
-    try:
-        import miasmap
-        # If miasmap was already imported from a different directory, reload it
-        # so it picks up the Map_FilledIn.jpg from the game directory.
-        reload(miasmap)
-        _spoil_inner(plants, install_path, spoiler_filename, miasmap)
-    finally:
-        os.chdir(old_cwd)
-
-def _spoil_inner(plants, install_path, spoiler_filename, miasmap):
-    tmp = miasmap.image
-    miasmap.image = tmp.copy()
-    miasmap.pix = miasmap.image.load()
+    import miasmap
 
     env_rs5 = load_environment_rs5(install_path)
     models = get_plants_notes_list(env_rs5, skip_non_removable=False)
@@ -348,6 +335,14 @@ def _spoil_inner(plants, install_path, spoiler_filename, miasmap):
     print('Searching for', ', '.join(m))
 
     main_rs5 = load_main_rs5(install_path)
+
+    print('Extracting map texture from main.rs5...')
+    miasmap.load_from_rs5(main_rs5, install_path)
+
+    tmp = miasmap.image
+    miasmap.image = tmp.copy()
+    miasmap.pix = miasmap.image.load()
+
     inst_header_fp = inst_header.open_inst_header_from_rs5(main_rs5)
     inst_node_names = inst_header.get_name_list(inst_header_fp)
     search_inst_ids = { inst_node_names.index(k): v for k,v in m.iteritems() if k in inst_node_names }
@@ -376,6 +371,7 @@ def _spoil_inner(plants, install_path, spoiler_filename, miasmap):
         for x,y in points[plant]:
             miasmap.plot_square(int(x), int(y), 20, (255, 255, 255), additive=False)
     miasmap.save_image(spoiler_filename)
+    miasmap.image = tmp
 
 def remove_previous_randomizer(install_path=None):
     if install_path is None:

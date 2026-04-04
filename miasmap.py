@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 from PIL import Image
 import sys, os
 
@@ -12,18 +14,46 @@ width = 4096
 height = 4096
 scale = 2
 
+# Tracks which install path the map was loaded from, so we know whether a
+# cached image is still valid.  None means "loaded from jpg on disk" or
+# "not yet loaded from rs5".
+_loaded_from = None
+
 map_filledin_path = 'Map_FilledIn.jpg'
 if not os.path.isfile(map_filledin_path):
-	# TODO: Extract from main.rs5
+	# Extracted jpg not present - caller should call load_from_rs5() instead.
 	map_filledin_path = os.path.join(os.path.dirname(__file__), map_filledin_path)
 try:
 	image = Image.open(map_filledin_path).transpose(Image.ROTATE_270).resize((width, height))
-except:
-	import traceback
-	traceback.print_exc()
-	image = Image.new('RGB', (width, height), (0,0,0))
-image = Image.eval(image, lambda x: x/3)
+	image = Image.eval(image, lambda x: x/3)
+except Exception:
+	# No jpg available - start with a black canvas.  load_from_rs5() will
+	# replace this with the real texture when called.
+	image = Image.new('RGB', (width, height), (0, 0, 0))
 pix = image.load()
+
+
+def load_from_rs5(main_rs5, install_path=None):
+	'''Extract and decode the Map_FilledIn texture from an open main.rs5.
+
+	The DXT5 decompression is slow (pure-Python implementation), so the
+	result is cached in the module-level *image* variable.  Subsequent calls
+	with the same *install_path* return immediately without re-decoding.
+
+	*install_path* is used purely as a cache key; pass it so that switching
+	between different game installations forces a re-decode.
+	'''
+	global image, pix, _loaded_from
+	if _loaded_from is not None and _loaded_from == install_path:
+		return  # already cached for this install
+	import rs5file
+	import imag
+	filledin = rs5file.Rs5ChunkedFileDecoder(main_rs5['TEX\\Map_FilledIn'].decompress())
+	decoded = imag.open_rs5file_imag(filledin, (1024, 1024), 'RGB')
+	image = decoded.transpose(Image.ROTATE_270).resize((width, height))
+	image = Image.eval(image, lambda x: x/3)
+	pix = image.load()
+	_loaded_from = install_path
 
 def save_image(filename):
 	print>>sys.stderr, 'Saving %s...' % filename
