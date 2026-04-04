@@ -7,6 +7,7 @@ import collections
 import random
 import os
 import re
+import sys
 
 import rs5archive
 import rs5file
@@ -52,10 +53,9 @@ FUNGI_BUCKET = (
 # "randomizer.rs5mod" is causing the game to crash on launch if the rs5mod
 # is in the game directory, maybe that same issue with naming anything
 # after "e"? I thought I tested the rs5mod extension avoiding that? Dangit
-# TODO: Maybe encode settings in seed/filename as well?
-randomizer_name_template     = 'randomizer_%u'
-randomizer_filename_template = 'randomizer_%u.dss5mod'
-randomizer_spoiler_template  = 'randomizer_%u_spoiler.jpg'
+randomizer_name_template     = 'randomizer_%s'
+randomizer_filename_template = 'randomizer_%s.dss5mod'
+randomizer_spoiler_template  = 'randomizer_%s_spoiler.jpg'
 randomizer_version           = '0.1'
 
 # Order used to make sure important plants on the spoiler map are drawn over
@@ -133,6 +133,46 @@ important_plants = cure_plants + (
     'plant5',             # Herculean Tonic (Yellow)
 )
 
+# Human-readable names for plants (used in the spoiler map tree view)
+plant_names = {
+    'plant0':  'Prickly Pear',
+    'plant00': 'Violet Cactus',
+    'plant1':  'Common White Mushroom',
+    'plant2':  'Pawn Shaped Mushroom',
+    'plant3':  'Red Toadstool',
+    'plant4':  'Pearl-Blue Shelf Fungus',
+    'plant5':  'Yellow Mushrooms',
+    'plant6':  'Grey Shelf Fungus',
+    'plant7':  'Brown Shelf Fungus',
+    'plant8':  'Sponge-Like Fungus',
+    'plant9':  'Wood Gill Fungus',
+    'plant10': 'Trumpet Mushroom',
+    'plant11': 'White Spiked Prairie Flower',
+    'plant12': 'Pink-White Prairie Flower',
+    'plant13': 'Orange Prairie Flower',
+    'plant14': 'White Bundle Prairie Flower',
+    'plant15': 'Sunflower',
+    'plant16': 'Indigo Asteraceae',
+    'plant17': 'Red and Yellow Hibiscus',
+    'plant18': 'White/Pink Viola',
+    'plant19': 'Blue-Capped Toadstool',
+    'plant20': 'Red-Green Tree Fungus',
+    'plant21': 'Fleshy Rooted Plant',
+    'plant22': 'Pink Spotted Lilly',
+    'plant23': 'Rainbow Orchard',
+    'plant24': 'Titan Plant',
+    'plant25': 'Giant Bloom',
+    'plant26': 'Bulbous Fruit Plant',
+    'plant27': 'Carnivorous Pitcher Plant',
+    'plant28': 'Carnivorous Trap Plant',
+    'plant29': 'Fabacae',
+    'plant30': 'Bio-Luminescent Algae',
+    'plant31': 'Blue Scaly Tree Fungus',
+    'plant32': 'Large Jungle Flower',
+    'plant33': 'Tropical Buttercup',
+    'plant34': 'Fleshy Purple Fruit',
+}
+
 # Blacklist corrupt / inaccessible instance nodes:
 min_z_blacklist_whole_node = -1.0 # Detects orbital launch platform, now just explicitly blacklisting that
 blacklist_inods = (
@@ -147,10 +187,26 @@ ADDITIONAL_MODELS = {
     #'Eggplant_Leaves1': 'plant34'
 }
 
-def find_install_path():
-    # FIXME: Query registry / prompt user / GUI like miaspatch
-    if os.path.isfile('miasmata.exe'):
-        return os.curdir
+def find_install_path(explicit_path=None):
+    '''Return the Miasmata install path, trying (in order):
+       1. The explicitly provided path
+       2. The Windows registry
+       3. The current directory
+       Returns None if not found.
+    '''
+    if explicit_path is not None:
+        return explicit_path
+    try:
+        import miasutil
+        path = miasutil.find_miasmata_install()
+        if os.path.isfile(os.path.join(path, 'main.rs5')):
+            return path
+    except Exception:
+        pass
+    if os.path.isfile(os.path.join(os.curdir, 'miasmata.exe')) or \
+       os.path.isfile(os.path.join(os.curdir, 'Miasmata.exe')):
+        return os.path.abspath(os.curdir)
+    return None
 
 def load_main_rs5(install_path, cls=rs5archive.Rs5ArchiveDecoder):
     print('Loading main.rs5...')
@@ -231,16 +287,17 @@ class ShuffleBucket(object):
             self.rr_counter = 0
 
 class PlantCluster(object):
-    def __init__(self, idx, x, y):
+    def __init__(self, idx, x, y, cluster_dist=CLUSTER_DISTANCE):
+        self.cluster_dist = cluster_dist
         self.contents = []
         self.x1 = self.x2 = x
         self.y1 = self.y2 = y
         self.add(idx, x, y)
     def add(self, idx, x, y):
-        self.x1 = min(self.x1, x - CLUSTER_DISTANCE)
-        self.x2 = max(self.x2, x + CLUSTER_DISTANCE)
-        self.y1 = min(self.y1, y - CLUSTER_DISTANCE)
-        self.y2 = max(self.y2, y + CLUSTER_DISTANCE)
+        self.x1 = min(self.x1, x - self.cluster_dist)
+        self.x2 = max(self.x2, x + self.cluster_dist)
+        self.y1 = min(self.y1, y - self.cluster_dist)
+        self.y2 = max(self.y2, y + self.cluster_dist)
         self.contents.append(idx)
     def intersects(self, other):
         return ((self.x1 >= other.x1 and self.x1 <= other.x2)  \
@@ -257,13 +314,27 @@ class PlantCluster(object):
         self.contents.extend(other.contents)
 
 
-def spoil(plants, spoiler_filename='spoiler.jpg'):
-    import miasmap
+def spoil(plants, install_path=None, spoiler_filename='spoiler.jpg'):
+    if install_path is None:
+        install_path = find_install_path()
+
+    # miasmap loads Map_FilledIn.jpg relative to the working directory at
+    # import time, so we must chdir to the install path before importing it.
+    old_cwd = os.getcwd()
+    os.chdir(install_path)
+    try:
+        import miasmap
+        # If miasmap was already imported from a different directory, reload it
+        # so it picks up the Map_FilledIn.jpg from the game directory.
+        reload(miasmap)
+        _spoil_inner(plants, install_path, spoiler_filename, miasmap)
+    finally:
+        os.chdir(old_cwd)
+
+def _spoil_inner(plants, install_path, spoiler_filename, miasmap):
     tmp = miasmap.image
     miasmap.image = tmp.copy()
     miasmap.pix = miasmap.image.load()
-
-    install_path = find_install_path()
 
     env_rs5 = load_environment_rs5(install_path)
     models = get_plants_notes_list(env_rs5, skip_non_removable=False)
@@ -306,18 +377,35 @@ def spoil(plants, spoiler_filename='spoiler.jpg'):
             miasmap.plot_square(int(x), int(y), 20, (255, 255, 255), additive=False)
     miasmap.save_image(spoiler_filename)
 
-def remove_previous_randomizer():
-    install_path = find_install_path()
-    main_rs5 = load_main_rs5(install_path, cls=rs5mod.Rs5ModArchiveUpdater)
+def remove_previous_randomizer(install_path=None):
+    if install_path is None:
+        install_path = find_install_path()
+    main_rs5_path = os.path.join(install_path, 'main.rs5')
+    main_rs5 = rs5mod.Rs5ModArchiveUpdater(open(main_rs5_path, 'rb+'))
     rs5mod.do_add_undo(main_rs5)
     installed_mods = list(rs5mod.rs5_mods(main_rs5))
     print('Installed mods:\n  %s' % '\n  '.join(installed_mods))
     for mod in installed_mods:
-        match = re.match(r'MIASMOD\\MODS\\(randomizer[_0-9]*)\.manifest', mod)
+        match = re.match(r'MIASMOD\\MODS\\(randomizer[_0-9a-z-]*)\.manifest', mod, re.IGNORECASE)
         if match:
             old_mod_name = match.group(1)
             print('Removing previous %s from main.rs5...' % old_mod_name)
             rs5mod.do_rm_mod(main_rs5, old_mod_name)
+
+def get_installed_randomizer_names(install_path):
+    '''Return list of installed randomizer mod names, or [] if none / error.'''
+    try:
+        main_rs5_path = os.path.join(install_path, 'main.rs5')
+        main_rs5 = rs5archive.Rs5ArchiveDecoder(open(main_rs5_path, 'rb'))
+        installed_mods = list(rs5mod.rs5_mods(main_rs5))
+        names = []
+        for mod in installed_mods:
+            match = re.match(r'MIASMOD\\MODS\\(randomizer[_0-9a-z-]*)\.manifest', mod, re.IGNORECASE)
+            if match:
+                names.append(match.group(1))
+        return names
+    except Exception:
+        return []
 
 # Required to install with miasmod without errors
 # REFACTORME: Move to rs5mod
@@ -329,10 +417,18 @@ def add_mod_meta(rs5, name, version):
     chunks = rs5file.Rs5ChunkedFileEncoder('META', rs5mod.mod_meta_file, 1, chunks)
     rs5.add_from_buf(chunks.encode())
 
-def generate_and_install_randomizer(seed=None):
-    remove_previous_randomizer()
+def generate_and_install_randomizer(install_path=None, seed=None,
+                                    note_mode=SHUFFLE_MODE_NOTES,
+                                    plant_mode=SHUFFLE_MODE_PLANTS,
+                                    fungi_mode=SHUFFLE_MODE_PLANTS,
+                                    cluster_dist=CLUSTER_DISTANCE,
+                                    install=True):
+    if install_path is None:
+        install_path = find_install_path()
 
-    install_path = find_install_path()
+    if install:
+        remove_previous_randomizer(install_path)
+
     env_rs5 = load_environment_rs5(install_path)
     models = get_plants_notes_list(env_rs5)
 
@@ -348,12 +444,14 @@ def generate_and_install_randomizer(seed=None):
     if seed is None:
         seed = random.randrange(0, 2**32)
     print('Using seed %u' % seed)
-    randomizer_filename = randomizer_filename_template % seed
-    randomizer_name = randomizer_name_template % seed
 
-    notes_bucket = ShuffleBucket(SHUFFLE_MODE_NOTES, seed)
-    plants_bucket = ShuffleBucket(SHUFFLE_MODE_PLANTS, seed+1)
-    fungi_bucket = ShuffleBucket(SHUFFLE_MODE_PLANTS, seed+2)
+    seed_str = encode_seed_string(seed, note_mode, plant_mode, fungi_mode, cluster_dist)
+    randomizer_filename = randomizer_filename_template % seed_str
+    randomizer_name = randomizer_name_template % seed_str
+
+    notes_bucket = ShuffleBucket(note_mode, seed)
+    plants_bucket = ShuffleBucket(plant_mode, seed+1)
+    fungi_bucket = ShuffleBucket(fungi_mode, seed+2)
     shuffle_buckets = [
             notes_bucket,
             plants_bucket,
@@ -413,7 +511,8 @@ def generate_and_install_randomizer(seed=None):
             altitude = z - height_map[int(x/2.0), int(y/2.0)]
             if altitude < 0 or altitude > 5:
                 bad_nodes.append((node, altitude, inst_node_bounds[inod_index])) # TODO: Only add if actually bad, for now adding all for testing
-            item_clusters.setdefault(search_inst_ids[node_name_idx], []).append(PlantCluster(u1, x, y))
+            item_clusters.setdefault(search_inst_ids[node_name_idx], []).append(
+                PlantCluster(u1, x, y, cluster_dist))
             item_ids.setdefault(search_inst_ids[node_name_idx], []).append(u1)
         if relevant:
             relevant_inodes.append(inod_fname)
@@ -493,7 +592,8 @@ def generate_and_install_randomizer(seed=None):
                 all_clusters_in_bucket = all_clusters_in_bucket[num_clusters:]
             assert(len(all_clusters_in_bucket) == 0)
 
-    randomizer_rs5 = rs5archive.Rs5ArchiveEncoder(randomizer_filename)
+    randomizer_rs5 = rs5archive.Rs5ArchiveEncoder(
+        os.path.join(install_path, randomizer_filename))
     for inod_fname in relevant_inodes:
         decompressed = main_rs5[inod_fname].decompress()
         nodes = list(inst_node.parse_inod(StringIO(decompressed), inst_node_names))
@@ -526,33 +626,585 @@ def generate_and_install_randomizer(seed=None):
 
     print('Saved %s' % randomizer_filename)
     #print('rs5-extractor.py -f main.rs5 --add-mod %s' % randomizer_filename)
-    print('Installing new randomizer to main.rs5...')
-    rs5mod.add_mod('main.rs5', [randomizer_filename])
+    if install:
+        print('Installing new randomizer to main.rs5...')
+        rs5mod.add_mod(os.path.join(install_path, 'main.rs5'),
+                       [os.path.join(install_path, randomizer_filename)])
 
     return seed
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Seed string encoding / decoding
+# ─────────────────────────────────────────────────────────────────────────────
+
+def encode_seed_string(raw_seed, note_mode, plant_mode, fungi_mode, cluster_dist):
+    '''Encode settings + raw seed into a compact string safe for filenames.
+
+    Format: {note_mode}{plant_mode}{fungi_mode}-{cluster_dist}-{raw_seed}
+    Example: 133-100-1234567890
+
+    This makes the full settings visible to the player and allows sharing
+    seeds that exactly reproduce a run including all settings.
+    '''
+    return '%d%d%d-%d-%u' % (note_mode, plant_mode, fungi_mode,
+                              cluster_dist, raw_seed)
+
+
+def decode_seed_string(s):
+    '''Parse a seed string back into its components.
+
+    Returns (raw_seed, note_mode, plant_mode, fungi_mode, cluster_dist) on
+    success, or None if the string cannot be parsed.
+
+    Accepts both the new format "133-100-1234567890" and the legacy format
+    of a bare integer seed (uses module defaults for settings).
+    '''
+    s = s.strip()
+    # New format: NNNs-ccc-sss where NNN are 1-digit mode values (1-3)
+    m = re.match(r'^([1-3])([1-3])([1-3])-(\d+)-(\d+)$', s)
+    if m:
+        note_mode    = int(m.group(1))
+        plant_mode   = int(m.group(2))
+        fungi_mode   = int(m.group(3))
+        cluster_dist = int(m.group(4))
+        raw_seed     = int(m.group(5))
+        return (raw_seed, note_mode, plant_mode, fungi_mode, cluster_dist)
+    # Legacy format: bare integer
+    try:
+        raw_seed = int(s)
+        if 0 <= raw_seed < 2**32:
+            return (raw_seed, SHUFFLE_MODE_NOTES, SHUFFLE_MODE_PLANTS,
+                    SHUFFLE_MODE_PLANTS, CLUSTER_DISTANCE)
+    except ValueError:
+        pass
+    return None
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# GUI
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _build_plant_tree_model():
+    '''Build a QStandardItemModel for the spoiler map plant/note selector.'''
+    from PySide import QtCore, QtGui
+
+    model = QtGui.QStandardItemModel()
+    model.setHorizontalHeaderLabels(['Plants / Notes'])
+
+    def make_cat(label):
+        item = QtGui.QStandardItem(label)
+        item.setEditable(False)
+        return item
+
+    def make_item(label, data):
+        item = QtGui.QStandardItem(label)
+        item.setEditable(False)
+        item.setCheckable(True)
+        item.setCheckState(QtCore.Qt.Unchecked)
+        item.setData(data, QtCore.Qt.UserRole)
+        return item
+
+    # Cure plants
+    cure_cat = make_cat('Cure Ingredients')
+    for pname, label in [
+        ('plant26', 'Agent X: Bulbous Fruit Plant'),
+        ('plant31', 'Agent X: Blue Scaly Tree Fungus'),
+        ('plant23', 'Agent Y: Rainbow Orchard'),
+        ('plant30', 'Agent Y: Bio-Luminescent Algae'),
+        ('plant24', 'Agent Z: Titan Plant'),
+        ('plant27', 'Agent Z: Pitcher Plant'),
+    ]:
+        cure_cat.appendRow(make_item(label, pname))
+    model.appendRow(cure_cat)
+
+    # All plants sorted by key
+    all_plants_cat = make_cat('All Plants')
+    for pname in sorted(plant_names.keys()):
+        all_plants_cat.appendRow(make_item(plant_names[pname], pname))
+    model.appendRow(all_plants_cat)
+
+    # Notes
+    notes_cat = make_cat('Notes')
+    for i in range(18):
+        notes_cat.appendRow(make_item('Note %i' % i, 'note%i' % i))
+    model.appendRow(notes_cat)
+
+    return model
+
+
+def start_gui():
+    from PySide import QtCore, QtGui
+    from randomizer_ui import Ui_MainWindow
+    from ui_utils import catch_error
+    import traceback
+
+    class _LogWriter(object):
+        '''stdout-compatible object that appends lines to a QStandardItemModel.'''
+        def __init__(self):
+            self._model = QtGui.QStandardItemModel()
+
+        def qt_model(self):
+            return self._model
+
+        def write(self, text):
+            for line in text.split('\n'):
+                if line:
+                    item = QtGui.QStandardItem(line)
+                    item.setEditable(False)
+                    self._model.appendRow(item)
+            # Let Qt process events so the list updates while work is running
+            QtGui.QApplication.processEvents()
+
+        def flush(self):
+            pass
+
+        def clear(self):
+            self._model.clear()
+
+    class MiasRandomizer(QtGui.QMainWindow):
+        def __init__(self, parent=None):
+            super(MiasRandomizer, self).__init__(parent)
+
+            self.ui = Ui_MainWindow()
+            self.ui.setupUi(self)
+
+            self._install_path = None
+            self._updating_seed = False
+
+            # Log writer
+            self._log = _LogWriter()
+            self.ui.listView.setModel(self._log.qt_model())
+
+            # Plant tree for spoiler map
+            self._plant_tree_model = _build_plant_tree_model()
+            self.ui.treeView.setModel(self._plant_tree_model)
+            self.ui.treeView.expandAll()
+
+            # Populate shuffle mode combo boxes.
+            # Note: only mode 1 is currently implemented for notes, so we
+            # disable the combo but leave it in place for future expansion.
+            note_modes = [('1 - Random assignment', 1)]
+            plant_modes = [
+                ('1 - Random assignment', 1),
+                ('2 - Swap plant kinds', 2),
+                ('3 - Shuffle clusters (recommended)', 3),
+            ]
+            for combo, modes, default in [
+                (self.ui.comboBox,   note_modes,  SHUFFLE_MODE_NOTES),
+                (self.ui.comboBox_2, plant_modes, SHUFFLE_MODE_PLANTS),
+                (self.ui.comboBox_3, plant_modes, SHUFFLE_MODE_PLANTS),
+            ]:
+                for text, mode in modes:
+                    combo.addItem(text, mode)
+                idx = combo.findData(default)
+                if idx >= 0:
+                    combo.setCurrentIndex(idx)
+            # Only one note mode for now
+            self.ui.comboBox.setEnabled(False)
+
+            self.ui.lineEdit_2.setText(str(CLUSTER_DISTANCE))
+
+            # Manual signal connections
+            self.ui.browse.clicked.connect(self._on_browse_clicked)
+            self.ui.install_path.editingFinished.connect(self._on_install_path_changed)
+            self.ui.pushButton.clicked.connect(self._on_uninstall_clicked)
+            self.ui.pushButton_4.clicked.connect(self._on_generate_clicked)
+            self.ui.pushButton_3.clicked.connect(self._on_show_clusters_clicked)
+            self.ui.pushButton_2.clicked.connect(self._on_show_spoiler_clicked)
+            self.ui.pushButton_5.clicked.connect(self._on_save_spoiler_clicked)
+
+            # Settings → seed
+            self.ui.comboBox.currentIndexChanged.connect(self._on_settings_changed)
+            self.ui.comboBox_2.currentIndexChanged.connect(self._on_settings_changed)
+            self.ui.comboBox_3.currentIndexChanged.connect(self._on_settings_changed)
+            self.ui.lineEdit_2.editingFinished.connect(self._on_settings_changed)
+            # Seed → settings
+            self.ui.lineEdit.textChanged.connect(self._on_seed_text_changed)
+
+        # ── Install path ──────────────────────────────────────────────────
+
+        def _is_valid_install_path(self, path):
+            for f in ('main.rs5', 'environment.rs5', 'Miasmata.exe'):
+                if not os.path.exists(os.path.join(path, f)):
+                    return False
+            return True
+
+        def _apply_install_path(self, path):
+            self._install_path = path
+            self.ui.install_path.setText(path)
+            self._refresh_installed_label()
+
+        def _refresh_installed_label(self):
+            if not self._install_path:
+                self.ui.label_2.setText('Installed Randomizer: (no path set)')
+                return
+            names = get_installed_randomizer_names(self._install_path)
+            if names:
+                self.ui.label_2.setText('Installed Randomizer: %s' % ', '.join(names))
+            else:
+                self.ui.label_2.setText('Installed Randomizer: (none)')
+
+        def find_install_path(self):
+            '''Auto-detect install path; called after the window is shown.'''
+            path = find_install_path()
+            if path and self._is_valid_install_path(path):
+                self._apply_install_path(path)
+            else:
+                self.ui.install_path.setPlaceholderText(
+                    'Browse to your Miasmata install directory...')
+
+        # ── Settings / seed sync ──────────────────────────────────────────
+
+        def _read_settings(self):
+            note_mode  = self.ui.comboBox.itemData(self.ui.comboBox.currentIndex())
+            plant_mode = self.ui.comboBox_2.itemData(self.ui.comboBox_2.currentIndex())
+            fungi_mode = self.ui.comboBox_3.itemData(self.ui.comboBox_3.currentIndex())
+            try:
+                cluster_dist = int(self.ui.lineEdit_2.text())
+            except (ValueError, TypeError):
+                cluster_dist = CLUSTER_DISTANCE
+            return note_mode, plant_mode, fungi_mode, cluster_dist
+
+        def _on_settings_changed(self, *args):
+            if self._updating_seed:
+                return
+            seed_text = self.ui.lineEdit.text().strip()
+            if not seed_text:
+                return
+            decoded = decode_seed_string(seed_text)
+            if decoded is None:
+                return
+            raw_seed = decoded[0]
+            note_mode, plant_mode, fungi_mode, cluster_dist = self._read_settings()
+            new_seed = encode_seed_string(raw_seed, note_mode, plant_mode, fungi_mode, cluster_dist)
+            self._updating_seed = True
+            self.ui.lineEdit.setText(new_seed)
+            self._updating_seed = False
+
+        def _on_seed_text_changed(self, text):
+            if self._updating_seed:
+                return
+            decoded = decode_seed_string(text.strip())
+            if decoded is None:
+                return
+            raw_seed, note_mode, plant_mode, fungi_mode, cluster_dist = decoded
+            self._updating_seed = True
+            for combo, mode in [
+                (self.ui.comboBox,   note_mode),
+                (self.ui.comboBox_2, plant_mode),
+                (self.ui.comboBox_3, fungi_mode),
+            ]:
+                idx = combo.findData(mode)
+                if idx >= 0:
+                    combo.setCurrentIndex(idx)
+            self.ui.lineEdit_2.setText(str(cluster_dist))
+            self._updating_seed = False
+
+        # ── Button handlers ───────────────────────────────────────────────
+
+        @catch_error
+        def _on_browse_clicked(self):
+            path = QtGui.QFileDialog.getExistingDirectory(
+                self, 'Select Miasmata Install Directory',
+                self._install_path or '')
+            if not path:
+                return
+            if self._is_valid_install_path(path):
+                self._apply_install_path(path)
+            else:
+                QtGui.QMessageBox.warning(
+                    self, 'Invalid Directory',
+                    'The selected directory does not look like a Miasmata '
+                    'install (main.rs5, environment.rs5, Miasmata.exe not found).')
+
+        @catch_error
+        def _on_install_path_changed(self):
+            path = self.ui.install_path.text().strip()
+            if path and os.path.isdir(path) and self._is_valid_install_path(path):
+                self._install_path = path
+                self._refresh_installed_label()
+
+        def _check_install_path(self):
+            if not self._install_path:
+                QtGui.QMessageBox.warning(self, 'No Install Path',
+                    'Please set the Miasmata install path first.')
+                return False
+            return True
+
+        def _run_with_log(self, func, *args, **kwargs):
+            '''Run func with stdout redirected to the log model.
+            Returns (success, result).'''
+            self._log.clear()
+            old_stdout = sys.stdout
+            sys.stdout = self._log
+            result = None
+            try:
+                result = func(*args, **kwargs)
+                return True, result
+            except Exception:
+                print(traceback.format_exc())
+                return False, None
+            finally:
+                sys.stdout = old_stdout
+
+        @catch_error
+        def _on_uninstall_clicked(self):
+            if not self._check_install_path():
+                return
+            ok, _ = self._run_with_log(remove_previous_randomizer, self._install_path)
+            self._refresh_installed_label()
+            if ok:
+                self.ui.statusbar.showMessage('Randomizer uninstalled.', 5000)
+
+        @catch_error
+        def _on_generate_clicked(self):
+            if not self._check_install_path():
+                return
+
+            seed_text = self.ui.lineEdit.text().strip()
+            raw_seed = None
+            if seed_text:
+                decoded = decode_seed_string(seed_text)
+                if decoded:
+                    raw_seed = decoded[0]
+
+            note_mode, plant_mode, fungi_mode, cluster_dist = self._read_settings()
+            do_install   = self.ui.checkBox.isChecked()
+            save_spoiler = self.ui.checkBox_2.isChecked()
+
+            ok, seed_out = self._run_with_log(
+                generate_and_install_randomizer,
+                install_path=self._install_path,
+                seed=raw_seed,
+                note_mode=note_mode,
+                plant_mode=plant_mode,
+                fungi_mode=fungi_mode,
+                cluster_dist=cluster_dist,
+                install=do_install,
+            )
+            if not ok:
+                return
+
+            seed_str = encode_seed_string(seed_out, note_mode, plant_mode,
+                                          fungi_mode, cluster_dist)
+            self._updating_seed = True
+            self.ui.lineEdit.setText(seed_str)
+            self._updating_seed = False
+
+            if save_spoiler:
+                spoiler_filename = os.path.join(
+                    self._install_path,
+                    randomizer_spoiler_template % seed_str)
+                ok2, _ = self._run_with_log(
+                    spoil, None,
+                    install_path=self._install_path,
+                    spoiler_filename=spoiler_filename)
+                if ok2:
+                    self.ui.statusbar.showMessage(
+                        'Saved spoiler map to %s' % spoiler_filename, 5000)
+
+            self._refresh_installed_label()
+            if ok:
+                self.ui.statusbar.showMessage(
+                    'Generated randomizer with seed %s' % seed_str, 10000)
+
+        @catch_error
+        def _on_show_clusters_clicked(self):
+            if not self._check_install_path():
+                return
+            _, cluster_dist_unused, _, cluster_dist = \
+                (None,) + self._read_settings()[1:]  # just grab cluster_dist
+            note_mode, plant_mode, fungi_mode, cluster_dist = self._read_settings()
+            self._run_with_log(self._show_clusters, cluster_dist)
+
+        def _show_clusters(self, cluster_dist):
+            '''Print cluster statistics to stdout (redirected to log).'''
+            env_rs5 = load_environment_rs5(self._install_path)
+            models = get_plants_notes_list(env_rs5)
+            main_rs5 = load_main_rs5(self._install_path)
+            inst_header_fp = inst_header.open_inst_header_from_rs5(main_rs5)
+            inst_node_names = inst_header.get_name_list(inst_header_fp)
+
+            search_inst_ids = {}
+            for model, game_object in models.iteritems():
+                if model not in inst_node_names:
+                    continue
+                search_inst_ids[inst_node_names.index(model)] = game_object
+
+            item_clusters = {}
+            for inod_fname, compressed_file in main_rs5.iteritems():
+                if compressed_file.type != 'INOD':
+                    continue
+                inod_index = int(inod_fname[9:])
+                if inod_index in blacklist_inods:
+                    continue
+                decompressed = compressed_file.decompress()
+                nodes = inst_node.parse_inod(StringIO(decompressed), inst_node_names)
+                for node in nodes:
+                    _, node_name_idx, u1, x, y, z, _, _, _, _, _ = node
+                    if node_name_idx not in search_inst_ids:
+                        continue
+                    game_object = search_inst_ids[node_name_idx]
+                    if game_object.lower().startswith('note'):
+                        continue  # Don't cluster notes
+                    item_clusters.setdefault(game_object, []).append(
+                        PlantCluster(u1, x, y, cluster_dist))
+
+            print('Cluster statistics (cluster distance = %d):' % cluster_dist)
+            for game_object in sorted(item_clusters.keys()):
+                clusters = item_clusters[game_object]
+                initial_len = len(clusters)
+                making_progress = True
+                while making_progress:
+                    making_progress = False
+                    i = 0
+                    while i < len(clusters):
+                        j = i + 1
+                        while j < len(clusters):
+                            if clusters[i].intersects(clusters[j]):
+                                clusters[i].merge(clusters.pop(j))
+                                making_progress = True
+                            else:
+                                j += 1
+                        i += 1
+                name = plant_names.get(game_object, game_object)
+                print('  %-40s %3i instances  →  %i cluster(s)' % (
+                    name, initial_len, len(clusters)))
+
+        @catch_error
+        def _on_show_spoiler_clicked(self):
+            if not self._check_install_path():
+                return
+            selected = self._get_selected_items()
+            if not selected:
+                QtGui.QMessageBox.information(self, 'Nothing Selected',
+                    'Please check one or more plants/notes in the list.')
+                return
+            import tempfile
+            tmp_path = os.path.join(tempfile.gettempdir(),
+                                    'randomizer_spoiler_preview.jpg')
+            ok, _ = self._run_with_log(
+                spoil, selected,
+                install_path=self._install_path,
+                spoiler_filename=tmp_path)
+            if ok:
+                self._display_image(tmp_path)
+
+        @catch_error
+        def _on_save_spoiler_clicked(self):
+            if not self._check_install_path():
+                return
+            selected = self._get_selected_items()
+            if not selected:
+                QtGui.QMessageBox.information(self, 'Nothing Selected',
+                    'Please check one or more plants/notes in the list.')
+                return
+            path, _ = QtGui.QFileDialog.getSaveFileName(
+                self, 'Save Spoiler Map', '', 'JPEG Images (*.jpg)')
+            if not path:
+                return
+            ok, _ = self._run_with_log(
+                spoil, selected,
+                install_path=self._install_path,
+                spoiler_filename=path)
+            if ok:
+                self._display_image(path)
+                self.ui.statusbar.showMessage('Saved spoiler map to %s' % path, 5000)
+
+        def _get_selected_items(self):
+            selected = []
+            def walk(item):
+                for row in range(item.rowCount()):
+                    child = item.child(row)
+                    data = child.data(QtCore.Qt.UserRole)
+                    if data and child.checkState() == QtCore.Qt.Checked:
+                        selected.append(data)
+                    walk(child)
+            walk(self._plant_tree_model.invisibleRootItem())
+            return selected
+
+        def _display_image(self, path):
+            pixmap = QtGui.QPixmap(path)
+            if pixmap.isNull():
+                QtGui.QMessageBox.warning(self, 'Image Error',
+                    'Could not load image: %s' % path)
+                return
+            self.ui.map_label.setPixmap(pixmap)
+            self.ui.map_label.resize(pixmap.size())
+            self.ui.scrollAreaWidgetContents.setMinimumSize(pixmap.size())
+            self.ui.tabWidget.setCurrentWidget(self.ui.tab_2)
+
+    # ── Launch ────────────────────────────────────────────────────────────
+    app = QtGui.QApplication(sys.argv)
+
+    window = MiasRandomizer()
+    window.show()
+    window.find_install_path()
+
+    app.exec_()
+    del window
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Entry point
+# ─────────────────────────────────────────────────────────────────────────────
+
 def parse_args():
     import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--seed', type=int)
+    parser = argparse.ArgumentParser(
+        description='Miasmata Randomizer - run with no arguments to launch the GUI')
+    parser.add_argument('-g', '--generate', action='store_true',
+        help='Generate and install a randomizer without the GUI')
+    parser.add_argument('-s', '--seed', type=int,
+        help='RNG seed to use (implies --generate)')
+    parser.add_argument('--no-install', action='store_true',
+        help='Generate the .dss5mod file but do not install it into main.rs5')
+    parser.add_argument('--no-spoiler', action='store_true',
+        help='Skip generating the spoiler map (CLI mode only)')
+    parser.add_argument('--note-mode', type=int, default=SHUFFLE_MODE_NOTES,
+        metavar='MODE',
+        help='Note shuffle mode 1-3 (default: %d)' % SHUFFLE_MODE_NOTES)
+    parser.add_argument('--plant-mode', type=int, default=SHUFFLE_MODE_PLANTS,
+        metavar='MODE',
+        help='Plant shuffle mode 1-3 (default: %d)' % SHUFFLE_MODE_PLANTS)
+    parser.add_argument('--fungi-mode', type=int, default=SHUFFLE_MODE_PLANTS,
+        metavar='MODE',
+        help='Fungi shuffle mode 1-3 (default: %d)' % SHUFFLE_MODE_PLANTS)
+    parser.add_argument('--cluster-dist', type=int, default=CLUSTER_DISTANCE,
+        metavar='DIST',
+        help='Cluster distance (default: %d)' % CLUSTER_DISTANCE)
     return parser.parse_args()
+
 
 if __name__ == '__main__':
     args = parse_args()
-    seed = None # So I can comment out the next line
-    seed = generate_and_install_randomizer(args.seed)
 
-    if seed is not None:
-        spoiler_filename = randomizer_spoiler_template % seed
+    if args.generate or args.seed is not None:
+        # ── CLI / headless mode ───────────────────────────────────────────
+        install_path = find_install_path()
+        if install_path is None:
+            sys.exit('Could not find Miasmata install path. '
+                     'Run from the Miasmata directory or check the registry.')
+
+        seed = generate_and_install_randomizer(
+            install_path=install_path,
+            seed=args.seed,
+            note_mode=args.note_mode,
+            plant_mode=args.plant_mode,
+            fungi_mode=args.fungi_mode,
+            cluster_dist=args.cluster_dist,
+            install=not args.no_install,
+        )
+
+        seed_str = encode_seed_string(seed, args.note_mode, args.plant_mode,
+                                      args.fungi_mode, args.cluster_dist)
+        print('Miasmata Randomizer Seed: %s' % seed_str)
+
+        if not args.no_spoiler:
+            spoiler_filename = os.path.join(install_path,
+                                            randomizer_spoiler_template % seed_str)
+            spoil(None, install_path=install_path, spoiler_filename=spoiler_filename)
     else:
-        spoiler_filename = 'spoiler.jpg'
-
-    # spoil('plant31', spoiler_filename)
-    # spoil('note1', spoiler_filename)
-    # spoil(cure_plants, spoiler_filename)
-    # spoil(important_plants, spoiler_filename)
-    # spoil(FUNGI_BUCKET, spoiler_filename)
-    spoil(None, spoiler_filename)
-
-    if seed is not None:
-        print('Miasmata Randomizer Seed: %u' % seed)
+        # ── GUI mode ──────────────────────────────────────────────────────
+        start_gui()
