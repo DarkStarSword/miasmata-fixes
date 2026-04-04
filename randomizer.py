@@ -9,6 +9,7 @@ import random
 import os
 import re
 import sys
+import time
 
 import rs5archive
 import rs5file
@@ -737,27 +738,68 @@ def start_gui():
     import traceback
 
     class _LogWriter(object):
-        '''stdout-compatible object that appends lines to a QStandardItemModel.'''
+        '''stdout-compatible object that appends lines to a QStandardItemModel.
+
+        Writes are buffered and only flushed to the Qt model at most every
+        _INTERVAL seconds.  This avoids the heavy cost of crossing the
+        Python/C++ boundary on every print() call (which can easily be
+        thousands of times during an RS5 scan) while still keeping the UI
+        visibly alive during long operations.
+        '''
+        _INTERVAL = 0.1  # seconds between UI refreshes
+
         def __init__(self):
             self._model = QtGui.QStandardItemModel()
+            self._buf = ''       # partial line not yet ended with '\n'
+            self._pending = []   # complete lines waiting to be added to model
+            self._last_flush = 0.0
 
         def qt_model(self):
             return self._model
 
         def write(self, text):
-            for line in text.split('\n'):
-                if line:
+            self._buf += text
+            if '\n' in self._buf:
+                parts = self._buf.split('\n')
+                self._buf = parts[-1]
+                self._pending.extend(parts[:-1])
+            # Flush to Qt at most once per _INTERVAL to keep the event loop
+            # responsive without paying the full C++ boundary cost every call.
+            now = time.time()
+            if now - self._last_flush >= self._INTERVAL:
+                self._flush_pending()
+
+        def _flush_pending(self):
+            if not self._pending:
+                self._last_flush = time.time()
+                QtGui.QApplication.processEvents()
+                return
+            # Block per-row signals so N inserts cause one view repaint, not N.
+            self._model.blockSignals(True)
+            try:
+                for line in self._pending:
                     item = QtGui.QStandardItem(line)
                     item.setEditable(False)
                     self._model.appendRow(item)
-            # Let Qt process events so the list updates while work is running
+            finally:
+                self._model.blockSignals(False)
+            self._pending = []
+            self._last_flush = time.time()
+            self._model.layoutChanged.emit()
             QtGui.QApplication.processEvents()
 
         def flush(self):
-            pass
+            '''Called at the end of a run; ensure all buffered output is shown.'''
+            if self._buf:
+                self._pending.append(self._buf)
+                self._buf = ''
+            self._flush_pending()
 
         def clear(self):
             self._model.clear()
+            self._buf = ''
+            self._pending = []
+            self._last_flush = 0.0
 
     class MiasRandomizer(QtGui.QMainWindow):
         def __init__(self, parent=None):
@@ -944,6 +986,7 @@ def start_gui():
                 return False, None
             finally:
                 sys.stdout = old_stdout
+                self._log.flush()  # drain any lines still in the time-based buffer
 
         @catch_error
         def _on_uninstall_clicked(self):
