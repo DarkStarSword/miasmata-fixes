@@ -276,6 +276,28 @@ def load_environment_rs5(install_path):
     path = os.path.join(install_path, 'environment.rs5')
     return environment.parse_from_archive(path)
 
+# ── RS5 cache for repeated spoil() calls ─────────────────────────────────────
+# Opening and indexing the rs5 archives is fast, but keeping the file handles
+# alive avoids reopening them on each spoil() call.  The cache is keyed by
+# install_path and must be invalidated whenever main.rs5 is modified (i.e.
+# after generate or uninstall).
+_rs5_cache_path = None
+_rs5_cache_main = None
+_rs5_cache_env  = None
+
+def _get_spoil_rs5(install_path):
+    global _rs5_cache_path, _rs5_cache_main, _rs5_cache_env
+    if _rs5_cache_path != install_path:
+        _rs5_cache_main = load_main_rs5(install_path)
+        _rs5_cache_env  = load_environment_rs5(install_path)
+        _rs5_cache_path = install_path
+    return _rs5_cache_main, _rs5_cache_env
+
+def _invalidate_rs5_cache():
+    global _rs5_cache_path
+    _rs5_cache_path = None
+
+
 def get_plants_notes_list(env_rs5, skip_non_removable=True):
     ret = ADDITIONAL_MODELS.copy()
     for modelset,game_object in env_rs5['player']['pick_objects'].iteritems():
@@ -381,7 +403,7 @@ def spoil(plants, install_path=None, spoiler_filename='spoiler.jpg'):
 
     import miasmap
 
-    env_rs5 = load_environment_rs5(install_path)
+    main_rs5, env_rs5 = _get_spoil_rs5(install_path)
     models = get_plants_notes_list(env_rs5, skip_non_removable=False)
 
     if plants is None:
@@ -394,9 +416,7 @@ def spoil(plants, install_path=None, spoiler_filename='spoiler.jpg'):
     m = { k:v for (k,v) in models.items() if v.lower() in plants_lower }
     print('Searching for', ', '.join(m))
 
-    main_rs5 = load_main_rs5(install_path)
-
-    print('Extracting map texture from main.rs5...')
+    # load_from_rs5 prints a message and does work only on first call per path
     miasmap.load_from_rs5(main_rs5, install_path)
 
     tmp = miasmap.image
@@ -888,6 +908,7 @@ def start_gui():
             self._install_path = None
             self._updating_seed = False
             self._updating_tree = False
+            self._map_pixmap = None  # full-res pixmap; rescaled in _update_map_display
 
             # Log writer — pass the listView so it can auto-scroll
             self._log = _LogWriter(self.ui.listView)
@@ -1080,6 +1101,7 @@ def start_gui():
             if not self._check_install_path():
                 return
             ok, _ = self._run_with_log(remove_previous_randomizer, self._install_path)
+            _invalidate_rs5_cache()
             self._refresh_installed_label()
             if ok:
                 self.ui.statusbar.showMessage('Randomizer uninstalled.', 5000)
@@ -1118,6 +1140,8 @@ def start_gui():
             self._updating_seed = True
             self.ui.lineEdit.setText(seed_str)
             self._updating_seed = False
+
+            _invalidate_rs5_cache()  # main.rs5 was modified; reload on next spoil
 
             if save_spoiler:
                 spoiler_filename = os.path.join(
@@ -1296,10 +1320,30 @@ def start_gui():
                 QtGui.QMessageBox.warning(self, 'Image Error',
                     'Could not load image: %s' % path)
                 return
-            self.ui.map_label.setPixmap(pixmap)
-            self.ui.map_label.resize(pixmap.size())
-            self.ui.scrollAreaWidgetContents.setMinimumSize(pixmap.size())
+            self._map_pixmap = pixmap
             self.ui.tabWidget.setCurrentWidget(self.ui.tab_2)
+            # Defer the scale until the tab's viewport has finished laying out
+            QtCore.QTimer.singleShot(0, self._update_map_display)
+
+        def _update_map_display(self):
+            '''Scale the stored pixmap to fit the scroll area viewport.'''
+            if self._map_pixmap is None:
+                return
+            vp = self.ui.scrollArea.viewport()
+            scaled = self._map_pixmap.scaled(
+                vp.width(), vp.height(),
+                QtCore.Qt.KeepAspectRatio,
+                QtCore.Qt.SmoothTransformation)
+            self.ui.map_label.setPixmap(scaled)
+            self.ui.map_label.resize(scaled.size())
+            # Remove the hardcoded minimum so no spurious scrollbars appear
+            self.ui.scrollAreaWidgetContents.setMinimumSize(QtCore.QSize(0, 0))
+            self.ui.scrollAreaWidgetContents.resize(scaled.size())
+
+        def resizeEvent(self, event):
+            super(MiasRandomizer, self).resizeEvent(event)
+            if self.ui.tabWidget.currentWidget() is self.ui.tab_2:
+                self._update_map_display()
 
     # ── Launch ────────────────────────────────────────────────────────────
     app = QtGui.QApplication(sys.argv)

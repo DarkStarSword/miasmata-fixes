@@ -46,6 +46,7 @@ def load_from_rs5(main_rs5, install_path=None):
 	global image, pix, _loaded_from
 	if _loaded_from is not None and _loaded_from == install_path:
 		return  # already cached for this install
+	print('Extracting map texture from main.rs5...')
 	import rs5file
 	import imag
 	filledin = rs5file.Rs5ChunkedFileDecoder(main_rs5['TEX\\Map_FilledIn'].decompress())
