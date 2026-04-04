@@ -389,7 +389,9 @@ def spoil(plants, install_path=None, spoiler_filename='spoiler.jpg'):
     elif not isinstance(plants, (list, tuple)):
         plants = (plants,)
 
-    m = { k:v for (k,v) in models.items() if v in plants }
+    # Case-insensitive match: note capitalisation is inconsistent in game data
+    plants_lower = {p.lower() for p in plants}
+    m = { k:v for (k,v) in models.items() if v.lower() in plants_lower }
     print('Searching for', ', '.join(m))
 
     main_rs5 = load_main_rs5(install_path)
@@ -517,13 +519,15 @@ def generate_and_install_randomizer(install_path=None, seed=None,
             print('NOTE: %s referenced in environment.rs5 not found in inst_header (no instances of this game_object in the map)' % model)
             continue
         inst_name_idx = inst_node_names.index(model)
-        search_inst_ids[inst_name_idx] = game_object
         if game_object.lower().startswith('note'):
             bucket = notes_bucket
         elif game_object in FUNGI_BUCKET:
             bucket = fungi_bucket
         else:
             bucket = plants_bucket
+        if bucket.shuffle_mode == 0:
+            continue  # Mode 0: leave this category unshuffled
+        search_inst_ids[inst_name_idx] = game_object
         bucket.bucket.setdefault(game_object, []).append(inst_name_idx)
 
     # Currently only using the bounds for debugging/insights. With
@@ -716,7 +720,7 @@ def decode_seed_string(s):
     '''
     s = s.strip()
     # New format: NNNs-ccc-sss where NNN are 1-digit mode values (1-3)
-    m = re.match(r'^([1-3])([1-3])([1-3])-(\d+)-(\d+)$', s)
+    m = re.match(r'^([0-3])([0-3])([0-3])-(\d+)-(\d+)$', s)
     if m:
         note_mode    = int(m.group(1))
         plant_mode   = int(m.group(2))
@@ -749,6 +753,10 @@ def _build_plant_tree_model():
     def make_cat(label):
         item = QtGui.QStandardItem(label)
         item.setEditable(False)
+        item.setCheckable(True)
+        item.setCheckState(QtCore.Qt.Unchecked)
+        # Allow three-state checkbox: unchecked / partial / checked
+        item.setFlags(item.flags() | QtCore.Qt.ItemIsTristate)
         return item
 
     def make_item(label, data):
@@ -758,6 +766,13 @@ def _build_plant_tree_model():
         item.setCheckState(QtCore.Qt.Unchecked)
         item.setData(data, QtCore.Qt.UserRole)
         return item
+
+    def note_sort_key(k):
+        '''Sort note keys: numeric suffix first (in numeric order), then alphanumeric.'''
+        suffix = k[4:]  # strip 'note' prefix
+        if suffix.isdigit():
+            return (0, int(suffix), u'')
+        return (1, 0, suffix.upper())
 
     # Cure plants
     cure_cat = make_cat('Cure Ingredients')
@@ -778,10 +793,10 @@ def _build_plant_tree_model():
         all_plants_cat.appendRow(make_item(plant_names[pname], pname))
     model.appendRow(all_plants_cat)
 
-    # Notes
+    # Notes — use notes_names dict for complete, human-readable list
     notes_cat = make_cat('Notes')
-    for i in range(18):
-        notes_cat.appendRow(make_item('Note %i' % i, 'note%i' % i))
+    for nkey in sorted(notes_names.keys(), key=note_sort_key):
+        notes_cat.appendRow(make_item(notes_names[nkey], nkey))
     model.appendRow(notes_cat)
 
     return model
@@ -804,8 +819,9 @@ def start_gui():
         '''
         _INTERVAL = 0.1  # seconds between UI refreshes
 
-        def __init__(self):
+        def __init__(self, list_view):
             self._model = QtGui.QStandardItemModel()
+            self._list_view = list_view
             self._buf = ''       # partial line not yet ended with '\n'
             self._pending = []   # complete lines waiting to be added to model
             self._last_flush = 0.0
@@ -830,6 +846,9 @@ def start_gui():
                 self._last_flush = time.time()
                 QtGui.QApplication.processEvents()
                 return
+            # Check scroll position before insert so we can restore it after.
+            scrollbar = self._list_view.verticalScrollBar()
+            at_bottom = scrollbar.value() >= scrollbar.maximum()
             # Block per-row signals so N inserts cause one view repaint, not N.
             self._model.blockSignals(True)
             try:
@@ -842,6 +861,8 @@ def start_gui():
             self._pending = []
             self._last_flush = time.time()
             self._model.layoutChanged.emit()
+            if at_bottom:
+                self._list_view.scrollToBottom()
             QtGui.QApplication.processEvents()
 
         def flush(self):
@@ -866,21 +887,25 @@ def start_gui():
 
             self._install_path = None
             self._updating_seed = False
+            self._updating_tree = False
 
-            # Log writer
-            self._log = _LogWriter()
+            # Log writer — pass the listView so it can auto-scroll
+            self._log = _LogWriter(self.ui.listView)
             self.ui.listView.setModel(self._log.qt_model())
 
             # Plant tree for spoiler map
             self._plant_tree_model = _build_plant_tree_model()
             self.ui.treeView.setModel(self._plant_tree_model)
             self.ui.treeView.expandAll()
+            self._plant_tree_model.itemChanged.connect(self._on_plant_item_changed)
 
             # Populate shuffle mode combo boxes.
-            # Note: only mode 1 is currently implemented for notes, so we
-            # disable the combo but leave it in place for future expansion.
-            note_modes = [('1 - Random assignment', 1)]
+            note_modes = [
+                ('0 - Don\'t shuffle', 0),
+                ('1 - Random assignment', 1),
+            ]
             plant_modes = [
+                ('0 - Don\'t shuffle', 0),
                 ('1 - Random assignment', 1),
                 ('2 - Swap plant kinds', 2),
                 ('3 - Shuffle clusters (recommended)', 3),
@@ -895,8 +920,6 @@ def start_gui():
                 idx = combo.findData(default)
                 if idx >= 0:
                     combo.setCurrentIndex(idx)
-            # Only one note mode for now
-            self.ui.comboBox.setEnabled(False)
 
             self.ui.lineEdit_2.setText(str(CLUSTER_DISTANCE))
 
@@ -933,12 +956,20 @@ def start_gui():
         def _refresh_installed_label(self):
             if not self._install_path:
                 self.ui.label_2.setText('Installed Randomizer: (no path set)')
+                self.ui.pushButton.setEnabled(False)   # uninstall
+                self.ui.pushButton_4.setEnabled(False) # generate
                 return
             names = get_installed_randomizer_names(self._install_path)
-            if names:
+            installed = bool(names)
+            if installed:
                 self.ui.label_2.setText('Installed Randomizer: %s' % ', '.join(names))
             else:
                 self.ui.label_2.setText('Installed Randomizer: (none)')
+            # Uninstall only makes sense when something is installed;
+            # generate is blocked when a randomizer is already active (must
+            # uninstall first to avoid stacking conflicting mods).
+            self.ui.pushButton.setEnabled(installed)    # uninstall
+            self.ui.pushButton_4.setEnabled(not installed)  # generate
 
         def find_install_path(self):
             '''Auto-detect install path; called after the window is shown.'''
@@ -1219,6 +1250,45 @@ def start_gui():
                     walk(child)
             walk(self._plant_tree_model.invisibleRootItem())
             return selected
+
+        def _on_plant_item_changed(self, item):
+            '''Handle check-state changes in the plant/note tree.
+
+            Category headers: propagate their state to all children.
+            Clicking a partially-checked category selects all (Unchecked →
+            Checked; PartiallyChecked → Checked; Checked → Unchecked).
+
+            Leaf items: update the parent header to reflect the aggregate
+            state (Checked / Unchecked / PartiallyChecked).
+            '''
+            if self._updating_tree:
+                return
+            self._updating_tree = True
+            try:
+                parent = item.parent()
+                if parent is None:
+                    # Top-level category changed by user click.
+                    state = item.checkState()
+                    if state == QtCore.Qt.PartiallyChecked:
+                        # Force partial → checked so clicking a mixed
+                        # category always means "select all".
+                        state = QtCore.Qt.Checked
+                        item.setCheckState(state)
+                    for row in range(item.rowCount()):
+                        item.child(row).setCheckState(state)
+                else:
+                    # Leaf item changed — update parent tristate.
+                    child_states = set(
+                        parent.child(r).checkState()
+                        for r in range(parent.rowCount()))
+                    if child_states == {QtCore.Qt.Checked}:
+                        parent.setCheckState(QtCore.Qt.Checked)
+                    elif child_states == {QtCore.Qt.Unchecked}:
+                        parent.setCheckState(QtCore.Qt.Unchecked)
+                    else:
+                        parent.setCheckState(QtCore.Qt.PartiallyChecked)
+            finally:
+                self._updating_tree = False
 
         def _display_image(self, path):
             pixmap = QtGui.QPixmap(path)
