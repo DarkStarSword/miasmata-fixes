@@ -175,6 +175,62 @@ plant_names = {
     'plant34': 'Fleshy Purple Fruit',
 }
 
+notes_names = {
+    'note0': 'A Bloody Memo about The Cure',
+    'note1': 'An Insane Note from Herbert',
+    'note2': 'Letter from Sanchez about the Anti-Toxin',
+    'note3': 'Map to Bio-Luminescent Algae',
+    'note4': 'A Letter from Cornelius about Orchid Extracts', # Not used in game
+    'note5': 'A Region Map for the Orchadae-Helius.',
+    'note7': 'A Map to a Tall Plant with a Golden Spadix',
+    'note8': 'A Regional Map of Outpost Sirius',
+    'note9': 'A Letter from Isabela about an Adjuvent.',
+    'note10': 'A procedure for developing The Adjuvent',
+    'note11': 'A Regional Map for Outpost Rigel',
+    'note12': 'A Study of Nepenthes Viri Pitcher Plant',
+    'note13': 'A Study of Plant X',
+    'note14': 'A Regional Map of Outpost Tau',
+    'note15': 'A Document on the Synthesis of Anti-Plague Agent',
+    'note16': 'A Study on the Inonotus Caeruleus Fungus',
+    'note17': 'A Map to a cache of Pitcher Plants',
+    'note18': 'A Map to a cache of Pitcher Plants', # Not used in game
+    'noteA1': 'A Map of Outpost Draco',
+    'noteA2': 'A Map to Purple Fruit and Jungle Flower',
+    'noteA3': 'A Map to Giant Bloom and Blue Cap Mushroom',
+    'noteA4': 'A Map to Sponge and Trumpet Mushrooms',
+    'noteA5': "A Guide to Cartography and Triangulation 'B','C'",
+    'noteA6': 'A Map of a Swamp Trail',
+    'noteA7': 'Journal Entry From Herbert #1',
+    'noteA8': 'Journal Entry From Herbert #2',
+    'noteA9': 'Journal Entry From Sanchez #6',
+    'noteAA': 'A codex of island Medicines',
+    'noteBB': 'A List of Basic Medicinal Plants',
+    'noteCC': 'Document on the Synthesis of Muscle Emphasis Drug',
+    'noteDD': 'Document on the Synthesis of Endurance Emphasis Drug', # Mislabeled as Muscle Emphasis in game - fixed by community patch
+    'noteEE': 'A List of Adrenaline Stimulants',
+    'noteFF': 'A Document about a Mental Clarity Tonic',
+    'noteGG': 'A Document about Anti-Hallucination Medicine',
+    'noteHH': 'A Document about Potency Enhancers',
+    'noteII': 'Photos of Chancellor Kallas',
+    'noteJJ': 'Photos of Plague Victims',
+    'noteKK': 'A Stack of Photos and Newspaper Clippings',
+    'noteLL': 'Instructions for Synthesizing Medicines',
+    'noteMM': 'A Pair of Island Photographs',
+    'noteNN': 'A Message in a Bottle',
+    'noteOO': 'Instructions for Researching Plants',
+    'notePP': 'A Plague Photo and Newspaper Article',
+    'noteQQ': 'A Photo and Article about Chancellor Kallas',
+    'noteRR': 'A Map to a Boat Landing',
+    'noteSS': 'A Document about Owl Statues',
+    'noteTT': 'A Document on Mapping and Cartography',
+    'noteUU': 'Instructions for Brain Emphasis Drug',
+    'noteVV': 'Journal Entry from Doctor Sanchez #5',
+    'noteWW': 'Journal Entry from Doctor Sanchez #4',
+    'noteXX': 'Journal Entry from Doctor Sanchez #3',
+    'noteYY': 'Journal Entry from Doctor Sanchez #2',
+    'noteZZ': 'Journal Entry from Doctor Sanchez #1',
+}
+
 # Blacklist corrupt / inaccessible instance nodes:
 min_z_blacklist_whole_node = -1.0 # Detects orbital launch platform, now just explicitly blacklisting that
 blacklist_inods = (
