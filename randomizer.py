@@ -1,4 +1,5 @@
 #!/usr/bin/env python2.7
+# -*- coding: utf-8 -*-
 
 from __future__ import print_function
 
@@ -1065,7 +1066,7 @@ def start_gui():
                                 j += 1
                         i += 1
                 name = plant_names.get(game_object, game_object)
-                print('  %-40s %3i instances  →  %i cluster(s)' % (
+                print('  %-40s %3i instances  ->  %i cluster(s)' % (
                     name, initial_len, len(clusters)))
 
         @catch_error

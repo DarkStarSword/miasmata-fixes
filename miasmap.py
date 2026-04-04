@@ -56,7 +56,7 @@ def load_from_rs5(main_rs5, install_path=None):
 	_loaded_from = install_path
 
 def save_image(filename):
-	print>>sys.stderr, 'Saving %s...' % filename
+	print('Saving %s...' % filename, file=sys.stderr)
 	image.transpose(Image.ROTATE_90).save(filename)
 
 def plot(x, y, (r, g, b), additive=True):
