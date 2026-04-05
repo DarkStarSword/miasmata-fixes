@@ -276,14 +276,21 @@ def load_environment_rs5(install_path):
     path = os.path.join(install_path, 'environment.rs5')
     return environment.parse_from_archive(path)
 
-# ── RS5 cache for repeated spoil() calls ─────────────────────────────────────
+# ── RS5 / points cache for repeated spoil() calls ────────────────────────────
 # Opening and indexing the rs5 archives is fast, but keeping the file handles
-# alive avoids reopening them on each spoil() call.  The cache is keyed by
-# install_path and must be invalidated whenever main.rs5 is modified (i.e.
-# after generate or uninstall).
+# alive avoids reopening them on each spoil() call.
+#
+# The INOD scan (iterating every instance-node file to collect plant/note XY
+# positions) is the real bottleneck.  _get_cached_points() does this scan once
+# and stores a compact {game_object: [(x,y), ...]} dict.  Only plant/note
+# positions are retained, so memory usage is small (a few thousand coords).
+#
+# Both caches are keyed by install_path and must be invalidated whenever
+# main.rs5 is modified (i.e. after generate or uninstall).
 _rs5_cache_path = None
 _rs5_cache_main = None
 _rs5_cache_env  = None
+_points_cache   = {}   # install_path -> {game_object: [(x, y), ...]}
 
 def _get_spoil_rs5(install_path):
     global _rs5_cache_path, _rs5_cache_main, _rs5_cache_env
@@ -293,9 +300,52 @@ def _get_spoil_rs5(install_path):
         _rs5_cache_path = install_path
     return _rs5_cache_main, _rs5_cache_env
 
+def _get_cached_points(install_path, main_rs5, env_rs5, progress_cb=None):
+    '''Scan all INOD files and return {game_object: [(x,y), ...]} for every
+    plant/note in the map.  Results are cached by install_path so subsequent
+    calls with the same path return immediately.
+
+    progress_cb, if provided, is called as progress_cb(done, total) after each
+    INOD file is processed so callers can drive a progress bar.
+    '''
+    if install_path in _points_cache:
+        return _points_cache[install_path]
+
+    models_all = get_plants_notes_list(env_rs5, skip_non_removable=False)
+    inst_header_fp = inst_header.open_inst_header_from_rs5(main_rs5)
+    inst_node_names = inst_header.get_name_list(inst_header_fp)
+    search_inst_ids = {
+        inst_node_names.index(k): v
+        for k, v in models_all.iteritems()
+        if k in inst_node_names
+    }
+
+    inod_items = [(f, c) for f, c in main_rs5.iteritems() if c.type == 'INOD']
+    print('Scanning %d instance node files for plant/note positions...' % len(inod_items))
+
+    points = {}
+    for i, (inod_fname, compressed_file) in enumerate(inod_items):
+        if progress_cb:
+            progress_cb(i, len(inod_items))
+        decompressed = compressed_file.decompress()
+        nodes = inst_node.parse_inod(StringIO(decompressed), inst_node_names)
+        for node in nodes:
+            _, node_name_idx, _, x, y, _, _, _, _, _, _ = node
+            if node_name_idx in search_inst_ids:
+                points.setdefault(search_inst_ids[node_name_idx], []).append(
+                    (int(x), int(y)))
+
+    if progress_cb:
+        progress_cb(len(inod_items), len(inod_items))
+
+    print('Done - found positions for %d plant/note types.' % len(points))
+    _points_cache[install_path] = points
+    return points
+
 def _invalidate_rs5_cache():
     global _rs5_cache_path
     _rs5_cache_path = None
+    _points_cache.clear()
 
 
 def get_plants_notes_list(env_rs5, skip_non_removable=True):
@@ -397,58 +447,48 @@ class PlantCluster(object):
         self.contents.extend(other.contents)
 
 
-def spoil(plants, install_path=None, spoiler_filename='spoiler.jpg'):
+def spoil(plants, install_path=None, spoiler_filename='spoiler.jpg',
+          progress_cb=None):
     if install_path is None:
         install_path = find_install_path()
 
     import miasmap
 
     main_rs5, env_rs5 = _get_spoil_rs5(install_path)
-    models = get_plants_notes_list(env_rs5, skip_non_removable=False)
 
+    # Resolve 'plants=None' to all plants before filtering
     if plants is None:
-        plants = [ x for x in models.values() if x.startswith('plant') ]
+        models = get_plants_notes_list(env_rs5, skip_non_removable=False)
+        plants = [x for x in models.values() if x.startswith('plant')]
     elif not isinstance(plants, (list, tuple)):
         plants = (plants,)
 
-    # Case-insensitive match: note capitalisation is inconsistent in game data
-    plants_lower = {p.lower() for p in plants}
-    m = { k:v for (k,v) in models.items() if v.lower() in plants_lower }
-    print('Searching for', ', '.join(m))
-
     # load_from_rs5 prints a message and does work only on first call per path
     miasmap.load_from_rs5(main_rs5, install_path)
+
+    # _get_cached_points scans all INODs on first call (driving the progress
+    # bar via progress_cb), then returns instantly from cache on repeat calls.
+    plants_lower = {p.lower() for p in plants}
+    points_all = _get_cached_points(install_path, main_rs5, env_rs5,
+                                    progress_cb=progress_cb)
+
+    # Filter to the requested subset using case-insensitive comparison
+    # (note capitalisation is inconsistent across game data files)
+    points = {k: v for k, v in points_all.iteritems()
+              if k.lower() in plants_lower}
+
+    print('Plotting %d plant/note type(s)...' % len(points))
 
     tmp = miasmap.image
     miasmap.image = tmp.copy()
     miasmap.pix = miasmap.image.load()
 
-    inst_header_fp = inst_header.open_inst_header_from_rs5(main_rs5)
-    inst_node_names = inst_header.get_name_list(inst_header_fp)
-    search_inst_ids = { inst_node_names.index(k): v for k,v in m.iteritems() if k in inst_node_names }
-
-    points = {}
-
-    for inod_fname,compressed_file in main_rs5.iteritems():
-        if compressed_file.type != 'INOD':
-            continue
-        inod_index = int(inod_fname[9:]) # strip "inst_node" from filename
-        assert(inod_fname == 'inst_node%i' % inod_index)
-        decompressed = compressed_file.decompress()
-        nodes = inst_node.parse_inod(StringIO(decompressed), inst_node_names)
-        for node in nodes:
-            node_name, node_name_idx, u1, x, y, z, u2, u3, u4, u5, u6 = node
-            try:
-                plant = search_inst_ids[node_name_idx]
-                points.setdefault(plant, []).append((int(x), int(y)))
-            except KeyError:
-                pass
     for plant, colour in spoiler_plant_colours.iteritems():
-        for x,y in points.get(plant, []):
+        for x, y in points.get(plant, []):
             miasmap.plot_square(int(x), int(y), 20, colour, additive=False)
-    # Anything requested without a colour:
+    # Anything requested but without an assigned colour gets white
     for plant in set(points).difference(spoiler_plant_colours):
-        for x,y in points[plant]:
+        for x, y in points[plant]:
             miasmap.plot_square(int(x), int(y), 20, (255, 255, 255), additive=False)
     miasmap.save_image(spoiler_filename)
     miasmap.image = tmp
@@ -1223,6 +1263,28 @@ def start_gui():
                 print('  %-40s %3i instances  ->  %i cluster(s)' % (
                     name, initial_len, len(clusters)))
 
+        def _on_scan_progress(self, done, total):
+            '''Progress callback passed to spoil() → _get_cached_points().
+            Only called during a cold-cache INOD scan; ignored on cache hits.'''
+            self.ui.progressBar.setMaximum(total)
+            self.ui.progressBar.setValue(done)
+            QtGui.QApplication.processEvents()
+
+        def _run_spoil(self, selected, spoiler_filename):
+            '''Run spoil() with progress bar, returning (ok, _).'''
+            need_scan = self._install_path not in _points_cache
+            if need_scan:
+                self.ui.progressBar.setValue(0)
+                self.ui.progressBar.setVisible(True)
+            try:
+                return self._run_with_log(
+                    spoil, selected,
+                    install_path=self._install_path,
+                    spoiler_filename=spoiler_filename,
+                    progress_cb=self._on_scan_progress)
+            finally:
+                self.ui.progressBar.setVisible(False)
+
         @catch_error
         def _on_show_spoiler_clicked(self):
             if not self._check_install_path():
@@ -1235,10 +1297,7 @@ def start_gui():
             import tempfile
             tmp_path = os.path.join(tempfile.gettempdir(),
                                     'randomizer_spoiler_preview.jpg')
-            ok, _ = self._run_with_log(
-                spoil, selected,
-                install_path=self._install_path,
-                spoiler_filename=tmp_path)
+            ok, _ = self._run_spoil(selected, tmp_path)
             if ok:
                 self._display_image(tmp_path)
 
@@ -1255,10 +1314,7 @@ def start_gui():
                 self, 'Save Spoiler Map', '', 'JPEG Images (*.jpg)')
             if not path:
                 return
-            ok, _ = self._run_with_log(
-                spoil, selected,
-                install_path=self._install_path,
-                spoiler_filename=path)
+            ok, _ = self._run_spoil(selected, path)
             if ok:
                 self._display_image(path)
                 self.ui.statusbar.showMessage('Saved spoiler map to %s' % path, 5000)

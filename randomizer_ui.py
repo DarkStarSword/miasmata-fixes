@@ -138,6 +138,14 @@ class Ui_MainWindow(object):
 		self.listView.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
 		self.verticalLayout_tab1.addWidget(self.listView)
 
+		# Progress bar (shown only during long scans; hidden otherwise)
+		self.progressBar = QtGui.QProgressBar(self.tab)
+		self.progressBar.setObjectName("progressBar")
+		self.progressBar.setMinimum(0)
+		self.progressBar.setValue(0)
+		self.progressBar.setVisible(False)
+		self.verticalLayout_tab1.addWidget(self.progressBar)
+
 		self.tabWidget.addTab(self.tab, "")
 
 		# ── Tab 1: Spoiler Map ────────────────────────────────────────────
