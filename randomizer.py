@@ -5,6 +5,7 @@ from __future__ import print_function
 
 from StringIO import StringIO
 import collections
+import gc
 import random
 import os
 import re
@@ -276,29 +277,20 @@ def load_environment_rs5(install_path):
     path = os.path.join(install_path, 'environment.rs5')
     return environment.parse_from_archive(path)
 
-# ── RS5 / points cache for repeated spoil() calls ────────────────────────────
-# Opening and indexing the rs5 archives is fast, but keeping the file handles
-# alive avoids reopening them on each spoil() call.
-#
+# ── Points cache for repeated spoil() calls ──────────────────────────────────
 # The INOD scan (iterating every instance-node file to collect plant/note XY
-# positions) is the real bottleneck.  _get_cached_points() does this scan once
+# positions) is the main bottleneck.  _get_cached_points() does this scan once
 # and stores a compact {game_object: [(x,y), ...]} dict.  Only plant/note
 # positions are retained, so memory usage is small (a few thousand coords).
 #
-# Both caches are keyed by install_path and must be invalidated whenever
-# main.rs5 is modified (i.e. after generate or uninstall).
-_rs5_cache_path = None
-_rs5_cache_main = None
-_rs5_cache_env  = None
-_points_cache   = {}   # install_path -> {game_object: [(x, y), ...]}
-
-def _get_spoil_rs5(install_path):
-    global _rs5_cache_path, _rs5_cache_main, _rs5_cache_env
-    if _rs5_cache_path != install_path:
-        _rs5_cache_main = load_main_rs5(install_path)
-        _rs5_cache_env  = load_environment_rs5(install_path)
-        _rs5_cache_path = install_path
-    return _rs5_cache_main, _rs5_cache_env
+# NOTE: We intentionally do NOT cache the Rs5ArchiveDecoder objects themselves.
+# Keeping open 'rb+' file handles to main.rs5 across generate/install/uninstall
+# cycles causes stale handle accumulation in 32-bit Python (the handles aren't
+# released until the globals are overwritten, not when _rs5_cache_path is
+# nulled), which contributes to memory pressure and potential read-corruption
+# when rs5mod modifies the file while old handles remain open.
+# Opening the archives fresh for each spoil() call is cheap.
+_points_cache = {}   # install_path -> {game_object: [(x, y), ...]}
 
 def _get_cached_points(install_path, main_rs5, env_rs5, progress_cb=None):
     '''Scan all INOD files and return {game_object: [(x,y), ...]} for every
@@ -342,9 +334,7 @@ def _get_cached_points(install_path, main_rs5, env_rs5, progress_cb=None):
     _points_cache[install_path] = points
     return points
 
-def _invalidate_rs5_cache():
-    global _rs5_cache_path
-    _rs5_cache_path = None
+def _invalidate_points_cache():
     _points_cache.clear()
 
 
@@ -454,7 +444,8 @@ def spoil(plants, install_path=None, spoiler_filename='spoiler.jpg',
 
     import miasmap
 
-    main_rs5, env_rs5 = _get_spoil_rs5(install_path)
+    main_rs5 = load_main_rs5(install_path)
+    env_rs5  = load_environment_rs5(install_path)
 
     # Resolve 'plants=None' to all plants before filtering
     if plants is None:
@@ -748,6 +739,14 @@ def generate_and_install_randomizer(install_path=None, seed=None,
         print('Installing new randomizer to main.rs5...')
         rs5mod.add_mod(os.path.join(install_path, 'main.rs5'),
                        [os.path.join(install_path, randomizer_filename)])
+
+    # Release the large intermediate buffers (decoded INODs, item maps, etc.)
+    # and explicitly run the cyclic GC.  In 32-bit Python, the heap can become
+    # fragmented after several generate/install/uninstall cycles otherwise,
+    # eventually causing MemoryError on the next large zlib.decompress call.
+    del main_rs5, env_rs5, item_id_map, item_clusters, item_ids
+    del relevant_inodes, height_map
+    gc.collect()
 
     return seed
 
@@ -1143,7 +1142,7 @@ def start_gui():
             if not self._check_install_path():
                 return
             ok, _ = self._run_with_log(remove_previous_randomizer, self._install_path)
-            _invalidate_rs5_cache()
+            _invalidate_points_cache()
             self._refresh_installed_label()
             if ok:
                 self.ui.statusbar.showMessage('Randomizer uninstalled.', 5000)
@@ -1183,7 +1182,7 @@ def start_gui():
             self.ui.lineEdit.setText(seed_str)
             self._updating_seed = False
 
-            _invalidate_rs5_cache()  # main.rs5 was modified; reload on next spoil
+            _invalidate_points_cache()  # main.rs5 was modified; reload on next spoil
 
             if save_spoiler:
                 spoiler_filename = os.path.join(
