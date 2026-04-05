@@ -1029,8 +1029,9 @@ def start_gui():
             # Uninstall only makes sense when something is installed;
             # generate is blocked when a randomizer is already active (must
             # uninstall first to avoid stacking conflicting mods).
-            self.ui.pushButton.setEnabled(installed)    # uninstall
-            self.ui.pushButton_4.setEnabled(not installed)  # generate
+            self.ui.pushButton.setEnabled(installed)         # uninstall
+            self.ui.pushButton_4.setEnabled(not installed)   # generate
+            self.ui.label_8.setVisible(installed)            # warning
 
         def find_install_path(self):
             '''Auto-detect install path; called after the window is shown.'''

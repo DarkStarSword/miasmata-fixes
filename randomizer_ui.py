@@ -56,14 +56,6 @@ class Ui_MainWindow(object):
 		self.verticalLayout_tab1 = QtGui.QVBoxLayout(self.tab)
 		self.verticalLayout_tab1.setObjectName("verticalLayout_tab1")
 
-		self.label_8 = QtGui.QLabel(self.tab)
-		self.label_8.setObjectName("label_8")
-		self.label_8.setWordWrap(True)
-		palette = self.label_8.palette()
-		palette.setColor(QtGui.QPalette.WindowText, QtGui.QColor(180, 100, 0))
-		self.label_8.setPalette(palette)
-		self.verticalLayout_tab1.addWidget(self.label_8)
-
 		# Settings form
 		self.formLayout = QtGui.QFormLayout()
 		self.formLayout.setObjectName("formLayout")
@@ -103,7 +95,7 @@ class Ui_MainWindow(object):
 
 		self.verticalLayout_tab1.addLayout(self.formLayout)
 
-		# Show Clusters button
+		# Show Cluster Statistics button
 		self.pushButton_3 = QtGui.QPushButton(self.tab)
 		self.pushButton_3.setObjectName("pushButton_3")
 		self.verticalLayout_tab1.addWidget(self.pushButton_3)
@@ -123,6 +115,17 @@ class Ui_MainWindow(object):
 		self.checkBox_3.setEnabled(False)
 		self.verticalLayout_tab1.addWidget(self.checkBox_3)
 
+		# Warning label: hidden by default; shown above Generate when a
+		# randomizer is already installed (see _refresh_installed_label).
+		self.label_8 = QtGui.QLabel(self.tab)
+		self.label_8.setObjectName("label_8")
+		self.label_8.setWordWrap(True)
+		palette = self.label_8.palette()
+		palette.setColor(QtGui.QPalette.WindowText, QtGui.QColor(180, 100, 0))
+		self.label_8.setPalette(palette)
+		self.label_8.setVisible(False)
+		self.verticalLayout_tab1.addWidget(self.label_8)
+
 		# Generate button (prominent)
 		self.pushButton_4 = QtGui.QPushButton(self.tab)
 		self.pushButton_4.setObjectName("pushButton_4")
@@ -137,14 +140,6 @@ class Ui_MainWindow(object):
 		self.listView.setObjectName("listView")
 		self.listView.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
 		self.verticalLayout_tab1.addWidget(self.listView)
-
-		# Progress bar (shown only during long scans; hidden otherwise)
-		self.progressBar = QtGui.QProgressBar(self.tab)
-		self.progressBar.setObjectName("progressBar")
-		self.progressBar.setMinimum(0)
-		self.progressBar.setValue(0)
-		self.progressBar.setVisible(False)
-		self.verticalLayout_tab1.addWidget(self.progressBar)
 
 		self.tabWidget.addTab(self.tab, "")
 
@@ -177,6 +172,14 @@ class Ui_MainWindow(object):
 		self.pushButton_5.setObjectName("pushButton_5")
 		self.horizontalLayout_spoiler_btns.addWidget(self.pushButton_5)
 		self.verticalLayout_tab2_left.addLayout(self.horizontalLayout_spoiler_btns)
+
+		# Progress bar: shown only during the cold-cache INOD scan
+		self.progressBar = QtGui.QProgressBar(self.tab_2)
+		self.progressBar.setObjectName("progressBar")
+		self.progressBar.setMinimum(0)
+		self.progressBar.setValue(0)
+		self.progressBar.setVisible(False)
+		self.verticalLayout_tab2_left.addWidget(self.progressBar)
 
 		self.horizontalLayout_tab2.addLayout(self.verticalLayout_tab2_left)
 
@@ -219,29 +222,29 @@ class Ui_MainWindow(object):
 		QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
 	def retranslateUi(self, MainWindow):
-		_ = lambda s: QtGui.QApplication.translate("MainWindow", s, None, QtGui.QApplication.UnicodeUTF8)
-		MainWindow.setWindowTitle(_("Miasmata Randomizer"))
-		self.label_7.setText(_("Miasmata Install &Location:"))
-		self.browse.setText(_("&Browse..."))
-		self.label_2.setText(_("Installed Randomizer: (none)"))
-		self.pushButton.setText(_("Uninstall"))
-		self.label_8.setText(_("You must uninstall the current randomizer before generating a new one"))
-		self.label.setText(_("Randomizer &Seed:"))
-		self.label_3.setText(_("&Note Shuffle Mode:"))
-		self.label_4.setText(_("&Plant Shuffle Mode:"))
-		self.label_5.setText(_("&Fungus Shuffle Mode:"))
-		self.label_6.setText(_("&Cluster Distance:"))
-		self.pushButton_3.setText(_("Show Clusters (Spoilers!)"))
-		self.checkBox.setText(_("Install Randomizer"))
-		self.checkBox_2.setText(_("Save Spoiler Map"))
-		self.checkBox_3.setText(_("Add hint notes (FUTURE)"))
-		self.pushButton_4.setText(_("Generate Randomizer!"))
-		self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _("Generate Randomizer"))
-		self.label_10.setText(_("The spoiler map shows the island map with the locations of selected "
+		MainWindow.setWindowTitle("Miasmata Randomizer")
+		self.label_7.setText("Miasmata Install Location:")
+		self.browse.setText("Browse...")
+		self.label_2.setText("Installed Randomizer: (none)")
+		self.pushButton.setText("Uninstall")
+		self.label_8.setText("You must uninstall the current randomizer before generating a new one")
+		self.label.setText("Randomizer Seed:")
+		self.label_3.setText("Note Shuffle Mode:")
+		self.label_4.setText("Plant Shuffle Mode:")
+		self.label_5.setText("Fungus Shuffle Mode:")
+		self.label_6.setText("Cluster Distance:")
+		self.pushButton_3.setText("Show Cluster Statistics")
+		self.checkBox.setText("Install Randomizer")
+		self.checkBox_2.setText("Save Spoiler Map")
+		self.checkBox_3.setText("Add hint notes (FUTURE)")
+		self.pushButton_4.setText("Generate Randomizer!")
+		self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), "Generate Randomizer")
+		self.label_10.setText(
+			"The spoiler map shows the island map with the locations of selected "
 			"plants/notes highlighted - either for the installed randomizer, or vanilla "
-			"locations if no randomizer is installed."))
-		self.pushButton_2.setText(_("Show Spoiler"))
-		self.pushButton_5.setText(_("Save to File..."))
-		self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _("Spoiler Map"))
+			"locations if no randomizer is installed.")
+		self.pushButton_2.setText("Show Spoiler")
+		self.pushButton_5.setText("Save to File...")
+		self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), "Spoiler Map")
 
 # vi:noexpandtab:sw=8:ts=8
