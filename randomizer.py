@@ -847,10 +847,11 @@ def _build_plant_tree_model():
         cure_cat.appendRow(make_item(label, pname))
     model.appendRow(cure_cat)
 
-    # All plants sorted by key
-    all_plants_cat = make_cat('All Plants')
+    # All other plants sorted by key (cure ingredients excluded — they appear above)
+    all_plants_cat = make_cat('Other Plants')
     for pname in sorted(plant_names.keys()):
-        all_plants_cat.appendRow(make_item(plant_names[pname], pname))
+        if pname not in cure_plants:
+            all_plants_cat.appendRow(make_item(plant_names[pname], pname))
     model.appendRow(all_plants_cat)
 
     # Notes — use notes_names dict for complete, human-readable list
